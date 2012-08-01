@@ -8,7 +8,7 @@ class AhnIndex(models.Model):
     """
     Generated with bin/django inspectdb after executing:
 
-    shp2pgsql data/index/ahn2_05_int_index_gevuld
+    shp2pgsql -s 28992 data/index/ahn2_05_int_index_gevuld
     public.lizard_damage_ahnindex | psql damage --username buildout
 
     shp2pgsql must take care of the table creation since django doesn't
