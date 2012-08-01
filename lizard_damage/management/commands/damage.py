@@ -8,6 +8,7 @@ from __future__ import (
 )
 
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.gis.geos import Polygon, MultiPolygon
 from django.conf import settings
 
 from lizard_damage.models import AhnIndex
@@ -19,7 +20,6 @@ from osgeo import (
 
 import numpy
 import os
-
 
 
 def import_dataset(filepath, driver):
@@ -58,6 +58,22 @@ def show(arr):
         Image.fromarray(ma).show()
 
 
+def ds2poly(ds):
+    gs = ds.GetGeoTransform()
+    x1 = gs[0]
+    x2 = x1 + ds.RasterXSize * gs[1]
+    y2 = gs[3]
+    y1 = y2 + ds.RasterYSize * gs[5]
+    coordinates = (
+        (x1, y1),
+        (x2, y1),
+        (x2, y2),
+        (x1, y2),
+        (x1, y1),
+    )
+    return Polygon(coordinates, srid=28992)
+
+
 def main():
     """
     import waterlevels
@@ -71,7 +87,7 @@ def main():
     #ahn_filename = 'data_landheight/i37en1_13'
     #ahnds = import_dataset(ahn_filename, 'PostGISRaster')
     wlds_filename = os.path.join(
-        settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
+        settings.DATA_ROOT, 'waterlevel', 'ws_test2.asc',
     )
     ahn_filename = os.path.join(
         settings.DATA_ROOT, 'landheight', 'i37en1_13',
@@ -79,6 +95,12 @@ def main():
     wlds = import_dataset(wlds_filename, 'AAIGrid')
     ahnds = import_dataset(ahn_filename, 'AIG')
 
+    wlpoly = ds2poly(wlds)
+    ahn_tiles = AhnIndex.objects.filter(
+        geom__intersects=wlpoly,
+    ).values_list('bladnr', flat=True)
+    for tile in ahn_tiles:
+        print(tile)
 
 
 class Command(BaseCommand):
