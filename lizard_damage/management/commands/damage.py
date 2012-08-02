@@ -61,7 +61,7 @@ def show(arr):
         Image.fromarray(ma).show()
 
 
-def ds2poly(ds):
+def get_polygon(ds):
     gs = ds.GetGeoTransform()
     x1 = gs[0]
     x2 = x1 + ds.RasterXSize * gs[1]
@@ -83,6 +83,7 @@ def reproject(ds_source, ds_match):
     """
    
     projection_source = ds_source.GetProjection()
+    nodatavalue_source = ds_source.GetRasterBand(1).GetNoDataValue()
 
     projection_match = ds_match.GetProjection()
     geotransform_match = ds_match.GetGeoTransform()
@@ -99,6 +100,8 @@ def reproject(ds_source, ds_match):
     )
     ds_destination.SetGeoTransform(geotransform_match)
     ds_destination.SetProjection(projection_match)
+    ds_destination.GetRasterBand(1).SetNoDataValue(nodatavalue_source)
+    ds_destination.GetRasterBand(1).Fill(nodatavalue_source)
 
     # Do nearest neigbour interpolation to retain the nodata value
     gdal.ReprojectImage(
@@ -106,13 +109,10 @@ def reproject(ds_source, ds_match):
         projection_source, projection_match,
         gdalconst.GRA_NearestNeighbour,
     )
-    # Set the nodata value from the source
-    ds_destination.GetRasterBand(1).SetNoDataValue(
-        ds_source.GetRasterBand(1).GetNoDataValue(),
-    )
+
     return ds_destination
 
-def ds2ma(ds):
+def get_masked_array(ds):
     """
     Return numpy masked array from dataset using nodata value.
     """
@@ -122,38 +122,76 @@ def ds2ma(ds):
 
     return masked_arr
 
+def getnod(ds):
+    return ds.GetRasterBand(1).GetNoDataValue()
 
-def data_for_tile(ahn_name, waterlevel_dataset, method='fs'):
+def setnod(ds, val):
+    ds.GetRasterBand(1).SetNoDataValue(val)
+
+def getarr(ds):
+    return ds.ReadAsArray()
+
+def getset(ds):
+    return set(getarr(ds).flatten())
+
+def data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
     """
-    Return arrays (height, land_use, water_level).
+    Return arrays (waterlevel, height, landuse, depth).
 
     waterlevel is a masked array, height and land use are normal arrays.
     land use and water level are checked to have data where waterlevel has data.
 
-    Input tile is the name according to ahn
+    Input:
+        ahn_name: ahn subunit name
+        ds_wl_original: supplied waterlevel dataset
+        method can be 'filesystem' or 'database'
     """
-    driver = 'AIG' if method == 'fs' else 'PostGISRaster'
+    if method == 'filesystem':
+        driver = 'AIG'
+        basepath = settings.DATA_ROOT
+    elif method == 'database':
+        driver = 'PostGISRaster'
+        basepath = ''
 
-    filename_ahn = os.path.join(
-        settings.DATA_ROOT, 'landheight', tile,
-    )
-    ds_ahn = import_dataset(ahn_filename, driver)
+    ds_ahn_filename = os.path.join(basepath, 'data_ahn', ahn_name)
+    ds_lgn_filename = os.path.join(basepath, 'data_lgn', ahn_name)
+    ds_ahn = import_dataset(ds_ahn_filename, driver)
+    ds_lgn = import_dataset(ds_lgn_filename, driver)
 
-    filename_lgn = os.path.join(
-        settings.DATA_ROOT, 'landuse', tile,
-    )
-    ds_lgn = import_dataset(, driver)
+    ds_wl = reproject(ds_wl_original, ds_ahn)
 
-    ds_wl_wl_dataset_resampled = reproject(wl_dataset, ahn_dataset)
+    arr_wl = ds_wl.ReadAsArray() 
+    arr_ahn = ds_ahn.ReadAsArray()
+    arr_lgn = ds_lgn.ReadAsArray()
 
+    ndv_wl = ds_wl.GetRasterBand(1).GetNoDataValue()
+    ndv_ahn = ds_ahn.GetRasterBand(1).GetNoDataValue()
+    ndv_lgn = ds_lgn.GetRasterBand(1).GetNoDataValue()
     
+    # Create masked arrays with nodata from waterlevel masked
+    mask = (arr_wl == ndv_wl)
+    wl = numpy.ma.array(arr_wl, mask=mask)
+    ahn = numpy.ma.array(arr_ahn, mask=mask)
+    lgn = numpy.ma.array(arr_lgn, mask=mask)
+
+    if (ahn == ndv_ahn).any():
+        raise CommandError('Nodata value found in landheight %s!' % ahn_name)
+    if (lgn == ndv_lgn).any():
+        raise CommandError('Nodata value found in landuse %s!' % ahn_name)
 
 
-def ahn_names(dataset):
+    # getnods for all datasets
+    # see of any nods in masked arrays.
+
+    # TODO masking of wl set and checking for missing values in other sets
+    return wl, ahn, lgn
+
+
+def ahn_names(ds):
     """ Return the names of the ahn tiles that cover this dataset. """
-    polygon = dataset2polygon(dataset)
+    polygon = get_polygon(ds)
     ahn_names = AhnIndex.objects.filter(
-        geom__intersects=wlpoly,
+        geom__intersects=polygon,
     ).values_list('bladnr', flat=True)
     return ahn_names
 
@@ -161,19 +199,16 @@ def ahn_names(dataset):
 def main():
     """
     """
-    #ahnds = import_dataset(ahn_filename, 'PostGISRaster')
-    wlds_filename = os.path.join(
+    ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
-    wlds = import_dataset(wlds_filename, 'AAIGrid')
-
-    wlpoly = ds2poly(wlds)
-    for tile in ahn_tiles[0:1]:
-        
-        print(tile)
-    wlds_r = reproject(wlds, ahnds)
-    marr = ds2ma(wlds_r)
-    print(marr)
+    ds_wl = import_dataset(ds_wl_filename, 'AAIGrid')
+    for name in ahn_names(ds_wl):
+        print(name)
+        wl, ahn, lgn = data_for_tile(name, ds_wl)
+        print(wl)
+        print(ahn)
+        print(lgn)
 
 
 class Command(BaseCommand):
