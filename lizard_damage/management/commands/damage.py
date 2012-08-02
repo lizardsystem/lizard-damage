@@ -45,6 +45,13 @@ def import_dataset(filepath, driver):
     dataset = gdal.Open(open_argument)
     if dataset.GetProjection() == '':
         dataset.SetProjection(PROJECTION_RD)
+
+    # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
+    # In that case we assume it is -9999.
+    if (driver == 'PostGISRaster' and
+        dataset.GetRasterBand(1).GetNoDataValue() == 0):
+        dataset.GetRasterBand(1).SetNoDataValue(-9999)
+
     return dataset
         
 
@@ -167,7 +174,7 @@ def data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
     ndv_wl = ds_wl.GetRasterBand(1).GetNoDataValue()
     ndv_ahn = ds_ahn.GetRasterBand(1).GetNoDataValue()
     ndv_lgn = ds_lgn.GetRasterBand(1).GetNoDataValue()
-    
+
     # Create masked arrays with nodata from waterlevel masked
     mask = (arr_wl == ndv_wl)
     wl = numpy.ma.array(arr_wl, mask=mask)
@@ -205,7 +212,7 @@ def main():
     ds_wl = import_dataset(ds_wl_filename, 'AAIGrid')
     for name in ahn_names(ds_wl):
         print(name)
-        wl, ahn, lgn = data_for_tile(name, ds_wl)
+        wl, ahn, lgn = data_for_tile(name, ds_wl, method='filesystem')
         print(wl)
         print(ahn)
         print(lgn)
