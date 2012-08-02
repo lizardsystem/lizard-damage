@@ -13,6 +13,7 @@ install_requires = [
     'django-extensions',
     'django-nose',
     'lizard-ui >= 4.0b5',
+    'openpyxl',
     ],
 
 tests_require = [
