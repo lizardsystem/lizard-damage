@@ -1,6 +1,15 @@
+# -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
-from __future__ import unicode_literals
+from __future__ import (
+  print_function,
+  unicode_literals,
+  absolute_import,
+  division,
+)
+
 from django.contrib.gis.db import models
+
+import numpy
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -28,3 +37,19 @@ class AhnIndex(models.Model):
     ar = models.FloatField(null=True, blank=True)
     geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
     objects = models.GeoManager()
+
+class Unit(models.Model):
+    name = models.CharField(
+        max_length=64,
+        blank=True, null=True,
+    )
+    factor = models.FloatField(
+        blank=True, null=True,
+    )
+
+    def __unicode__(self):
+        return self.name
+
+    def to_si(self, value):
+        return self.factor * numpy.array(value)
+

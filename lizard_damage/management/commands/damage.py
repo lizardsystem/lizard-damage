@@ -11,7 +11,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Polygon, MultiPolygon
 from django.conf import settings
 
-from lizard_damage.models import AhnIndex
+from lizard_damage import (
+    models,
+    utils,
+    table,
+)
 
 from osgeo import (
     gdal,
@@ -37,21 +41,26 @@ def import_dataset(filepath, driver):
     gdal.GetDriverByName(driver)
     if driver == 'PostGISRaster':
         table, filename = os.path.split(filepath)
-        open_argument = settings.CONNECTION_TEMPLATE % dict(
-            table=table, filename=filename,
+        open_argument = utils.get_postgisraster_argument(
+            'raster', table, filename,
         )
     else:
         open_argument = filepath
     dataset = gdal.Open(open_argument)
+
+    # Post processing
     if dataset.GetProjection() == '':
         dataset.SetProjection(PROJECTION_RD)
 
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
-    # In that case we assume it is -9999.
+    # In that case we get it from the database
     if (driver == 'PostGISRaster' and
         dataset.GetRasterBand(1).GetNoDataValue() == 0):
-        dataset.GetRasterBand(1).SetNoDataValue(-9999)
-
+        nodatavalue = utils.get_postgisraster_nodatavalue(
+            'raster', table, filename,
+        )
+        dataset.GetRasterBand(1).SetNoDataValue(nodatavalue)
+   
     return dataset
         
 
@@ -197,25 +206,28 @@ def data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
 def ahn_names(ds):
     """ Return the names of the ahn tiles that cover this dataset. """
     polygon = get_polygon(ds)
-    ahn_names = AhnIndex.objects.filter(
+    ahn_names = models.AhnIndex.objects.filter(
         geom__intersects=polygon,
     ).values_list('bladnr', flat=True)
     return ahn_names
 
-
 def main():
+    table.DamageTable.from_xlsx('data/damagetable/Schadetabel.xlsx')
+
+def main_old():
     """
     """
     ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
     ds_wl = import_dataset(ds_wl_filename, 'AAIGrid')
-    for name in ahn_names(ds_wl):
+    for name in ahn_names(ds_wl)[0:1]:
         print(name)
         wl, ahn, lgn = data_for_tile(name, ds_wl, method='filesystem')
         print(wl)
         print(ahn)
         print(lgn)
+        import ipdb; ipdb.set_trace() 
 
 
 class Command(BaseCommand):
