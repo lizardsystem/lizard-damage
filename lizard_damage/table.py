@@ -8,120 +8,56 @@ from __future__ import (
 )
 
 import openpyxl
+import numpy
+
 from lizard_damage.models import Unit
-
-class DepthGamma(object):
-    def __init__(self, depth, gamma):
-
-        self.depth = depth
-        self.gamma = gamma
-
-    def to_gamma(self, depth):
-        """ Return gamma array for depth array. """
-        return numpy.interp(array, self.duration, self.gamma)
-
-
-class DurationGamma(object):
-    def __init__(self, duration, gamma):
-        self.duration = duration
-        self.gamma = gamma
-
-    def to_gamma(self, duration):
-        """ Return gamma for duration. """
-        return numpy.interp(duration, self.duration, self.gamma)
-  
-
-class PeriodGamma(object):
-    def __init__(self, month, gamma):
-        self.month = month
-        self.gamma = gamma
-        self.lookup = dict(zip(month,gamma))
-
-    def to_gamma(self, period):
-        """ Return gamma for period. """
-        return self.lookup.get(period)
-        numpy.interp(array, self.duration, self.gamma)
-
+from lizard_damage.utils import DamageWorksheet
 
 class DirectDamage(object):
     """ Everything per square meter. """
-    def __init__(self, dmg_avg, dmg_min, dmg_max, dmg_unit):
-        self.unit = Unit.objects.get(name=dmg_unit)
-        self.dmg_avg, self.dmg_min, self.dmg_max = self.unit.to_si(
-            (dmg_avg, dmg_min, dmg_max),
+    def __init__(self, avg, min, max, unit):
+        self.unit = Unit.objects.get(name=unit)
+        self.avg, self.min, self.max = self.unit.to_si(
+            (avg, min, max),
         )
 
-class IndirectDamage(object):
-    pass
 
-
-class DamageRanges(object):
+class DamageHeader(object):
     """ Store header ranges, added from table importer."""
-    def __init__(self, depth, duration, period):
+    def __init__(self, depth, time, period):
         self.depth = depth
-        self.duration = duration
+        self.time = time
         self.period = period
 
 
-class DamageWorksheet(object):
-    """ Container for worksheet and handy methods. """
+class DamageRow(object):
+    """ Container for single land use data. """
+    def __init__(
+        self, code, description, direct_damage,
+        gamma_depth, gamma_time, gamma_month, header
+    ):
+        self.code = code
+        self.description = description
+        self.direct_damage = direct_damage
 
-    def __init__(self, worksheet):
-        self.worksheet = worksheet
-        self.blocks = self._get_block_indices()
+        self._header = header
+        self._gamma_depth = gamma_depth
+        self._gamma_time = gamma_time
+        self._gamma_month = gamma_month
 
-    def _get_block_indices(self):
-        """ Return block indices based on top row headers. """
-        block_starts = [i for i, c in enumerate(self.worksheet.rows[0])
-                      if c.value is not None] + [len(self.worksheet.rows[0])]
-        block_ends = [i - 1 for i in block_starts]
-        blocks = zip(block_starts[:-1], block_ends[1:])
-      
-        # Append single column blocks for headerless columns
-        blocks = [(i, i) for i in range(blocks[0][0])] + blocks
-       
-        return blocks
-    
-    def _to_number(self, value):
-        """
-        Return corrected values for common oddities.
-        """
-        if isinstance(value, (float, int)):
-            return value
-        if value == '-':
-            return 0.
-        if ',' in value:
-            return float(value.replace(',', '.'))
-        else:
-            raise ValueError('Unsupported value!')
-    
-    def get_values(self, row, block, correct=False):
-        """
-        Return values for a specific block.
-        """
-        row = self.worksheet.rows[row]
-        blockslice = slice(
-            self.blocks[block][0],
-            self.blocks[block][1] + 1,
-        )
-        values = [cell.value for cell in row[blockslice]]
-        if correct:
-            return map(self._to_number, values)
-        return values
+    def gamma_depth(self, depth):
+        """ Return gamma array for depth array. """
+        return numpy.interp(depth, self._header.depth, self._gamma_depth)
 
-    def _merge_headers(self, row1, row2):
-        """ Integrate top row and second row headers. """
-        h1 = None
-        result = []
-        for c1, c2 in zip(row1, row2):
-            h1 = c1.value if c1.value is not None else h1
-            h2 = c2.value 
-            if h1 is not None:
-                result.append(h1 + ':' + h2)
-            else:
-                result.append(h2)
-        return result
- 
+    def gamma_time(self, time):
+        """ Return gamma for time. """
+        return numpy.interp(time, self._header.time, self._gamma_time)
+
+    def gamma_month(self, month):
+        """ Return gamma for period. """
+        return self._gamma_month[month - 1]
+
+
 class DamageTable(object):
     """
     Container for damagetable properties, including import and export methods
@@ -143,32 +79,31 @@ class DamageTable(object):
         worksheet = DamageWorksheet(workbook.get_active_sheet())
 
 
-        duration_with_units = worksheet.get_values(1,5)
+        time_with_units = worksheet.get_values(1,5)
 
-
-
-        
-        
-        self.ranges = DamageRanges(
-            depth=worksheet.get_values(1, 4, True),
-            duration=worksheet.get_values(1, 5),
-            period=worksheet.get_values(1, 6),
+        self.header = DamageHeader(
+            depth=worksheet.get_values(1, 4, correct=True),
+            time=worksheet.get_values(1, 5, convert=True),
+            period=range(1, len(worksheet.get_values(1, 6)) + 1),
 
         )
-
-        import ipdb; ipdb.set_trace() 
-        print(worksheet.get_values(3,5))
-
-
-        # eenheden ombouwen, zie models.
-        # interpolation of g(depth)
         
+        self.data = {}
+        for i in range(2, len(worksheet.worksheet.rows)):
+            damage_row = DamageRow(
+                code = worksheet.get_values(i, 0)[0],
+                description = worksheet.get_values(i, 1)[0],
+                direct_damage = DirectDamage(
+                    *worksheet.get_values(i, 2, correct=True)),
+                gamma_depth = worksheet.get_values(i, 4, correct=True),
+                gamma_time = worksheet.get_values(i, 5, correct=True),
+                gamma_month =  worksheet.get_values(i, 6, correct=True),
+                header = self.header,
+            )
 
+            self.data[damage_row.code] = damage_row
+
+    # Here the importers are registered.
     importers = {
         XLSX_TYPE: _import_from_xlsx,
     }
-
-
-
-    
-

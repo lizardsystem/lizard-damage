@@ -67,14 +67,10 @@ def import_dataset(filepath, driver):
 def show(arr):
         """ Visualize an array with PIL """
         import Image
-        mask = arr == arr.min()
-        ma = numpy.ma.array(arr, mask=mask)
-        ma *= 255 / (ma.max() - ma.min())
-        ma -= ma.min()
-        ma.mask = ma.mask == False  # Invert the mask
-        ma[ma.mask == False] = 0
-        ma.mask = False
-        Image.fromarray(ma).show()
+        tmp = numpy.ma.copy(arr)
+        tmp = (tmp - tmp.min()) * 255. / (tmp.max() - tmp.min())
+        tmp[tmp.mask] = 0
+        Image.fromarray(tmp).show()       
 
 
 def get_polygon(ds):
@@ -212,22 +208,19 @@ def ahn_names(ds):
     return ahn_names
 
 def main():
-    table.DamageTable.from_xlsx('data/damagetable/Schadetabel.xlsx')
+    dt = table.DamageTable.from_xlsx('data/damagetable/Schadetabel.xlsx')
+    d1 = dt.data[1]
+    import ipdb; ipdb.set_trace()
+
 
 def main_old():
-    """
-    """
     ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
     ds_wl = import_dataset(ds_wl_filename, 'AAIGrid')
-    for name in ahn_names(ds_wl)[0:1]:
+    for name in ahn_names(ds_wl):
         print(name)
         wl, ahn, lgn = data_for_tile(name, ds_wl, method='filesystem')
-        print(wl)
-        print(ahn)
-        print(lgn)
-        import ipdb; ipdb.set_trace() 
 
 
 class Command(BaseCommand):
