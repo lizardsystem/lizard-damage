@@ -51,5 +51,8 @@ class Unit(models.Model):
         return self.name
 
     def to_si(self, value):
-        return self.factor * numpy.array(value)
+        return numpy.array(value) * self.factor
+    
+    def from_si(self, value):
+        return numpy.array(value) / self.factor
 

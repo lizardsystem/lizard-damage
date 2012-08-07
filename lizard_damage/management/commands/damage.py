@@ -172,6 +172,9 @@ def data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
 
     ds_wl = reproject(ds_wl_original, ds_ahn)
 
+    ds_wl_gt = ds_wl.GetGeoTransform()
+    area_per_pixel = abs(ds_wl_gt[1] * ds_wl_gt[5])
+
     arr_wl = ds_wl.ReadAsArray() 
     arr_ahn = ds_ahn.ReadAsArray()
     arr_lgn = ds_lgn.ReadAsArray()
@@ -181,22 +184,20 @@ def data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
     ndv_lgn = ds_lgn.GetRasterBand(1).GetNoDataValue()
 
     # Create masked arrays with nodata from waterlevel masked
-    mask = (arr_wl == ndv_wl)
+    mask = (numpy.equal(arr_wl, ndv_wl))
     wl = numpy.ma.array(arr_wl, mask=mask)
     ahn = numpy.ma.array(arr_ahn, mask=mask)
     lgn = numpy.ma.array(arr_lgn, mask=mask)
 
-    if (ahn == ndv_ahn).any():
+    # Check for nodatavalue in unmasked parts of ahn and lgn
+    if numpy.equal(ahn, ndv_ahn).any():
         raise CommandError('Nodata value found in landheight %s!' % ahn_name)
-    if (lgn == ndv_lgn).any():
+    if numpy.equal(lgn, ndv_lgn).any():
         raise CommandError('Nodata value found in landuse %s!' % ahn_name)
 
+    depth = wl - ahn
 
-    # getnods for all datasets
-    # see of any nods in masked arrays.
-
-    # TODO masking of wl set and checking for missing values in other sets
-    return wl, ahn, lgn
+    return lgn, depth, area_per_pixel
 
 
 def ahn_names(ds):
@@ -207,20 +208,67 @@ def ahn_names(ds):
     ).values_list('bladnr', flat=True)
     return ahn_names
 
+
+def calculate(use, depth, area_per_pixel, table, month, time):
+    """
+    Calculate stuff. Note the hardcoded area_per_pixel!
+    """
+
+    result = numpy.ma.zeros(depth.shape)
+    result.mask = depth.mask
+
+    count = {}
+    damage = {}
+    damage_area = {}
+
+    for code, dr in table.data.items():
+
+        index = (numpy.ma.equal(use, code))
+        count[code] = numpy.count_nonzero(index)
+
+        result[index] = (
+            area_per_pixel *
+            dr.direct_damage.max *
+            dr.gamma_depth(depth[index]) *
+            dr.gamma_time(time) *
+            dr.gamma_month(month)
+        )
+
+        damage_area[code] = numpy.count_nonzero(
+            numpy.greater(result[index], 0)
+        ) * area_per_pixel
+
+        # The sum of an empty masked array is 'masked', so check that.
+        if count[code] > 0:
+            damage[code] = result[index].sum()
+        else:
+            damage[code] = 0.
+
+    return damage, count, damage_area, result
+
+
 def main():
-    dt = table.DamageTable.from_xlsx('data/damagetable/Schadetabel.xlsx')
-    d1 = dt.data[1]
-    import ipdb; ipdb.set_trace()
-
-
-def main_old():
     ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
     ds_wl = import_dataset(ds_wl_filename, 'AAIGrid')
+    dt = table.DamageTable.read_xlsx('data/damagetable/Schadetabel.xlsx')
+
     for name in ahn_names(ds_wl):
-        print(name)
-        wl, ahn, lgn = data_for_tile(name, ds_wl, method='filesystem')
+        use, depth, app = data_for_tile(name, ds_wl, method='filesystem')
+
+        damage, count, area, result = calculate(
+            use=use, depth=depth, area_per_pixel=app,
+            table=dt, month=6, time=20 * 3600,
+        )
+        print(result.sum())
+        exit()
+
+def temp():
+    dt = table.DamageTable.read_xlsx('data/damagetable/Schadetabel.xlsx')
+    with open('data/damagetable/dt.cfg', 'w') as cfg:
+        dt.write_cfg(cfg)
+
 
 
 class Command(BaseCommand):
@@ -228,4 +276,4 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        main()
+        temp()

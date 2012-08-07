@@ -7,6 +7,7 @@ from __future__ import (
   division,
 )
 
+import ConfigParser
 import openpyxl
 import numpy
 
@@ -70,8 +71,30 @@ class DamageTable(object):
 
         
     @classmethod
-    def from_xlsx(cls, filename):
+    def read_xlsx(cls, filename):
         return cls(from_type=cls.XLSX_TYPE, from_filename=filename)
+
+    def write_cfg(self, file_object):
+        c = ConfigParser.ConfigParser()
+        c.add_section('algemeen')
+        c.set('algemeen', 'inundatiediepte', self.header.depth)
+        c.set('algemeen', 'inundatieperiode', self.header.period)
+
+        for code, dr in self.data.items():
+            section = unicode(code)
+            c.add_section(section)
+            c.set(section, 'omschrijving', dr.description)
+            direct_unit = dr.direct_damage.unit
+
+            c.set(section, 'direct_eenheid', direct_unit)
+            c.set(section, 'direct_gem',
+                direct_unit.from_si(dr.direct_damage.avg))
+            c.set(section, 'direct_min',
+                direct_unit.from_si(dr.direct_damage.min))
+            c.set(section, 'direct_max',
+                direct_unit.from_si(dr.direct_damage.max))
+       
+        c.write(file_object)
         
 
     def _import_from_xlsx(self, filename):
