@@ -14,6 +14,7 @@ import numpy
 from lizard_damage.models import Unit
 from lizard_damage.utils import DamageWorksheet
 
+
 class DirectDamage(object):
     """ Everything per square meter. """
     def __init__(self, avg, min, max, unit):
@@ -69,7 +70,6 @@ class DamageTable(object):
     def __init__(self, from_type, from_filename):
         self.importers[from_type](self, from_filename)
 
-        
     @classmethod
     def read_xlsx(cls, filename):
         return cls(from_type=cls.XLSX_TYPE, from_filename=filename)
@@ -93,16 +93,12 @@ class DamageTable(object):
                 direct_unit.from_si(dr.direct_damage.min))
             c.set(section, 'direct_max',
                 direct_unit.from_si(dr.direct_damage.max))
-       
+
         c.write(file_object)
-        
 
     def _import_from_xlsx(self, filename):
         workbook = openpyxl.reader.excel.load_workbook(filename)
         worksheet = DamageWorksheet(workbook.get_active_sheet())
-
-
-        time_with_units = worksheet.get_values(1,5)
 
         self.header = DamageHeader(
             depth=worksheet.get_values(1, 4, correct=True),
@@ -110,18 +106,18 @@ class DamageTable(object):
             period=range(1, len(worksheet.get_values(1, 6)) + 1),
 
         )
-        
+
         self.data = {}
         for i in range(2, len(worksheet.worksheet.rows)):
             damage_row = DamageRow(
-                code = worksheet.get_values(i, 0)[0],
-                description = worksheet.get_values(i, 1)[0],
-                direct_damage = DirectDamage(
+                code=worksheet.get_values(i, 0)[0],
+                description=worksheet.get_values(i, 1)[0],
+                direct_damage=DirectDamage(
                     *worksheet.get_values(i, 2, correct=True)),
-                gamma_depth = worksheet.get_values(i, 4, correct=True),
-                gamma_time = worksheet.get_values(i, 5, correct=True),
-                gamma_month =  worksheet.get_values(i, 6, correct=True),
-                header = self.header,
+                gamma_depth=worksheet.get_values(i, 4, correct=True),
+                gamma_time=worksheet.get_values(i, 5, correct=True),
+                gamma_month=worksheet.get_values(i, 6, correct=True),
+                header=self.header,
             )
 
             self.data[damage_row.code] = damage_row

@@ -13,6 +13,7 @@ import numpy
 
 # from django.utils.translation import ugettext_lazy as _
 
+
 class AhnIndex(models.Model):
     """
     Generated with bin/django inspectdb after executing:
@@ -24,8 +25,10 @@ class AhnIndex(models.Model):
     handle postgis2 very well currently.
     """
     gid = models.IntegerField(primary_key=True)
-    x = models.DecimalField(null=True, max_digits=1000, decimal_places=1000, blank=True)
-    y = models.DecimalField(null=True, max_digits=1000, decimal_places=1000, blank=True)
+    x = models.DecimalField(null=True, blank=True,
+                            max_digits=1000, decimal_places=1000)
+    y = models.DecimalField(null=True, blank=True,
+                            max_digits=1000, decimal_places=1000)
     cellsize = models.CharField(max_length=2, blank=True)
     lo_x = models.CharField(max_length=6, blank=True)
     lo_y = models.CharField(max_length=6, blank=True)
@@ -37,6 +40,7 @@ class AhnIndex(models.Model):
     ar = models.FloatField(null=True, blank=True)
     geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
     objects = models.GeoManager()
+
 
 class Unit(models.Model):
     name = models.CharField(
@@ -52,7 +56,6 @@ class Unit(models.Model):
 
     def to_si(self, value):
         return numpy.array(value) * self.factor
-    
+
     def from_si(self, value):
         return numpy.array(value) / self.factor
-
