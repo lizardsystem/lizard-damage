@@ -9,8 +9,6 @@ from __future__ import (
 
 from django.contrib.gis.db import models
 
-import numpy
-
 # from django.utils.translation import ugettext_lazy as _
 
 
@@ -55,7 +53,7 @@ class Unit(models.Model):
         return self.name
 
     def to_si(self, value):
-        return numpy.array(value) * self.factor
+        return value * self.factor
 
     def from_si(self, value):
-        return numpy.array(value) / self.factor
+        return value / self.factor

@@ -65,10 +65,10 @@ def main():
         import ipdb; ipdb.set_trace() 
 
 def temp():
-    dt = table.DamageTable.read_xlsx('data/damagetable/Schadetabel.xlsx')
+    with open('data/damagetable/Schadetabel.xlsx', 'rb') as xlsx:
+        dt = table.DamageTable.read_xlsx(xlsx)
     with open('data/damagetable/dt.cfg', 'w') as cfg:
         dt.write_cfg(cfg)
-
 
 
 class Command(BaseCommand):
@@ -76,4 +76,4 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        main()
+        temp()

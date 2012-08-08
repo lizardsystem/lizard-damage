@@ -14,7 +14,6 @@ class DamageWorksheet(object):
     """ Container for worksheet and handy methods. """
 
     def __init__(self, worksheet):
-        self.units = dict((u.name, u) for u in Unit.objects.all())
         self.worksheet = worksheet
         self.blocks = self._get_block_indices()
 
@@ -47,7 +46,7 @@ class DamageWorksheet(object):
         except ValueError:
             return value
 
-    def _convert(self, text):
+    def _convert(self, )
         """
         Convert a field of the form '5,2 /uur' to a valid number in
         si units.
@@ -55,18 +54,19 @@ class DamageWorksheet(object):
         value, unit = text.split()
         return self.units[unit].to_si(self._to_number(value))
 
-    def get_values(self, row, block, correct=False, convert=False):
-        """
-        Return values for a specific block.
-        """
+    def _get_sequence(self, row, block):
         row = self.worksheet.rows[row]
         blockslice = slice(
             self.blocks[block][0],
             self.blocks[block][1] + 1,
         )
-        values = [cell.value for cell in row[blockslice]]
-        if correct:
-            return map(self._to_number, values)
-        if convert:
-            return map(self._convert, values)
-        return values
+        return [cell.value for cell in row[blockslice]]
+
+    def get_text_values(self, row, block):
+        return map(unicode, self._get_sequence(row, block))
+
+    def get_numeric_values(self, row, block):
+        return map(self._to_number, self._get_sequence(row, block))
+
+
+        

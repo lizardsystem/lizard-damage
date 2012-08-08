@@ -11,25 +11,26 @@ import ConfigParser
 import openpyxl
 import numpy
 
-from lizard_damage.models import Unit
-from lizard_damage.utils import DamageWorksheet
+from lizard_damage import (
+    models,
+    utils,
+)
 
 
 class DirectDamage(object):
-    """ Everything per square meter. """
     def __init__(self, avg, min, max, unit):
-        self.unit = Unit.objects.get(name=unit)
-        self.avg, self.min, self.max = self.unit.to_si(
-            (avg, min, max),
-        )
+        self.avg = avg
+        self.min = min
+        self.max = max
+        self.unit = unit
 
 
 class DamageHeader(object):
     """ Store header ranges, added from table importer."""
-    def __init__(self, depth, time, period):
+    def __init__(self, depth, time_value, time_unit):
         self.depth = depth
-        self.time = time
-        self.period = period
+        self.time_value = time_value
+        self.time_unit = time_unit
 
 
 class DamageRow(object):
@@ -38,22 +39,26 @@ class DamageRow(object):
         self, code, description, direct_damage,
         gamma_depth, gamma_time, gamma_month, header
     ):
+        self.header = header
+
         self.code = code
         self.description = description
         self.direct_damage = direct_damage
 
-        self._header = header
         self._gamma_depth = gamma_depth
         self._gamma_time = gamma_time
         self._gamma_month = gamma_month
 
     def gamma_depth(self, depth):
         """ Return gamma array for depth array. """
-        return numpy.interp(depth, self._header.depth, self._gamma_depth)
+        return numpy.interp(depth, self.header.depth, self._gamma_depth)
 
     def gamma_time(self, time):
         """ Return gamma for time. """
-        return numpy.interp(time, self._header.time, self._gamma_time)
+            time_with_units = zip(self.header.time_value,
+                                  self.header.time_unit)
+            seconds = [u.to_si(t) for t, u in time_with_units]
+        return numpy.interp(time, seconds, self._gamma_time)
 
     def gamma_month(self, month):
         """ Return gamma for period. """
@@ -66,9 +71,11 @@ class DamageTable(object):
     """
 
     XLSX_TYPE = 1
+    CFG_TYPE = 2
 
     def __init__(self, from_type, from_filename):
         self.importers[from_type](self, from_filename)
+        self.units = dict((u.name, u) for u in models.Unit.objects.all())
 
     @classmethod
     def read_xlsx(cls, filename):
@@ -78,7 +85,7 @@ class DamageTable(object):
         c = ConfigParser.ConfigParser()
         c.add_section('algemeen')
         c.set('algemeen', 'inundatiediepte', self.header.depth)
-        c.set('algemeen', 'inundatieperiode', self.header.period)
+        c.set('algemeen', 'inundatieduur', self.header.time)
 
         for code, dr in self.data.items():
             section = unicode(code)
@@ -93,18 +100,20 @@ class DamageTable(object):
                 direct_unit.from_si(dr.direct_damage.min))
             c.set(section, 'direct_max',
                 direct_unit.from_si(dr.direct_damage.max))
+            c.set(section, 'gamma_inundatie', 'bla')
+                
 
         c.write(file_object)
 
     def _import_from_xlsx(self, filename):
         workbook = openpyxl.reader.excel.load_workbook(filename)
-        worksheet = DamageWorksheet(workbook.get_active_sheet())
+        worksheet = utils.DamageWorksheet(workbook.get_active_sheet())
 
         self.header = DamageHeader(
             depth=worksheet.get_values(1, 4, correct=True),
             time=worksheet.get_values(1, 5, convert=True),
+            
             period=range(1, len(worksheet.get_values(1, 6)) + 1),
-
         )
 
         self.data = {}
@@ -122,7 +131,12 @@ class DamageTable(object):
 
             self.data[damage_row.code] = damage_row
 
+    def _import_from_cfg(file_object):
+        pass
+        
+
     # Here the importers are registered.
     importers = {
         XLSX_TYPE: _import_from_xlsx,
+        CFG_TYPE: _import_from_cfg,
     }
