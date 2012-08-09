@@ -18,8 +18,8 @@ from lizard_damage import (
 )
 
 CFG_HEADER_SECTION = 'algemeen'
-CFG_HEADER_DEPTH = 'inundatieduur'
-CFG_HEADER_TIME = 'inundatiediepte'
+CFG_HEADER_TIME = 'inundatieduur'
+CFG_HEADER_DEPTH = 'inundatiediepte'
 
 CFG_ROW_DESCRIPTION = 'omschrijving'
 CFG_ROW_UNIT = 'direct_eenheid'
@@ -100,6 +100,13 @@ class DamageRow(object):
 class DamageTable(object):
     """
     Container for damagetable properties, including import and export methods
+
+    Instantiate it from a configuration file, such as:
+
+        with open('data/damagetable/Schadetabel.xlsx', 'rb') as xlsx:
+            dt = table.DamageTable.read_xlsx(xlsx)
+        with open('data/damagetable/dt.cfg') as cfg:
+            dt = table.DamageTable.read_cfg(cfg)
     """
 
     XLSX_TYPE = 1

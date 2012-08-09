@@ -64,8 +64,30 @@ def temp():
         dt.write_cfg(cfg)
     with open('data/damagetable/dt.cfg') as cfg:
         dt2 = table.DamageTable.read_cfg(cfg)
-        dt2.data[1].to_direct_damage()
 
+def test():
+    with open('data/damagetable/damagetable_test1.cfg') as cfg:
+        dt = table.DamageTable.read_cfg(cfg)
+        app = 1
+        depth = numpy.ones((4,4)) / 2.
+        use = numpy.zeros((4,4))
+        mask = numpy.equal(depth, 1)
+        depth = numpy.ma.array(depth, mask=mask)
+        use = numpy.ma.array(use, mask=mask)
+
+        use.data[:,2:4] = 1
+        use.mask[2:4,:] = True
+
+        damage, count, area, result = calc.calculate(
+            use=use, depth=depth, area_per_pixel=app,
+            table=dt, month=7, time=20 * 3600,
+        )
+        print('use')
+        print(use.data)
+        print('depth')
+        print(depth)
+        print('mask')
+        print(use.mask)
 
 
 class Command(BaseCommand):
@@ -73,4 +95,4 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        main()
+        test()
