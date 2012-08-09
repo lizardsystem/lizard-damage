@@ -29,10 +29,10 @@ def calculate(use, depth, area_per_pixel, table, month, time):
 
         result[index] = (
             area_per_pixel *
-            dr.direct_damage.max *
-            dr.gamma_depth(depth[index]) *
-            dr.gamma_time(time) *
-            dr.gamma_month(month)
+            dr.to_direct_damage('max') *
+            dr.to_gamma_depth(depth[index]) *
+            dr.to_gamma_time(time) *
+            dr.to_gamma_month(month)
         )
 
         damage_area[code] = numpy.count_nonzero(
