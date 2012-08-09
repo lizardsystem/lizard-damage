@@ -35,3 +35,6 @@ src
 # Ignore generated config files
 etc/*.nginx.conf
 etc/*.logrotate
+
+# Localsettings
+lizard_damage/local_testsettings.py
