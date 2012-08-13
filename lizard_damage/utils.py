@@ -7,8 +7,6 @@ from __future__ import (
     unicode_literals,
 )
 
-from lizard_damage.models import Unit
-
 
 class DamageWorksheet(object):
     """ Container for worksheet and handy methods. """
@@ -55,8 +53,8 @@ class DamageWorksheet(object):
         return map(self._to_float, self._sequence(row, block))
 
     def get_header(self):
-        depth = self._float_sequence(1,4)
-        time = self._sequence(1,5)
+        depth = self._float_sequence(1, 4)
+        time = self._sequence(1, 5)
 
         return {
             'time': time,
@@ -65,18 +63,18 @@ class DamageWorksheet(object):
 
     def get_rows(self):
         for i in range(2, len(self.worksheet.rows)):
-            code = self._sequence(i,0)[0]
-            description = self._sequence(i,1)[0]
+            code = self._sequence(i, 0)[0]
+            description = self._sequence(i, 1)[0]
 
-            direct_damage_keys = ('avg','min','max','unit')
-            direct_damage_seq = self._sequence(i,2)
+            direct_damage_keys = ('avg', 'min', 'max', 'unit')
+            direct_damage_seq = self._sequence(i, 2)
             #  first three values have to be floats, the last one is the unit.
             for j in range(3):
                 direct_damage_seq[j] = self._to_float(direct_damage_seq[j])
             direct_damage = dict(zip(direct_damage_keys, direct_damage_seq))
-            gamma_depth = self._float_sequence(i,4)
-            gamma_time = self._float_sequence(i,5)
-            gamma_month = self._float_sequence(i,6)
+            gamma_depth = self._float_sequence(i, 4)
+            gamma_time = self._float_sequence(i, 5)
+            gamma_month = self._float_sequence(i, 6)
 
             yield {
                 'code': code,

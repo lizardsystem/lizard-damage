@@ -26,68 +26,60 @@ def show(arr):
         tmp = numpy.ma.copy(arr)
         tmp = (tmp - tmp.min()) * 255. / (tmp.max() - tmp.min())
         tmp[tmp.mask] = 0
-        Image.fromarray(tmp).show()
+        Image.fromarray(tmp[::4,::4]).show()
 
 
 def main():
     ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
-    ds_wl = raster.import_dataset(ds_wl_filename, 'AAIGrid')
+    ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
     with open('data/damagetable/Schadetabel.xlsx', 'rb') as xlsx:
         dt = table.DamageTable.read_xlsx(xlsx)
-    with open('data/damagetable/dt.cfg') as cfg:
-        dt = table.DamageTable.read_cfg(cfg)
+    #with open('data/damagetable/dt.cfg', 'w') as cfg:
+        #dt.write_cfg(cfg)
+    #with open('data/damagetable/dt.cfg') as cfg:
+        #dt = table.DamageTable.read_cfg(cfg)
 
-    import utils;mon=utils.monitor.Monitor()
-    for name in raster.get_ahn_names(ds_wl):
+    for ahn_name in raster.get_ahn_names(ds_wl_original):
+        ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
+            ahn_name=ahn_name,
+            ds_wl_original=ds_wl_original,
+            method='filesystem',
+        )
 
+        # Prepare data for calculation
+        wl = raster.to_masked_array(ds_wl)
         try:
-            use, depth, app = raster.get_data_for_tile(
-                name, ds_wl, method='filesystem')
+            ahn = raster.to_masked_array(ds_ahn, mask=wl.mask)
+            lgn = raster.to_masked_array(ds_lgn, mask=wl.mask)
         except ValueError as e:
             raise CommandError(e)
-
+        depth = wl - ahn
+        area_per_pixel = raster.get_area_per_pixel(ds_wl)
+        
         damage, count, area, result = calc.calculate(
-            use=use, depth=depth, area_per_pixel=app,
+            use=lgn, depth=depth,
+            area_per_pixel=area_per_pixel,
             table=dt, month=6, time=20 * 3600,
         )
         print(result.sum())
-        del use, depth, app, damage, count, area, result
-        mon.check(name) 
+        
+
+        #ds_result = raster.init_dataset(ds_ahn, nodatavalue=-1234)
+        #raster.fill_dataset(ds_result, result)
+        
+        #raster.export_dataset(
+            #filepath='/tmp/result.asc',
+            #ds=ds_result,
+        #)
 
 
-def temp():
-    with open('data/damagetable/Schadetabel.xlsx', 'rb') as xlsx:
-        dt = table.DamageTable.read_xlsx(xlsx)
-    with open('data/damagetable/dt.cfg', 'w') as cfg:
-        dt.write_cfg(cfg)
-    with open('data/damagetable/dt.cfg') as cfg:
-        dt2 = table.DamageTable.read_cfg(cfg)
+        import ipdb; ipdb.set_trace()     
+        del ds_wl, ds_ahn, ds_lgn
+        del lgn, depth, wl
+        del result
 
-def test():
-    with open('data/damagetable/damagetable_test1.cfg') as cfg:
-        dt = table.DamageTable.read_cfg(cfg)
-        app = 1
-        depth = numpy.ones((4,4)) / 2.
-        use = numpy.zeros((4,4))
-        mask = numpy.equal(depth, 1)
-        depth = numpy.ma.array(depth, mask=mask)
-        use = numpy.ma.array(use, mask=mask)
-
-        use.data[:,2:4] = 1
-        use.mask[2:4,:] = True
-
-        damage, count, area, result = calc.calculate(
-            use=use, depth=depth, area_per_pixel=app,
-            table=dt, month=7, time=20 * 3600,
-        )
-        print('use')
-        print(use.data)
-        print('depth')
-        print(depth)
-        print('mask')
-        print(use.mask)
 
 
 class Command(BaseCommand):
@@ -95,4 +87,4 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        test()
+        main()
