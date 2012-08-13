@@ -5,7 +5,10 @@ from django.conf.urls.defaults import url
 from django.contrib import admin
 from lizard_ui.urls import debugmode_urlpatterns
 
-from lizard_damage import views
+from lizard_damage import (
+    views,
+    forms,
+)
 
 admin.autodiscover()
 
@@ -20,5 +23,13 @@ urlpatterns = patterns(
     # url(r'^something_else/$',
     #     views.SomeClassBasedView.as_view(),
     #     name='name_it_too'),
-    )
+    url(
+        r'^$', 
+        views.ContactWizard.as_view([
+            forms.ContactForm1,
+            forms.ContactForm2,
+        ]),
+        name='lizard_damage_form'
+    ),
+)
 urlpatterns += debugmode_urlpatterns()
