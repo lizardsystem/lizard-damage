@@ -19,3 +19,22 @@ from django.utils.translation import ugettext as _
 #     """Simple view with a map."""
 #     template_name = 'lizard_damage/todo2.html'
 #     page_title = _('TODO 2 view')
+
+from django.shortcuts import render_to_response
+from django.contrib.formtools.wizard.views import SessionWizardView
+
+class ContactWizard(SessionWizardView):
+    template_name = 'lizard_damage/base_form.html'
+    def done(self, form_list, **kwargs):
+        return render_to_response('done.html', {
+            'form_data': [form.cleaned_data for form in form_list],
+        })
+
+from django.http import HttpResponseRedirect
+from django.contrib.formtools.wizard.views import SessionWizardView
+
+class ContactWizard(SessionWizardView):
+    template_name = 'lizard_damage/base_form.html'
+    def done(self, form_list, **kwargs):
+        do_something_with_the_form_data(form_list)
+        return HttpResponseRedirect('/page-to-redirect-to-when-done/')

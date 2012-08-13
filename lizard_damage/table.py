@@ -30,6 +30,7 @@ CFG_ROW_G_DEPTH = 'gamma_inundatiediepte'
 CFG_ROW_G_TIME = 'gamma_periode'
 CFG_ROW_G_MONTH = 'gamma_maand'
 
+
 class DirectDamage(object):
     def __init__(self, avg, min, max, unit):
         self.avg = float(avg)
@@ -48,7 +49,7 @@ class DamageHeader(object):
         for t in time:
             v, u = t.split()
             self._time_in_seconds.append(self._units[u].to_si(float(v)))
-            
+
     def get_depth(self):
         return self.depth
 
@@ -97,6 +98,7 @@ class DamageRow(object):
     def __repr__(self):
         return '<' + self.__class__.__name__ + ': ' + self.description + '>'
 
+
 class DamageTable(object):
     """
     Container for damagetable properties, including import and export methods
@@ -130,7 +132,7 @@ class DamageTable(object):
         c.set(CFG_HEADER_SECTION, CFG_HEADER_DEPTH,
             json.dumps(self.header.depth),
         )
-        c.set(CFG_HEADER_SECTION,CFG_HEADER_TIME,
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_TIME,
             json.dumps(self.header.time)
         )
 
@@ -144,7 +146,7 @@ class DamageTable(object):
             c.set(section, CFG_ROW_MAX, dr.direct_damage.max)
             c.set(section, CFG_ROW_G_DEPTH, json.dumps(dr.gamma_depth))
             c.set(section, CFG_ROW_G_TIME, json.dumps(dr.gamma_time))
-            c.set(section, CFG_ROW_G_MONTH,json.dumps(dr.gamma_month))
+            c.set(section, CFG_ROW_G_MONTH, json.dumps(dr.gamma_month))
 
         c.write(file_object)
 

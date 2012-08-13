@@ -91,64 +91,6 @@ def get_postgisraster_nodatavalue(dbname, table, filename):
     return row[0][0]
 
 
-def get_ahn_names(ds):
-    """ Return the names of the ahn tiles that cover this dataset. """
-    polygon = get_polygon(ds)
-    ahn_names = models.AhnIndex.objects.filter(
-        geom__intersects=polygon,
-    ).values_list('bladnr', flat=True)
-    return ahn_names
-
-
-def reproject(ds_source, ds_match):
-    """
-    Reproject source to match the raster layout of match.
-
-    Accepts and resturns gdal datasets.
-    """
-
-    projection_source = ds_source.GetProjection()
-    nodatavalue_source = ds_source.GetRasterBand(1).GetNoDataValue()
-
-    projection_match = ds_match.GetProjection()
-    geotransform_match = ds_match.GetGeoTransform()
-    width = ds_match.RasterXSize
-    height = ds_match.RasterYSize
-
-    # Create destination dataset
-    ds_destination = gdal.GetDriverByName('MEM').Create(
-        '',
-        width,
-        height,
-        1,  # number of bands
-        gdalconst.GDT_Float32,
-    )
-    ds_destination.SetGeoTransform(geotransform_match)
-    ds_destination.SetProjection(projection_match)
-    ds_destination.GetRasterBand(1).SetNoDataValue(nodatavalue_source)
-    ds_destination.GetRasterBand(1).Fill(nodatavalue_source)
-
-    # Do nearest neigbour interpolation to retain the nodata value
-    gdal.ReprojectImage(
-        ds_source, ds_destination,
-        projection_source, projection_match,
-        gdalconst.GRA_NearestNeighbour,
-    )
-
-    return ds_destination
-
-
-def get_masked_array(ds):
-    """
-    Return numpy masked array from dataset using nodata value.
-    """
-    arr = ds.ReadAsArray()
-    mask = (arr == ds.GetRasterBand(1).GetNoDataValue())
-    masked_arr = numpy.ma.array(arr, mask=mask)
-
-    return masked_arr
-
-
 def get_polygon(ds):
     gs = ds.GetGeoTransform()
     x1 = gs[0]
@@ -163,6 +105,76 @@ def get_polygon(ds):
         (x1, y1),
     )
     return Polygon(coordinates, srid=28992)
+
+
+def get_area_per_pixel(ds):
+    gs = ds.GetGeoTransform()
+    area_per_pixel = abs(gs[1] * gs[5])
+    return area_per_pixel
+
+
+def get_ahn_names(ds):
+    """ Return the names of the ahn tiles that cover this dataset. """
+    polygon = get_polygon(ds)
+    ahn_names = models.AhnIndex.objects.filter(
+        geom__intersects=polygon,
+    ).values_list('bladnr', flat=True)
+    return ahn_names
+
+
+def init_dataset(ds, nodatavalue=None):
+    """
+    Return new dataset with same geometry and datatype as ds.
+
+    If nodatavalue is specified, it is set on the new dataset and the
+    array is initialized to nodatavalue
+    """
+    # Create destination dataset
+
+    result = gdal.GetDriverByName('MEM').Create(
+        '',  # No filename
+        ds.RasterXSize,
+        ds.RasterYSize,
+        1,  # number of bands
+        ds.GetRasterBand(1).DataType
+    )
+
+    result.SetProjection(ds.GetProjection())
+    result.SetGeoTransform(ds.GetGeoTransform())
+
+    if nodatavalue is None:
+        result.GetRasterBand(1).SetNoDataValue(
+            ds.GetRasterBand(1).GetNoDataValue()
+        )
+        return result
+
+    result.GetRasterBand(1).SetNoDataValue(nodatavalue)
+    result.GetRasterBand(1).Fill(nodatavalue)
+    return result
+
+
+def reproject(ds_source, ds_match):
+    """
+    Reproject source to match the raster layout of match.
+
+    Accepts and resturns gdal datasets.
+    """
+    nodatavalue_source = ds_source.GetRasterBand(1).GetNoDataValue()
+
+    # Create destination dataset
+    ds_destination = init_dataset(ds_match, nodatavalue=nodatavalue_source)
+
+    # Do nearest neigbour interpolation to retain the nodata value
+    projection_source = ds_source.GetProjection()
+    projection_match = ds_match.GetProjection()
+
+    gdal.ReprojectImage(
+        ds_source, ds_destination,
+        projection_source, projection_match,
+        gdalconst.GRA_NearestNeighbour,
+    )
+
+    return ds_destination
 
 
 def import_dataset(filepath, driver):
@@ -198,13 +210,16 @@ def import_dataset(filepath, driver):
     return dataset
 
 
-def get_data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
+def export_dataset(filepath, ds, driver='AAIGrid'):
     """
-    Return arrays (waterlevel, height, landuse, depth).
+    Save ds at filepath using driver.
+    """
+    gdal.GetDriverByName(driver).CreateCopy(filepath, ds)
 
-    waterlevel is a masked array, height and land use are normal arrays.
-    land use and water level are checked to have data where waterlevel
-    has data.
+
+def get_ds_for_tile(ahn_name, ds_wl_original, method='filesystem'):
+    """
+    Return datasets (waterlevel, height, landuse).
 
     Input:
         ahn_name: ahn subunit name
@@ -225,29 +240,38 @@ def get_data_for_tile(ahn_name, ds_wl_original, method='filesystem'):
 
     ds_wl = reproject(ds_wl_original, ds_ahn)
 
-    ds_wl_gt = ds_wl.GetGeoTransform()
-    area_per_pixel = abs(ds_wl_gt[1] * ds_wl_gt[5])
+    return ds_wl, ds_ahn, ds_lgn
 
-    arr_wl = ds_wl.ReadAsArray()
-    arr_ahn = ds_ahn.ReadAsArray()
-    arr_lgn = ds_lgn.ReadAsArray()
 
-    ndv_wl = ds_wl.GetRasterBand(1).GetNoDataValue()
-    ndv_ahn = ds_ahn.GetRasterBand(1).GetNoDataValue()
-    ndv_lgn = ds_lgn.GetRasterBand(1).GetNoDataValue()
+def fill_dataset(ds, masked_array):
+    """
+    Set ds band to array data, or nodatavalue where masked.
+    """
+    array = numpy.array(masked_array, copy=True)
+    array[masked_array.mask] = ds.GetRasterBand(1).GetNoDataValue()
+    ds.GetRasterBand(1).WriteArray(array)
 
-    # Create masked arrays with nodata from waterlevel masked
-    mask = (numpy.equal(arr_wl, ndv_wl))
-    wl = numpy.ma.array(arr_wl, mask=mask)
-    ahn = numpy.ma.array(arr_ahn, mask=mask)
-    lgn = numpy.ma.array(arr_lgn, mask=mask)
 
-    # Check for nodatavalue in unmasked parts of ahn and lgn
-    if numpy.equal(ahn, ndv_ahn).any():
-        raise ValueError('Nodata value found in landheight %s!' % ahn_name)
-    if numpy.equal(lgn, ndv_lgn).any():
-        raise ValueError('Nodata value found in landuse %s!' % ahn_name)
+def to_masked_array(ds, mask=None):
+    """
+    Read masked array from dataset.
 
-    depth = wl - ahn
+    If mask is given, use that instead of creating mask from nodatavalue,
+    and check for nodatavalue in the remaining unmasked data
+    """
+    array = ds.ReadAsArray()
+    nodatavalue = ds.GetRasterBand(1).GetNoDataValue()
 
-    return lgn, depth, area_per_pixel
+    if mask is None:
+        result = numpy.ma.array(
+            array,
+            mask=numpy.equal(array, nodatavalue),
+        )
+        return result
+
+    result = numpy.ma.array(array, mask=mask)
+
+    if numpy.equal(result, nodatavalue).any():
+        raise ValueError('Nodata value found outside mask')
+
+    return result

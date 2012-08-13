@@ -8,13 +8,15 @@ from __future__ import (
 )
 
 import numpy
+import logging
+
+logger = logging.getLogger(__name__) 
 
 
 def calculate(use, depth, area_per_pixel, table, month, time):
     """
     Calculate stuff. Note the hardcoded area_per_pixel!
     """
-
     result = numpy.ma.zeros(depth.shape)
     result.mask = depth.mask
 
@@ -44,5 +46,7 @@ def calculate(use, depth, area_per_pixel, table, month, time):
             damage[code] = result[index].sum()
         else:
             damage[code] = 0.
+        
+        logger.debug(dr.description + ': ' + unicode(damage[code]))
 
     return damage, count, damage_area, result
