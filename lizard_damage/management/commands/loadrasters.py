@@ -7,17 +7,39 @@ from __future__ import (
   division,
 )
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.db import connections
 
 import subprocess
+import optparse
 import sys
 import os
 
-def main():
+def main(*args, **options):
+    table_name = args[-1]
+    drop_first = options['drop']
+    connection = connections['raster']
+    
+    if options['ignore']:
+        raster_files = [f for f in args[:-1] if not f.endswith('.aux.xml')]
+    else:
+        raster_files = args[:-1]
+    
+    table_exists = table_name in connection.introspection.table_names()
 
-    table = sys.argv[-1]
-    filenames = sys.argv[2:-1]
+    if drop_first and not table_exists:
+        raise CommandError('Cannot drop non-existing table %s' % table)
+
+    if table_exists and not drop_first:
+        # Need to know which files are already loaded
+        cursor = connection.cursor()
+        cursor.execute('select filename from %s' % table_name)
+        existing_basenames = [r[0] for r in cursor.fetchall()]
+    else:
+        existing_basenames = []
+
+    # Connection parameters
     db = settings.DATABASES['raster']
     psql_args = [
         'psql', db['NAME'],
@@ -32,8 +54,18 @@ def main():
             ['--port', db['PORT']],
         )
 
-    for i, filename in enumerate(filenames):
-        action = '-a' if i else '-d'  # Only drop table for first file.
+    for i, path in enumerate(raster_files):
+        basename = os.path.basename(path)
+        if i==0 and drop_first:
+            action = '-d'
+        elif i==0 and not table_exists:
+            action = '-c'
+        else:
+            action = '-a'
+            if basename in existing_basenames:
+                raise CommandError('Filename %s already in %s.' %
+                                   (basename, table_name))
+
         p1 = subprocess.Popen(
             [
                 'raster2pgsql',
@@ -41,13 +73,13 @@ def main():
                 '28992', 
                 action,
                 '-F',
-                filename, 
-                table,
+                path, 
+                table_name,
             ],
             stdout=subprocess.PIPE,
         )
         p2 = subprocess.Popen(
-            ['sed', "s/'');$/'" + os.path.basename(filename) + "');/"],
+            ['sed', "s/'');$/'" + os.path.basename(basename) + "');/"],
             stdin=p1.stdout,
             stdout=subprocess.PIPE,
         )
@@ -60,10 +92,21 @@ def main():
         p3.communicate()
 
 
-
 class Command(BaseCommand):
-    args = 'file [ file [file] ] schema.table'
-    help = 'Example: bin/django loadrasters i14ez2_19 i14ez2_20 public.data_ahn'
+    option_list = BaseCommand.option_list + (
+        optparse.make_option('-d', '--drop',
+            action='store_true',
+            dest='drop',
+            default=False,
+            help='Drop table first instead of appending rasters.'),
+        optparse.make_option('-i', '--ignore',
+            action='store_true',
+            dest='ignore',
+            default=False,
+            help='Ignore *.aux.xml files'),
+    )
+    args = 'RASTER_FILE(S) DATABASE_TABLE'
+    help = 'Load one or more raster files into raster database.'
 
     def handle(self, *args, **options):
-        main()
+        main(*args, **options)
