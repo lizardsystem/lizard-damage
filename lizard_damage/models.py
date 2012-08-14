@@ -14,20 +14,19 @@ from django.contrib.gis.db import models
 
 class AhnIndex(models.Model):
     """
-    Generated with bin/django inspectdb after executing:
+    Generated with bin/django inspectdb after executing, with
+    DecimalFields replaced y FloatFields:
 
     shp2pgsql -s 28992 data/index/ahn2_05_int_index_gevuld\
     public.lizard_damage_ahnindex | psql schademodule\
     --username buildout
 
-    shp2pgsql must take care of the table creation since django doesn't
-    handle postgis2 very well currently.
+    When using postgis2, shp2pgsql must take care of the table creation
+    since django doesn't handle postgis2 very well currently.
     """
     gid = models.IntegerField(primary_key=True)
-    x = models.DecimalField(null=True, blank=True,
-                            max_digits=1000, decimal_places=1000)
-    y = models.DecimalField(null=True, blank=True,
-                            max_digits=1000, decimal_places=1000)
+    x = models.FloatField(null=True, blank=True)
+    y = models.FloatField(null=True, blank=True)
     cellsize = models.CharField(max_length=2, blank=True)
     lo_x = models.CharField(max_length=6, blank=True)
     lo_y = models.CharField(max_length=6, blank=True)
@@ -37,7 +36,7 @@ class AhnIndex(models.Model):
     min_datum = models.DateField(null=True, blank=True)
     max_datum = models.DateField(null=True, blank=True)
     ar = models.FloatField(null=True, blank=True)
-    geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
+    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
     objects = models.GeoManager()
 
 

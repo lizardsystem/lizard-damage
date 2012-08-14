@@ -117,7 +117,7 @@ def get_ahn_names(ds):
     """ Return the names of the ahn tiles that cover this dataset. """
     polygon = get_polygon(ds)
     ahn_names = models.AhnIndex.objects.filter(
-        geom__intersects=polygon,
+        the_geom__intersects=polygon,
     ).values_list('bladnr', flat=True)
     return ahn_names
 
