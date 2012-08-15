@@ -29,7 +29,7 @@ def main(*args, **options):
     table_exists = table_name in connection.introspection.table_names()
 
     if drop_first and not table_exists:
-        raise CommandError('Cannot drop non-existing table %s' % table)
+        raise CommandError('Cannot drop non-existing table %s' % table_name)
 
     if table_exists and not drop_first:
         # Need to know which files are already loaded
@@ -91,6 +91,12 @@ def main(*args, **options):
         )
         p3.communicate()
 
+        """ Or, when to file option is present:
+        mkfifo zut.txt
+        ls > zut.txt & zip zut.zip --fifo zut.txt
+        rm zut.txt
+        """
+
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -104,9 +110,16 @@ class Command(BaseCommand):
             dest='ignore',
             default=False,
             help='Ignore *.aux.xml files'),
+        optparse.make_option('-f', '--file',
+            action='store_true',
+            dest='ignore',
+            default=False,
+            help='Save as sql_files instead of loading in database'),
     )
     args = 'RASTER_FILE(S) DATABASE_TABLE'
     help = 'Load one or more raster files into raster database.'
 
     def handle(self, *args, **options):
+        import utils;mon=utils.monitor.Monitor()  
         main(*args, **options)
+        mon.check('') 
