@@ -117,7 +117,11 @@ class Main(object):
         else:
             existing_records = []
 
+        total = len(self.raster_files)
+
         for i, path in enumerate(self.raster_files):
+            logger.debug('Saving raster %s/%s' % (i,total))
+
             filename = os.path.basename(path)
             if i==0 and not table_exists:
                     self._save(action=PREPARE, path=path)
