@@ -139,7 +139,7 @@ def init_dataset(ds, nodatavalue=None):
         ds.GetRasterBand(1).DataType
     )
 
-    result.SetProjection(ds.GetProjection())
+    result.SetProjection(PROJECTION_RD)
     result.SetGeoTransform(ds.GetGeoTransform())
 
     if nodatavalue is None:
@@ -193,10 +193,6 @@ def import_dataset(filepath, driver):
     else:
         open_argument = filepath
     dataset = gdal.Open(open_argument)
-
-    # Post processing
-    if dataset.GetProjection() == '':
-        dataset.SetProjection(PROJECTION_RD)
 
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
     # In that case we get it from the database

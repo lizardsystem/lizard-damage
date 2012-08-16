@@ -45,7 +45,7 @@ def main():
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
             ds_wl_original=ds_wl_original,
-            method='filesystem',
+            method='database',
         )
 
         # Prepare data for calculation
@@ -64,6 +64,7 @@ def main():
             table=dt, month=6, time=20 * 3600,
         )
         print(result.sum())
+        exit()
         
 
         #ds_result = raster.init_dataset(ds_ahn, nodatavalue=-1234)
