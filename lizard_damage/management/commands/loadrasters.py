@@ -8,14 +8,23 @@ from __future__ import (
 )
 
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 from django.db import connections
+from django.conf import settings
 
 import subprocess
 import optparse
+import logging
 import shlex
 import sys
 import os
+
+PREPARE = '-p'
+APPEND = '-a'
+MASTER = 'all.sql'
+
+logger = logging.getLogger(__name__)
+if os.path.exists(MASTER):
+    os.remove(MASTER)
 
 
 class Main(object):
@@ -25,12 +34,19 @@ class Main(object):
        
         self.table = args[-1]
         self.psql_command = self._psql_command()
-        
-        if self.ignore_aux_xml_files:
+       
+        if self.use_stdin:
+            self.raster_files = [f.rstrip() for f in sys.stdin.readlines()]
+        elif self.ignore_aux_xml_files:
             self.raster_files = [f for f in args[:-1]
                                  if not f.endswith('.aux.xml')]
         else:
             self.raster_files = args[:-1]
+
+        if self.save_as_zip:
+            self._save = self._to_zipfile
+        else:
+            self._save = self._to_database
 
     def _psql_command(self):
         db = settings.DATABASES['raster']
@@ -44,30 +60,35 @@ class Main(object):
         )
         return psql_command
 
-    def _to_database(self, action, path):
+    def _to_database(self, action, path, number=None):
         p2 = self._pgsql2raster(action, path, subprocess.PIPE)
         p3 = subprocess.Popen(self.psql_command, stdin=p2.stdout)
         p3.communicate()
 
-    def _to_zipfile(self, action, path, number):
-        fifo_name = '%s_%08i_%s.sql' % (
-            self.table, number, os.path.basename(path),
-        )
+    def _to_zipfile(self, action, path, number=None):
+        if number is None:
+            fifo_name = '0000_create_table.sql'
+        else:
+            fifo_name = '%s_%08i_%s.sql' % (
+                self.table, number, os.path.basename(path),
+            )
         os.mkfifo(fifo_name)
-        zip_command = shlex.split(
-            'zip %(fifo_name)s.zip --fifo %(fifo_name)s' % 
-            dict(fifo_name=fifo_name),
-        )
-        p1 = subprocess.Popen(zip_command)
-        fifo = open(fifo_name, 'w')
-        p2 = self._pgsql2raster(action, path, fifo)
-        p2.communicate()
-        fifo.close()
-        os.remove(fifo_name)
-        with open('all.sql', 'a') as master:
+        try:
+            zip_command = shlex.split(
+                'zip %(fifo_name)s.zip --fifo %(fifo_name)s' % 
+                dict(fifo_name=fifo_name),
+            )
+            p1 = subprocess.Popen(zip_command)
+            fifo = open(fifo_name, 'w')
+            p2 = self._pgsql2raster(action, path, fifo)
+            p2.communicate()
+            fifo.close()
+        except Exception as e:
+            raise e
+        finally:
+            os.remove(fifo_name)
+        with open(MASTER, 'a') as master:
             master.write('\i %s\n' % fifo_name)
-
-    
 
     def _pgsql2raster(self, action, path, destination):
         """ Return the subprocess that writes the sql to destination """
@@ -89,46 +110,28 @@ class Main(object):
     def run(self):
         connection = connections['raster']
         table_exists = self.table in connection.introspection.table_names()
-        
-        if self.drop_existing_table and not table_exists:
-            raise CommandError(
-                'Cannot drop non-existing table %s' %
-                self.table,
-            )
-
-        if table_exists and not self.drop_existing_table:
-            # Need to know which files are already loaded
+        if table_exists:
             cursor = connection.cursor()
             cursor.execute('select filename from %s' % self.table)
             existing_records = [r[0] for r in cursor.fetchall()]
         else:
             existing_records = []
 
-
         for i, path in enumerate(self.raster_files):
             filename = os.path.basename(path)
-            if i==0 and self.drop_existing_table:
-                action = '-d'
-            elif i==0 and not table_exists:
-                action = '-c'
-            else:
-                action = '-a'
-                if filename in existing_records:
-                    raise CommandError('Filename %s already in %s.' %
-                                       (filename, self.table))
-            if self.save_as_zip:
-                self._to_zipfile(action=action, path=path, number=i)
-            else:
-                self._to_database(action=action, path=path)
+            if i==0 and not table_exists:
+                    self._save(action=PREPARE, path=path)
+
+            if filename in existing_records:
+                logger.debug('%s already in %s, skipping.' %
+                    (filename, self.table),
+                )
+                continue
+            self._save(action=APPEND, path=path, number=i)
 
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
-        optparse.make_option('-d', '--drop',
-            action='store_true',
-            dest='drop_existing_table',
-            default=False,
-            help='Drop table first instead of appending rasters.'),
         optparse.make_option('-i', '--ignore',
             action='store_true',
             dest='ignore_aux_xml_files',
@@ -139,6 +142,11 @@ class Command(BaseCommand):
             dest='save_as_zip',
             default=False,
             help='Save as zipped sql instead of loading in database'),
+        optparse.make_option('-s', '--stdin',
+            action='store_true',
+            dest='use_stdin',
+            default=False,
+            help='Use filenames from stdin'),
     )
     args = 'RASTER_FILE(S) DATABASE_TABLE'
     help = 'Load one or more raster files into raster database.'
