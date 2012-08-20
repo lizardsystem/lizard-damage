@@ -19,8 +19,11 @@ from django.conf import settings
 
 from lizard_damage import models
 
+import logging
 import numpy
 import os
+
+logger = logging.getLogger(__name__) 
 
 # Get RD projection string
 spatial_reference_rd = osr.SpatialReference()
@@ -193,6 +196,8 @@ def import_dataset(filepath, driver):
     else:
         open_argument = filepath
     dataset = gdal.Open(open_argument)
+
+    logger.debug('Opening dataset: %s', open_argument)
 
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
     # In that case we get it from the database

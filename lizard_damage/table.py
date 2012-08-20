@@ -9,6 +9,7 @@ from __future__ import (
 
 import ConfigParser
 import openpyxl
+import logging
 import numpy
 
 from django.utils import simplejson as json
@@ -21,17 +22,24 @@ CFG_HEADER_SECTION = 'algemeen'
 CFG_HEADER_TIME = 'inundatieduur'
 CFG_HEADER_DEPTH = 'inundatiediepte'
 
+CFG_ROW_SOURCE = 'bron'
 CFG_ROW_DESCRIPTION = 'omschrijving'
-CFG_ROW_UNIT = 'direct_eenheid'
-CFG_ROW_AVG = 'direct_gem'
-CFG_ROW_MIN = 'direct_min'
-CFG_ROW_MAX = 'direct_max'
+CFG_ROW_D_UNIT = 'direct_eenheid'
+CFG_ROW_D_AVG = 'direct_gem'
+CFG_ROW_D_MIN = 'direct_min'
+CFG_ROW_D_MAX = 'direct_max'
+CFG_ROW_I_UNIT = 'indirect_eenheid'
+CFG_ROW_I_AVG = 'indirect_gem'
+CFG_ROW_I_MIN = 'indirect_min'
+CFG_ROW_I_MAX = 'indirect_max'
 CFG_ROW_G_DEPTH = 'gamma_inundatiediepte'
 CFG_ROW_G_TIME = 'gamma_periode'
 CFG_ROW_G_MONTH = 'gamma_maand'
 
+logger = logging.getLogger(__name__) 
 
-class DirectDamage(object):
+
+class Damage(object):
     def __init__(self, avg, min, max, unit):
         self.avg = float(avg)
         self.min = float(min)
@@ -61,15 +69,17 @@ class DamageRow(object):
     """ Container for single land use data. """
     def __init__(
         self, units, header,
-        code, description, direct_damage,
+        source, code, description, direct_damage, indirect_damage,
         gamma_depth, gamma_time, gamma_month
     ):
         self._units = units
         self.header = header
 
+        self.source = source
         self.code = code
         self.description = description
-        self.direct_damage = DirectDamage(**direct_damage)
+        self.direct_damage = Damage(**direct_damage)
+        self.indirect_damage = Damage(**indirect_damage)
 
         self.gamma_depth = gamma_depth
         self.gamma_time = gamma_time
@@ -127,6 +137,7 @@ class DamageTable(object):
         return cls(from_type=cls.CFG_TYPE, from_filename=filename)
 
     def write_cfg(self, file_object):
+        logger.debug('Writeing damage table %s.', file_object.name)
         c = ConfigParser.ConfigParser()
         c.add_section(CFG_HEADER_SECTION)
         c.set(CFG_HEADER_SECTION, CFG_HEADER_DEPTH,
@@ -139,11 +150,16 @@ class DamageTable(object):
         for code, dr in self.data.items():
             section = unicode(code)
             c.add_section(section)
+            c.set(section, CFG_ROW_SOURCE, dr.source)
             c.set(section, CFG_ROW_DESCRIPTION, dr.description)
-            c.set(section, CFG_ROW_UNIT, dr.direct_damage.unit)
-            c.set(section, CFG_ROW_AVG, dr.direct_damage.avg)
-            c.set(section, CFG_ROW_MIN, dr.direct_damage.min)
-            c.set(section, CFG_ROW_MAX, dr.direct_damage.max)
+            c.set(section, CFG_ROW_D_UNIT, dr.direct_damage.unit)
+            c.set(section, CFG_ROW_D_AVG, dr.direct_damage.avg)
+            c.set(section, CFG_ROW_D_MIN, dr.direct_damage.min)
+            c.set(section, CFG_ROW_D_MAX, dr.direct_damage.max)
+            c.set(section, CFG_ROW_I_UNIT, dr.indirect_damage.unit)
+            c.set(section, CFG_ROW_I_AVG, dr.indirect_damage.avg)
+            c.set(section, CFG_ROW_I_MIN, dr.indirect_damage.min)
+            c.set(section, CFG_ROW_I_MAX, dr.indirect_damage.max)
             c.set(section, CFG_ROW_G_DEPTH, json.dumps(dr.gamma_depth))
             c.set(section, CFG_ROW_G_TIME, json.dumps(dr.gamma_time))
             c.set(section, CFG_ROW_G_MONTH, json.dumps(dr.gamma_month))
@@ -151,6 +167,7 @@ class DamageTable(object):
         c.write(file_object)
 
     def _import_from_xlsx(self, file_object):
+        logger.debug('Reading damage table %s.', file_object.name)
         workbook = openpyxl.reader.excel.load_workbook(file_object)
         worksheet = utils.DamageWorksheet(workbook.get_active_sheet())
 
@@ -163,6 +180,7 @@ class DamageTable(object):
             self.data[damage_row.code] = damage_row
 
     def _import_from_cfg(self, file_object):
+        logger.debug('Reading damage table %s.', file_object.name)
         self.data = {}
         cp = ConfigParser.ConfigParser()
         cp.readfp(file_object)
@@ -178,13 +196,20 @@ class DamageTable(object):
                 self.data[code] = DamageRow(
                     header=self.header,
                     units=self._units,
+                    source=cp.get(section, CFG_ROW_SOURCE),
                     code=code,
                     description=cp.get(section, CFG_ROW_DESCRIPTION),
                     direct_damage=dict(
-                        unit=cp.get(section, CFG_ROW_UNIT),
-                        avg=cp.get(section, CFG_ROW_AVG),
-                        min=cp.get(section, CFG_ROW_MIN),
-                        max=cp.get(section, CFG_ROW_MAX),
+                        unit=cp.get(section, CFG_ROW_D_UNIT),
+                        avg=cp.get(section, CFG_ROW_D_AVG),
+                        min=cp.get(section, CFG_ROW_D_MIN),
+                        max=cp.get(section, CFG_ROW_D_MAX),
+                    ),
+                    indirect_damage=dict(
+                        unit=cp.get(section, CFG_ROW_I_UNIT),
+                        avg=cp.get(section, CFG_ROW_I_AVG),
+                        min=cp.get(section, CFG_ROW_I_MIN),
+                        max=cp.get(section, CFG_ROW_I_MAX),
                     ),
                     gamma_depth=json.loads(cp.get(section, CFG_ROW_G_DEPTH)),
                     gamma_time=json.loads(cp.get(section, CFG_ROW_G_TIME)),

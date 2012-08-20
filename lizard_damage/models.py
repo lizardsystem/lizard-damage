@@ -18,7 +18,7 @@ class AhnIndex(models.Model):
     DecimalFields replaced y FloatFields:
 
     shp2pgsql -s 28992 data/index/ahn2_05_int_index_gevuld\
-    public.lizard_damage_ahnindex | psql schademodule\
+    public.lizard_damage_ahnindex | sed s/geom/the_geom/g | psql schademodule\
     --username buildout
 
     When using postgis2, shp2pgsql must take care of the table creation

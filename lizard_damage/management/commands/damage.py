@@ -16,8 +16,11 @@ from lizard_damage import (
     table,
 )
 
+import logging
 import numpy
 import os
+
+logger = logging.getLogger(__name__) 
 
 
 def show(arr):
@@ -28,24 +31,56 @@ def show(arr):
         tmp[tmp.mask] = 0
         Image.fromarray(tmp[::4,::4]).show()
 
+def write_result(name, ma_result, ds_template):
+    ds_result = raster.init_dataset(ds_template, nodatavalue=-1234)
+    raster.fill_dataset(ds_result, ma_result)
+    raster.export_dataset(
+        filepath=name,
+        ds=ds_result,
+    )
+    
+def write_table(name, damage, area, dt):
+    with open(name, 'w') as resultfile:
+        resultfile.write(
+            '"%s","%s","%s","%s","%s"\r\n' %
+            (
+                'bron',
+                'code',
+                'omschrijving',
+                'oppervlakte met schade [ha]',
+                'schade',
+            )
+        )
+        for code, dr in dt.data.items():
+            resultfile.write(
+                '%s,%s,%s,%s,%s\r\n' %
+                (
+                    dr.source,
+                    dr.code,
+                    dr.description,
+                    area[dr.code] / 10000.,
+                    damage[dr.code],
+                )
+            )
+           
 
 def main():
     ds_wl_filename = os.path.join(
         settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
     )
     ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
-    with open('data/damagetable/Schadetabel.xlsx', 'rb') as xlsx:
-        dt = table.DamageTable.read_xlsx(xlsx)
-    #with open('data/damagetable/dt.cfg', 'w') as cfg:
-        #dt.write_cfg(cfg)
-    #with open('data/damagetable/dt.cfg') as cfg:
-        #dt = table.DamageTable.read_cfg(cfg)
+    dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
+    with open(dt_path) as cfg:
+        dt = table.DamageTable.read_cfg(cfg)
 
+
+    overall_area = {}
+    overall_damage = {}
     for ahn_name in raster.get_ahn_names(ds_wl_original):
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
             ds_wl_original=ds_wl_original,
-            method='database',
+            method='filesystem',
         )
 
         # Prepare data for calculation
@@ -64,20 +99,39 @@ def main():
             table=dt, month=6, time=20 * 3600,
         )
         print(result.sum())
-        exit()
-        
+        write_result(
+            name='schade_' + ahn_name + '.asc',
+            ma_result=result,
+            ds_template=ds_ahn,
+        )
+        write_table(
+            name='schade_' + ahn_name + '.csv',
+            damage=damage,
+            area=area,
+            dt=dt,
+        )
+        for k in damage.keys():
+            if k in overall_damage:
+                overall_damage[k] += damage[k]
+            else:
+                overall_damage[k] = damage[k]
 
-        #ds_result = raster.init_dataset(ds_ahn, nodatavalue=-1234)
-        #raster.fill_dataset(ds_result, result)
-        
-        #raster.export_dataset(
-            #filepath='/tmp/result.asc',
-            #ds=ds_result,
-        #)
+        for k in area.keys():
+            if k in overall_area:
+                overall_area[k] += area[k]
+            else:
+                overall_area[k] = area[k]
 
         del ds_wl, ds_ahn, ds_lgn
         del lgn, depth, wl
         del result
+
+    write_table(
+        name='schade_totaal.csv',
+        damage=overall_damage,
+        area=overall_area,
+        dt=dt,
+    )
 
 
 

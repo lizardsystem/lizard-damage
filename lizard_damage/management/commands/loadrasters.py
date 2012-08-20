@@ -28,6 +28,11 @@ if os.path.exists(MASTER):
 
 
 class Main(object):
+    """
+    find data/ahn_proc/ -maxdepth 2 -mindepth 2 -regex .*_[0-9][0-9]$ > somelist
+    cat filelist | ~/code/schademodule/bin/django loadrasters data_lgn -z -s
+
+    """
     def __init__(self, *args, **options):
         for k, v in options.iteritems():
             setattr(self, k, v)

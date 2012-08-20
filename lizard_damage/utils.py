@@ -7,6 +7,10 @@ from __future__ import (
     unicode_literals,
 )
 
+import logging
+
+logger = logging.getLogger(__name__) 
+
 
 class DamageWorksheet(object):
     """ Container for worksheet and handy methods. """
@@ -53,8 +57,8 @@ class DamageWorksheet(object):
         return map(self._to_float, self._sequence(row, block))
 
     def get_header(self):
-        depth = self._float_sequence(1, 4)
-        time = self._sequence(1, 5)
+        depth = self._float_sequence(1, 5)
+        time = self._sequence(1, 6)
 
         return {
             'time': time,
@@ -62,24 +66,38 @@ class DamageWorksheet(object):
         }
 
     def get_rows(self):
+        source = ''
         for i in range(2, len(self.worksheet.rows)):
-            code = self._sequence(i, 0)[0]
-            description = self._sequence(i, 1)[0]
 
-            direct_damage_keys = ('avg', 'min', 'max', 'unit')
-            direct_damage_seq = self._sequence(i, 2)
+            # Source is only in table if it changes.
+            row_source = self._sequence(i, 0)[0]
+            if row_source:
+                source = row_source
+                
+            code = self._sequence(i, 1)[0]
+            description = self._sequence(i, 2)[0]
+
+            damage_keys = ('avg', 'min', 'max', 'unit')
+
+            direct_damage_seq = self._sequence(i, 3)
+            indirect_damage_seq = self._sequence(i, 4)
             #  first three values have to be floats, the last one is the unit.
             for j in range(3):
                 direct_damage_seq[j] = self._to_float(direct_damage_seq[j])
-            direct_damage = dict(zip(direct_damage_keys, direct_damage_seq))
-            gamma_depth = self._float_sequence(i, 4)
-            gamma_time = self._float_sequence(i, 5)
-            gamma_month = self._float_sequence(i, 6)
+                indirect_damage_seq[j] = self._to_float(indirect_damage_seq[j])
+            direct_damage = dict(zip(damage_keys, direct_damage_seq))
+            indirect_damage = dict(zip(damage_keys, indirect_damage_seq))
+            
+            gamma_depth = self._float_sequence(i, 5)
+            gamma_time = self._float_sequence(i, 6)
+            gamma_month = self._float_sequence(i, 7)
 
             yield {
+                'source': source,
                 'code': code,
                 'description': description,
                 'direct_damage': direct_damage,
+                'indirect_damage': direct_damage,
                 'gamma_depth': gamma_depth,
                 'gamma_time': gamma_time,
                 'gamma_month': gamma_month,
