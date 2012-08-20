@@ -47,6 +47,7 @@ def calculate(use, depth, area_per_pixel, table, month, time):
         else:
             damage[code] = 0.
 
-        logger.debug(dr.source + ' - ' + dr.description + ': ' + unicode(damage[code]))
+        logger.debug(dr.source + ' - ' +
+                     dr.description + ': ' + unicode(damage[code]))
 
     return damage, count, damage_area, result
