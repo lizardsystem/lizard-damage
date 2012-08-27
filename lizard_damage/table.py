@@ -19,8 +19,12 @@ from lizard_damage import (
 )
 
 CFG_HEADER_SECTION = 'algemeen'
-CFG_HEADER_TIME = 'inundatieduur'
+CFG_HEADER_FLOODTIME = 'inundatieduur'
+CFG_HEADER_REPAIRTIME = 'herstelperiode'
 CFG_HEADER_DEPTH = 'inundatiediepte'
+CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieperiode'
+CFG_HEADER_DEFAULT_REPAIRTIME = 'standaard_herstelperiode'
+CFG_HEADER_DEFAULT_MONTH = 'standaard_maand'
 
 CFG_ROW_SOURCE = 'bron'
 CFG_ROW_DESCRIPTION = 'omschrijving'
@@ -33,7 +37,8 @@ CFG_ROW_I_AVG = 'indirect_gem'
 CFG_ROW_I_MIN = 'indirect_min'
 CFG_ROW_I_MAX = 'indirect_max'
 CFG_ROW_G_DEPTH = 'gamma_inundatiediepte'
-CFG_ROW_G_TIME = 'gamma_periode'
+CFG_ROW_G_FLOODTIME = 'gamma_inundatieduur'
+CFG_ROW_G_REPAIRTIME = 'gamma_herstelperiode'
 CFG_ROW_G_MONTH = 'gamma_maand'
 
 logger = logging.getLogger(__name__) 
@@ -49,29 +54,64 @@ class Damage(object):
 
 class DamageHeader(object):
     """ Store header ranges, added from table importer."""
-    def __init__(self, units, depth, time):
+    def __init__(self, units, depth, floodtime, repairtime,
+                 default_floodtime='1 dag', 
+                 default_repairtime='5 dagen', default_month=9):
         self._units = units
         self.depth = depth
-        self.time = time
-        self._time_in_seconds = []
-        for t in time:
-            v, u = t.split()
-            self._time_in_seconds.append(self._units[u].to_si(float(v)))
+
+        self.floodtime = floodtime
+        self._floodtime_in_seconds = [self._to_seconds(t) 
+                                      for t in self.floodtime]
+
+        self.repairtime = repairtime
+        self._floodtime_in_seconds = [self._to_seconds(t)
+                                      for t in self.floodtime]
+
+        self.default_floodtime = default_floodtime
+        self._default_floodtime_in_seconds = self._to_seconds(
+            self.default_floodtime,
+        )
+
+        self.default_repairtime = default_repairtime
+        self._default_repairtime_in_seconds = self._to_seconds(
+            self.default_repairtime,
+        )
+
+        self.default_month = default_month
+
+    def _to_seconds(self, text):
+        value, unit = text.split()
+        seconds = self._units[unit].to_si(float(value))
+        return seconds
 
     def get_depth(self):
         return self.depth
 
-    def get_time(self):
-        return self._time_in_seconds
+    def get_floodtime(self):
+        """ Return list of time in seconds. """
+        return self._floodtime_in_seconds
+
+    def get_repairtime(self):
+        """ Return list of time in seconds. """
+        return self._repairtime_in_seconds
+
+    def get_default_floodtime(self):
+        """ Return list of time in seconds. """
+        return self._default_floodtime_in_seconds
+
+    def get_default_repairtime(self):
+        """ Return list of time in seconds. """
+        return self._default_repairtime_in_seconds
 
 
 class DamageRow(object):
     """ Container for single land use data. """
-    def __init__(
-        self, units, header,
-        source, code, description, direct_damage, indirect_damage,
-        gamma_depth, gamma_time, gamma_month
-    ):
+    def __init__(self, units, header,
+                 source, code, description,
+                 direct_damage, indirect_damage, gamma_depth,
+                 gamma_floodtime, gamma_repairtime, gamma_month):
+
         self._units = units
         self.header = header
 
@@ -82,19 +122,28 @@ class DamageRow(object):
         self.indirect_damage = Damage(**indirect_damage)
 
         self.gamma_depth = gamma_depth
-        self.gamma_time = gamma_time
+        self.gamma_floodtime = gamma_floodtime
+        self.gamma_repairtime = gamma_repairtime
         self.gamma_month = gamma_month
 
     def to_gamma_depth(self, depth):
         """ Return gamma array for depth array. """
         return numpy.interp(depth, self.header.depth, self.gamma_depth)
 
-    def to_gamma_time(self, time):
-        """ Return gamma for time. """
+    def to_gamma_floodtime(self, floodtime):
+        """ Return gamma for floodtime. """
         return numpy.interp(
-            time,
-            self.header.get_time(),
-            self.gamma_time
+            floodtime,
+            self.header.get_floodtime(),
+            self.gamma_floodtime
+        )
+
+    def to_gamma_repairtime(self, repairtime):
+        """ Return gamma for repairtime. """
+        return numpy.interp(
+            repairtime,
+            self.header.get_repairtime(),
+            self.gamma_repairtime
         )
 
     def to_gamma_month(self, month):
@@ -104,6 +153,10 @@ class DamageRow(object):
     def to_direct_damage(self, damage='max'):
         damage_unit = self._units[self.direct_damage.unit]
         return damage_unit.to_si(getattr(self.direct_damage, damage))
+
+    def to_indirect_damage(self, damage='max'):
+        damage_unit = self._units[self.indirect_damage.unit]
+        return damage_unit.to_si(getattr(self.indirect_damage, damage))
 
     def __repr__(self):
         return '<' + self.__class__.__name__ + ': ' + self.description + '>'
@@ -137,14 +190,26 @@ class DamageTable(object):
         return cls(from_type=cls.CFG_TYPE, from_filename=filename)
 
     def write_cfg(self, file_object):
-        logger.debug('Writeing damage table %s.', file_object.name)
+        logger.debug('Writing damage table %s.', file_object.name)
         c = ConfigParser.ConfigParser()
         c.add_section(CFG_HEADER_SECTION)
         c.set(CFG_HEADER_SECTION, CFG_HEADER_DEPTH,
             json.dumps(self.header.depth),
         )
-        c.set(CFG_HEADER_SECTION, CFG_HEADER_TIME,
-            json.dumps(self.header.time)
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_FLOODTIME,
+            json.dumps(self.header.floodtime)
+        )
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_REPAIRTIME,
+            json.dumps(self.header.repairtime)
+        )
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_FLOODTIME,
+            self.header.default_floodtime
+        )
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_REPAIRTIME,
+            self.header.default_repairtime
+        )
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_MONTH,
+            self.header.default_month
         )
 
         for code, dr in self.data.items():
@@ -161,7 +226,8 @@ class DamageTable(object):
             c.set(section, CFG_ROW_I_MIN, dr.indirect_damage.min)
             c.set(section, CFG_ROW_I_MAX, dr.indirect_damage.max)
             c.set(section, CFG_ROW_G_DEPTH, json.dumps(dr.gamma_depth))
-            c.set(section, CFG_ROW_G_TIME, json.dumps(dr.gamma_time))
+            c.set(section, CFG_ROW_G_FLOODTIME, json.dumps(dr.gamma_floodtime))
+            c.set(section, CFG_ROW_G_REPAIRTIME, json.dumps(dr.gamma_repairtime))
             c.set(section, CFG_ROW_G_MONTH, json.dumps(dr.gamma_month))
 
         c.write(file_object)
@@ -189,7 +255,16 @@ class DamageTable(object):
                 self.header = DamageHeader(
                     units=self._units,
                     depth=json.loads(cp.get(section, CFG_HEADER_DEPTH)),
-                    time=json.loads(cp.get(section, CFG_HEADER_TIME)),
+                    floodtime=json.loads(cp.get(section,
+                                         CFG_HEADER_FLOODTIME)),
+                    repairtime=json.loads(cp.get(section,
+                                         CFG_HEADER_REPAIRTIME)),
+                    default_floodtime=(cp.get(section,
+                                       CFG_HEADER_DEFAULT_FLOODTIME)),
+                    default_repairtime=(cp.get(section,
+                                       CFG_HEADER_DEFAULT_REPAIRTIME)),
+                    default_month=(cp.get(section,
+                                       CFG_HEADER_DEFAULT_MONTH)),
                 )
             else:
                 code = int(section)
@@ -211,9 +286,14 @@ class DamageTable(object):
                         min=cp.get(section, CFG_ROW_I_MIN),
                         max=cp.get(section, CFG_ROW_I_MAX),
                     ),
-                    gamma_depth=json.loads(cp.get(section, CFG_ROW_G_DEPTH)),
-                    gamma_time=json.loads(cp.get(section, CFG_ROW_G_TIME)),
-                    gamma_month=json.loads(cp.get(section, CFG_ROW_G_MONTH)),
+                    gamma_depth=json.loads(cp.get(section,
+                                                  CFG_ROW_G_DEPTH)),
+                    gamma_floodtime=json.loads(cp.get(section,
+                                                 CFG_ROW_G_FLOODTIME)),
+                    gamma_repairtime=json.loads(cp.get(section,
+                                                 CFG_ROW_G_REPAIRTIME)),
+                    gamma_month=json.loads(cp.get(section,
+                                                  CFG_ROW_G_MONTH)),
                 )
 
     # Here the importers are registered.

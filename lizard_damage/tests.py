@@ -28,6 +28,7 @@ class ExampleTest(TestCase):
     def test_calculation(self):
         self.damage, self.count, self.area, self.result = calc.calculate(
             use=self.use, depth=self.depth, area_per_pixel=1,
-            table=self.dt, month=7, time=20 * 3600,
+            table=self.dt, month=7,
+            floodtime=20 * 3600, repairtime=None,
         )
         self.assertEquals(1, 1)

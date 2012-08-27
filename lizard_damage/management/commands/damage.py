@@ -96,7 +96,8 @@ def main():
         damage, count, area, result = calc.calculate(
             use=lgn, depth=depth,
             area_per_pixel=area_per_pixel,
-            table=dt, month=6, time=20 * 3600,
+            table=dt, month=6,
+            floodtime=20 * 3600, repairtime=None
         )
         print(result.sum())
         write_result(

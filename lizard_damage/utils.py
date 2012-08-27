@@ -58,11 +58,13 @@ class DamageWorksheet(object):
 
     def get_header(self):
         depth = self._float_sequence(1, 5)
-        time = self._sequence(1, 6)
+        floodtime = self._sequence(1, 6)
+        repairtime = self._sequence(1, 7)
 
         return {
-            'time': time,
             'depth': depth,
+            'floodtime': floodtime,
+            'repairtime': repairtime,
         }
 
     def get_rows(self):
@@ -89,8 +91,9 @@ class DamageWorksheet(object):
             indirect_damage = dict(zip(damage_keys, indirect_damage_seq))
             
             gamma_depth = self._float_sequence(i, 5)
-            gamma_time = self._float_sequence(i, 6)
-            gamma_month = self._float_sequence(i, 7)
+            gamma_floodtime = self._float_sequence(i, 6)
+            gamma_repairtime = self._float_sequence(i, 7)
+            gamma_month = self._float_sequence(i, 8)
 
             yield {
                 'source': source,
@@ -99,6 +102,7 @@ class DamageWorksheet(object):
                 'direct_damage': direct_damage,
                 'indirect_damage': direct_damage,
                 'gamma_depth': gamma_depth,
-                'gamma_time': gamma_time,
+                'gamma_floodtime': gamma_floodtime,
+                'gamma_repairtime': gamma_repairtime,
                 'gamma_month': gamma_month,
             }

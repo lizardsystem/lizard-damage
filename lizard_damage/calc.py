@@ -13,9 +13,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def calculate(use, depth, area_per_pixel, table, month, time):
+def calculate(use, depth,
+              area_per_pixel, table,
+              month, floodtime, repairtime):
     """
-    Calculate stuff. Note the hardcoded area_per_pixel!
+    Calculate stuff.
     """
     result = numpy.ma.zeros(depth.shape)
     result.mask = depth.mask
@@ -33,7 +35,7 @@ def calculate(use, depth, area_per_pixel, table, month, time):
             area_per_pixel *
             dr.to_direct_damage('max') *
             dr.to_gamma_depth(depth[index]) *
-            dr.to_gamma_time(time) *
+            dr.to_gamma_floodtime(floodtime) *
             dr.to_gamma_month(month)
         )
 
