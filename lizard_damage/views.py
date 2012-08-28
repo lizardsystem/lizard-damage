@@ -27,5 +27,6 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 class ContactWizard(SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     def done(self, form_list, **kwargs):
+        import ipdb; ipdb.set_trace() 
         do_something_with_the_form_data(form_list)
         return HttpResponseRedirect('/page-to-redirect-to-when-done/')

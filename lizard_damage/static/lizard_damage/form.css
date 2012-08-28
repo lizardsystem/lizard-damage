@@ -1,0 +1,7 @@
+form ul {
+    list-style-type:none
+}
+
+form input[type=radio] {
+    display:inline
+}

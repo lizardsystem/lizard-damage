@@ -6,6 +6,22 @@
 {{ wizard.form.media }}
 {% endblock %}
 
+{% block javascript %}
+  <script type="text/javascript"
+          src="{{ STATIC_URL }}lizard_ui/csrf.js"></script>
+  <script type="text/javascript"
+          src="{{ STATIC_URL }}lizard_damage/form.js"></script>
+{% endblock javascript %}
+
+{% block css %}
+{{ block.super }}
+  {# Sprites: all icons (print, info, etc) in one cacheable image. #}
+  <link rel="stylesheet"
+        href="{{ STATIC_URL }}lizard_damage/form.css"
+        type="text/css"
+        media="screen, projection" />
+{% endblock css %}
+
 {% block content %}
 <p>Stap {{ wizard.steps.step1 }} van {{ wizard.steps.count }}</p>
 <form action="" method="post">{% csrf_token %}
@@ -17,7 +33,7 @@
         {{ form }}
     {% endfor %}
 {% else %}
-    {{ wizard.form }}
+    {{ wizard.form.as_p }}
 {% endif %}
 </table>
 {% if wizard.steps.prev %}
