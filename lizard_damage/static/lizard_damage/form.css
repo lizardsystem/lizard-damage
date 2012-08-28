@@ -1,7 +1,8 @@
+
+/* Make radio buttons apear on one line without list marker */
 form ul {
     list-style-type:none
 }
-
 form input[type=radio] {
     display:inline
 }
