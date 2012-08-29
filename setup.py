@@ -13,6 +13,7 @@ install_requires = [
     'django-extensions',
     'django-nose',
     'lizard-ui >= 4.0b5',
+    'lizard-task',
     'openpyxl',
     ],
 
@@ -21,15 +22,15 @@ tests_require = [
 
 setup(name='lizard-damage',
       version=version,
-      description="TODO",
+      description="Schade Module: berekent schade aan de hand van gebeurtenissen",
       long_description=long_description,
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=['Programming Language :: Python',
                    'Framework :: Django',
                    ],
       keywords=[],
-      author='TODO',
-      author_email='TODO@nelen-schuurmans.nl',
+      author='Arjan Verkerk',
+      author_email='arjan.verkerk@nelen-schuurmans.nl',
       url='',
       license='GPL',
       packages=['lizard_damage'],
