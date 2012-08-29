@@ -6,8 +6,9 @@ from __future__ import (
   absolute_import,
   division,
 )
-
 from django.contrib.gis.db import models
+
+import os
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -57,3 +58,104 @@ class Unit(models.Model):
 
     def from_si(self, value):
         return value / self.factor
+
+SCENARIO_STATUS_CHOICES = (
+    (1, 'Ontvangen'),
+    (2, 'Bezig'),
+    (3, 'Gereed'),
+    (4, 'Verzonden'),
+    (5, 'Opgeschoond'),
+)
+
+
+class DamageScenario(models.Model):
+    """
+    Has all information to calculate damage for one waterlevel grid.
+    """
+    SCENARIO_STATUS_RECEIVED = 1
+    SCENARIO_STATUS_INPROGRESS = 2
+    SCENARIO_STATUS_DONE = 3
+    SCENARIO_STATUS_SENT = 4
+    SCENARIO_STATUS_CLEANED = 5
+
+    SCENARIO_STATUS_CHOICES = (
+        (SCENARIO_STATUS_RECEIVED, 'Ontvangen'),
+        (SCENARIO_STATUS_INPROGRESS, 'Bezig'),
+        (SCENARIO_STATUS_DONE, 'Gereed'),
+        (SCENARIO_STATUS_SENT, 'Verzonden'),
+        (SCENARIO_STATUS_CLEANED, 'Opgeschoond'),
+    )
+
+    status = models.IntegerField(
+        choices=SCENARIO_STATUS_CHOICES,
+        default=SCENARIO_STATUS_RECEIVED,
+    )
+    name = models.CharField(max_length=64)
+    email = models.EmailField(max_length=128)
+    # token = models.CharField(max_length=32)
+
+    def __unicode__(self):
+        return self.name
+
+    def process(self):
+        pass
+
+
+class DamageEvent(models.Model):
+    """
+    Has all information to calculate damage for one waterlevel grid.
+    """
+    EVENT_STATUS_RECEIVED = 1
+    EVENT_STATUS_INPROGRESS = 2
+    EVENT_STATUS_DONE = 3
+    EVENT_STATUS_CLEANED = 5
+
+    EVENT_STATUS_CHOICES = (
+        (EVENT_STATUS_RECEIVED, 'Ontvangen'),
+        (EVENT_STATUS_INPROGRESS, 'Bezig'),
+        (EVENT_STATUS_DONE, 'Gereed'),
+        (EVENT_STATUS_CLEANED, 'Opgeschoond'),
+    )
+
+    status = models.IntegerField(
+        choices=EVENT_STATUS_CHOICES,
+        default=EVENT_STATUS_RECEIVED,
+    )
+    scenario = models.ForeignKey(DamageScenario)
+    floodtime = models.FloatField(help_text='In seconds')
+    repairtime = models.FloatField(help_text='In seconds')
+    waterlevel = models.FileField(upload_to='scenario/waterlevel')
+    flooddate = models.DateTimeField()
+
+    # calculationtype = models.IntegerField()
+    # repetitiontime = models.FloatField(help_text='In years')
+
+    # Result
+    table = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s - %s' % (self.scenario.name,
+                            os.path.basename(self.waterlevel.path))
+
+    def process(self):
+        # Calculate and put stuff in the media root like <scenario>
+        pass
+
+class DamageEventResult(models.Model):
+    """ Partial damage grid with corresponding damage table."""
+    table = models.TextField()
+    raster = models.FileField(upload_to='scenario/result')
+    """
+     with open('/tmp/test', 'rb') as testfile:
+         ds.waterlevel.save('blabla', File(testfile), save=True)
+    """
+
+    
+
+
+
+
+
+
+    
+
