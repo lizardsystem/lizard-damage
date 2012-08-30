@@ -42,15 +42,14 @@ class DamageScenarioAdmin(admin.ModelAdmin):
         """Create a send mail task and put it on the queue."""
         sent = 0
         for damage_scenario in queryset:
-            task_name = 'Send "received mail" for scenario %d' % damage_scenario.id
-            task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d"}' % (
-                        task_name, damage_scenario.id)
+            task_name = 'Send received mail for scenario %d' % damage_scenario.id
+            task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d", "mail_template": "email_received"}' % (task_name, damage_scenario.id)
             email_task, created = SecuredPeriodicTask.objects.get_or_create(
                 name=task_name,
-                task='lizard_damage.tasks.send_received_email',
-                defaults={'kwargs':task_kwargs},
+                defaults={'kwargs':task_kwargs, 'task': 'lizard_damage.tasks.send_email'}
                 )
             email_task.kwargs = task_kwargs
+            email_task.task = 'lizard_damage.tasks.send_email'
             email_task.save()
             email_task.send_task(username='admin')
             sent += 1
