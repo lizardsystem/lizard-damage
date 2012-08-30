@@ -15,10 +15,11 @@ from lizard_damage.models import DamageScenario
 from django.http import HttpResponseRedirect
 from django.contrib.formtools.wizard.views import SessionWizardView
 
-class ContactWizard(SessionWizardView):
+class Wizard(SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
+
     def done(self, form_list, **kwargs):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         do_something_with_the_form_data(form_list)
         return HttpResponseRedirect('/page-to-redirect-to-when-done/')
 
@@ -26,5 +27,9 @@ class ContactWizard(SessionWizardView):
 class DamageScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/damage_scenario_result.html'
 
+    def title(self):
+        return 'Schademodule resultatenpagina %s' % str(self.damage_scenario)
+
+    @property
     def damage_scenario(self):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])

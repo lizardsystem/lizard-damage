@@ -25,9 +25,10 @@ urlpatterns = patterns(
     #     name='name_it_too'),
     url(
         r'^$',
-        views.ContactWizard.as_view([
-            forms.ContactForm1,
-            forms.ContactForm2,
+        views.Wizard.as_view([
+            forms.Form1,
+            #forms.Form2,
+            forms.Form3,
         ]),
         name='lizard_damage_form'
     ),

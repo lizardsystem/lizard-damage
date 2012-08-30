@@ -30,11 +30,23 @@ class DamageScenarioAdmin(admin.ModelAdmin):
     actions = ['process', 'send_received_email', 'send_finished_email', ]
 
     def process(self, request, queryset):
+        sent = 0
         for damage_scenario in queryset:
-            damage_scenario.process()
+            task_name = 'Calculate damage scenario %d' % damage_scenario.id
+            task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d"}' % (
+                task_name, damage_scenario.id)
+            calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
+                name=task_name, defaults={
+                    'kwargs': task_kwargs,
+                    'task': 'lizard_damage.tasks.calculate_damage'
+                    })
+            calc_damage_task.task = 'lizard_damage.tasks.calculate_damage'
+            calc_damage_task.save()
+            calc_damage_task.send_task('admin')
+            sent += 1
         return self.message_user(
             request,
-            'DamageScenarios calculated.',
+            '%d DamageScenarios sent to message queue.' % sent,
         )
     process.short_description = 'Bereken schade voor geselecteerde scenarios'
 

@@ -1,5 +1,17 @@
 {% extends 'lizard_ui/lizardbase.html' %}
 
 {% block main-area %}
-Resultaten voor schademodule {{ view.damage_scenario }}
+<h3>Resultaten berekening {{ view.damage_scenario }}</h3>
+
+<a href="#">KML</a>
+tabel
+
+<h3>Gebeurtenissen</h3>
+<ul>
+  {% for event in view.damage_scenario.damageevent_set.all %}
+  <li>event {{ event }} <a href="#">ascii als zip</a><a href="#">tabel</a></li>
+  {% empty %}
+  <li>Er zijn geen events verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
+  {% endfor %}
+</ul>
 {% endblock %}

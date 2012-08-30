@@ -6,16 +6,9 @@ from django.template.loader import get_template
 from lizard_damage.models import DamageScenario
 from lizard_task.task import task_logging
 from celery.task import task
+from django.contrib.sites.models import Site
 
 import logging
-
-
-@task
-@task_logging
-def damage_task(username=None, taskname=None, loglevel=20):
-    logger = logging.getLogger(taskname)
-    # Do your thing
-    logger.info("Doing my thing")
 
 
 @task
@@ -28,7 +21,12 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
 
     #subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
-    context = Context({"damage_scenario": damage_scenario})
+    try:
+        root_url = 'http://%s' % Site.objects.all()[0].domain
+    except:
+        root_url = 'http://damage.lizard.net'
+        logger.error('Error fetching Site... defaulting to damage.lizard.net')
+    context = Context({"damage_scenario": damage_scenario, 'ROOT_URL': root_url})
     template_text = get_template("lizard_damage/%s.txt" % mail_template)
     template_html = get_template("lizard_damage/%s.html" % mail_template)
 
@@ -42,3 +40,17 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     msg.send()
 
     logger.info("e-mail has been successfully sent")
+
+
+@task
+@task_logging
+def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=20):
+    """
+    Main calculation task.
+    """
+    logger = logging.getLogger(taskname)
+    logger.info("calculate damage")
+    damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
+    logger.info("scenario: %d, %s" % (damage_scenario.id, str(damage_scenario)))
+
+    logger.info("finished")

@@ -12,7 +12,7 @@ from django.utils.safestring import SafeUnicode
 from xml.etree import ElementTree
 import logging
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 CALCULATION_TYPES = (
     (0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
@@ -25,7 +25,10 @@ CALCULATION_TYPES = (
 )
 
 
-class ContactForm1(forms.Form):
+class Form1(forms.Form):
+    """
+    Name and e-mail
+    """
     name = forms.CharField(
         max_length=100,
         label='Hoe wilt u het scenario noemen?',
@@ -35,8 +38,11 @@ class ContactForm1(forms.Form):
     )
 
 
-class ContactForm2(forms.Form):
-    message = forms.ChoiceField(
+class Form2(forms.Form):
+    """
+    Type of calculation
+    """
+    calculation_type = forms.ChoiceField(
         label='Kies het type gegevens waarmee u '
               'een schadeberekening wilt uitvoeren',
         choices = CALCULATION_TYPES,
@@ -44,4 +50,28 @@ class ContactForm2(forms.Form):
     )
 
 
+class Form3(forms.Form):
+    """
+    Scenario info (based on 1 kaart, 1 gebeurtenis)
+    """
+    MONTH_CHOICES = (
+        (1, 'januari'),
+        (2, 'februari'),
+        (3, 'maart'),
+        (4, 'april'),
+        (5, 'mei'),
+        (6, 'juni'),
+        (7, 'juli'),
+        (8, 'augustus'),
+        (9, 'september'),
+        (10, 'oktober'),
+        (11, 'november'),
+        (12, 'december'),
+        )
 
+    floodtime = forms.FloatField(label="Duur overlast", help_text="Duur overlast help text")
+    repairtime = forms.FloatField(label="Hersteltijd", help_text="")
+    #waterlevel = forms.FileField(label="Ascii bestand maximale waterstand")
+    flooddate = forms.ChoiceField(label="Wat is de datum van de gebeurtenis?",
+                                  choices=MONTH_CHOICES)
+    damage_table = forms.CharField(label="Optioneel: eigen schadebestand", required=False)

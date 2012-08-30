@@ -4,7 +4,7 @@
 
     Het schademodule scenario <strong>"{{ damage_scenario.name }}"</strong> is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
 
-    <a href="{% url lizard_damage_result slug=damage_scenario.slug %}">Resultaten "{{ damage_scenario.name }}"</a>
+    <a href="{{ ROOT_URL }}{% url lizard_damage_result slug=damage_scenario.slug %}">Resultaten "{{ damage_scenario.name }}"</a>
 
   <br/><br/>
   --<br/>

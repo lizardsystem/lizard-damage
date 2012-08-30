@@ -3,7 +3,7 @@ L.S.,
 
 Het schademodule scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
 
-Resultaten "{{ damage_scenario.name }}": {% url lizard_damage_result slug=damage_scenario.slug %}
+Resultaten "{{ damage_scenario.name }}": {{ ROOT_URL }}{% url lizard_damage_result slug=damage_scenario.slug %}
 
 --
 schade.lizard.net

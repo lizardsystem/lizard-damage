@@ -20,7 +20,7 @@ import logging
 import numpy
 import os
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 
 def show(arr):
@@ -38,7 +38,7 @@ def write_result(name, ma_result, ds_template):
         filepath=name,
         ds=ds_result,
     )
-    
+
 def write_table(name, damage, area, dt):
     with open(name, 'w') as resultfile:
         resultfile.write(
@@ -62,7 +62,7 @@ def write_table(name, damage, area, dt):
                     damage[dr.code],
                 )
             )
-           
+
 
 def main():
     ds_wl_filename = os.path.join(
@@ -92,7 +92,7 @@ def main():
             raise CommandError(e)
         depth = wl - ahn
         area_per_pixel = raster.get_area_per_pixel(ds_wl)
-        
+
         damage, count, area, result = calc.calculate(
             use=lgn, depth=depth,
             area_per_pixel=area_per_pixel,

@@ -23,7 +23,7 @@ import logging
 import numpy
 import os
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 # Get RD projection string
 spatial_reference_rd = osr.SpatialReference()
@@ -195,7 +195,7 @@ def import_dataset(filepath, driver):
         )
     else:
         open_argument = filepath
-    dataset = gdal.Open(open_argument)
+    dataset = gdal.Open(str(open_argument))
 
     logger.debug('Opening dataset: %s', open_argument)
 
