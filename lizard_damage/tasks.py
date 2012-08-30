@@ -1,5 +1,4 @@
 from django.core.mail import EmailMultiAlternatives
-from django.core.mail import send_mail
 from django.template import Context
 #from django.template import Template
 from django.template.loader import get_template
@@ -22,13 +21,13 @@ def damage_task(username=None, taskname=None, loglevel=20):
 @task
 @task_logging
 def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
-               mail_template='email_received'):
+               mail_template='email_received', subject='Onderwerp'):
     logger = logging.getLogger(taskname)
     # Do your thing
     logger.info("send_mail: %s" % mail_template)
     damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
 
-    subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
+    #subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
     context = Context({"damage_scenario": damage_scenario})
     template_text = get_template("lizard_damage/%s.txt" % mail_template)
     template_html = get_template("lizard_damage/%s.html" % mail_template)

@@ -24,12 +24,17 @@ urlpatterns = patterns(
     #     views.SomeClassBasedView.as_view(),
     #     name='name_it_too'),
     url(
-        r'^$', 
+        r'^$',
         views.ContactWizard.as_view([
             forms.ContactForm1,
             forms.ContactForm2,
         ]),
         name='lizard_damage_form'
+    ),
+    url(
+        r'^result/(?P<slug>.*)/$',
+        views.DamageScenarioResult.as_view(),
+        name='lizard_damage_result'
     ),
 )
 urlpatterns += debugmode_urlpatterns()
