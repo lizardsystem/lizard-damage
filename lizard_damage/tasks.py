@@ -36,9 +36,10 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     from_email = 'no-reply@nelen-schuurmans.nl'
     to = damage_scenario.email
 
+    logger.info("scenario: %s" % damage_scenario)
+    logger.info("sending e-mail to: %s" % to)
     msg = EmailMultiAlternatives(subject, template_text.render(context), from_email, [to])
     msg.attach_alternative(template_html.render(context), 'text/html')
     msg.send()
 
-    logger.info("e-mail has been successfully sent to %s for scenario %s" % (
-            damage_scenario.email, damage_scenario.name))
+    logger.info("e-mail has been successfully sent")

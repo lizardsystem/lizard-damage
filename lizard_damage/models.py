@@ -9,6 +9,8 @@ from __future__ import (
 from django.contrib.gis.db import models
 
 import os
+import random
+import string
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -91,6 +93,7 @@ class DamageScenario(models.Model):
         default=SCENARIO_STATUS_RECEIVED,
     )
     name = models.CharField(max_length=64)
+    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
     # token = models.CharField(max_length=32)
 
@@ -99,6 +102,11 @@ class DamageScenario(models.Model):
 
     def process(self):
         pass
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = ''.join(random.sample(string.letters, 20))
+        return super(DamageScenario, self).save(*args, **kwargs)
 
 
 class DamageEvent(models.Model):
@@ -150,12 +158,12 @@ class DamageEventResult(models.Model):
          ds.waterlevel.save('blabla', File(testfile), save=True)
     """
 
-    
 
 
 
 
 
 
-    
+
+
 
