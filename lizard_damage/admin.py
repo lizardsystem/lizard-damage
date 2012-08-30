@@ -25,7 +25,7 @@ class DamageEventAdmin(admin.ModelAdmin):
 
 
 class DamageScenarioAdmin(admin.ModelAdmin):
-    list_display = ['__unicode__']
+    list_display = ['__unicode__', 'email']
     inlines = [DamageEventInline]
     actions = ['process', 'send_received_email', 'send_finished_email', ]
 
@@ -42,7 +42,7 @@ class DamageScenarioAdmin(admin.ModelAdmin):
         """Create a send mail task and put it on the queue."""
         sent = 0
         for damage_scenario in queryset:
-            task_name = 'Send received mail for scenario %d' % damage_scenario.id
+            task_name = 'Send "received mail" for scenario %d' % damage_scenario.id
             task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d"}' % (
                         task_name, damage_scenario.id)
             email_task, created = SecuredPeriodicTask.objects.get_or_create(
