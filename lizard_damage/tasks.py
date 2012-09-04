@@ -94,11 +94,12 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
 
     import os
     from django.conf import settings
-    ds_wl_filename = os.path.join(
-        settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
-        )
     logger.info("scenario %s" % (damage_scenario.name))
     for damage_event in damage_scenario.damageevent_set.all():
+        # ds_wl_filename = os.path.join(
+        #     settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
+        #     )
+        ds_wl_filename = damage_event.waterlevel.path
         logger.info("event %s" % (damage_event))
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
         logger.info(" - month %s, floodtime %s, repairtime %s" % (

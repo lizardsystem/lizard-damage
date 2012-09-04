@@ -36,7 +36,6 @@ class Wizard(SessionWizardView):
         #do_something_with_the_form_data(form_list)
 
         # TODO: validate that everything is correct
-        # TODO: store file
         #print self.file_storage
         all_form_data = self.get_all_cleaned_data()
         damage_scenario = DamageScenario(
@@ -45,13 +44,13 @@ class Wizard(SessionWizardView):
         damage_scenario.damageevent_set.create(
             floodtime=all_form_data['floodtime'] * 3600,
             repairtime=all_form_data['repairtime'] * 3600,
-            waterlevel='',
+            waterlevel=all_form_data['waterlevel'],
             floodmonth=all_form_data['floodmonth'])
 
         # launch task
         tasks.damage_scenario_to_task(damage_scenario, username="web")
 
-        # e-mail received
+        # e-mail received: let's not do this. Feedback is given directly
         # subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
         # tasks.send_email_to_task(
         #     damage_scenario.id, 'email_received', subject, username='web')

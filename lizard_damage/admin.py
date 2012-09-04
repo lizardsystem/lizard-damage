@@ -26,9 +26,12 @@ class DamageEventAdmin(admin.ModelAdmin):
 
 
 class DamageScenarioAdmin(admin.ModelAdmin):
-    list_display = ['__unicode__', 'email']
+    list_display = ['__unicode__', 'email', 'datetime_created']
     inlines = [DamageEventInline]
     actions = ['process', 'send_received_email', 'send_finished_email', ]
+
+    class Meta:
+        ordering = ('-datetime_created', )
 
     def process(self, request, queryset):
         sent = 0

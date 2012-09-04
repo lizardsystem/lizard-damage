@@ -97,6 +97,8 @@ class DamageScenario(models.Model):
     email = models.EmailField(max_length=128)
     # token = models.CharField(max_length=32)
 
+    datetime_created = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return self.name
 
@@ -144,10 +146,9 @@ class DamageEvent(models.Model):
 
     def __unicode__(self):
         try:
-            return '%s - %s' % (self.scenario.name,
-                                os.path.basename(self.waterlevel.path))
+            return '%s' % (os.path.basename(self.waterlevel.path))
         except:
-            return '%s - (no waterlevel)' % (self.scenario.name)
+            return '(no waterlevel)' % (self.scenario.name)
 
     def process(self):
         # Calculate and put stuff in the media root like <scenario>
