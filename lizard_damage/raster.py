@@ -187,7 +187,7 @@ def import_dataset(filepath, driver):
     When using the PostGISRaster driver, use 'tablename/filename' as
     the filepath
     """
-    gdal.GetDriverByName(driver)
+    gdal.GetDriverByName(str(driver))
     if driver == 'PostGISRaster':
         table, filename = os.path.split(filepath)
         open_argument = get_postgisraster_argument(
@@ -214,8 +214,10 @@ def import_dataset(filepath, driver):
 def export_dataset(filepath, ds, driver='AAIGrid'):
     """
     Save ds at filepath using driver.
+
+    ds is GDAL Dataset Shadow ?
     """
-    gdal.GetDriverByName(driver).CreateCopy(filepath, ds)
+    gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
 def get_ds_for_tile(ahn_name, ds_wl_original, method='filesystem'):

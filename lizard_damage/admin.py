@@ -5,6 +5,7 @@ from django.contrib import admin
 from lizard_damage import models
 from lizard_task.models import SecuredPeriodicTask
 
+from lizard_damage import tasks
 
 class DamageEventInline(admin.TabularInline):
     model = models.DamageEvent
@@ -32,17 +33,7 @@ class DamageScenarioAdmin(admin.ModelAdmin):
     def process(self, request, queryset):
         sent = 0
         for damage_scenario in queryset:
-            task_name = 'Calculate damage scenario %d' % damage_scenario.id
-            task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d"}' % (
-                task_name, damage_scenario.id)
-            calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
-                name=task_name, defaults={
-                    'kwargs': task_kwargs,
-                    'task': 'lizard_damage.tasks.calculate_damage'
-                    })
-            calc_damage_task.task = 'lizard_damage.tasks.calculate_damage'
-            calc_damage_task.save()
-            calc_damage_task.send_task('admin')
+            tasks.damage_scenario_to_task(damage_scenario, username="admin")
             sent += 1
         return self.message_user(
             request,
@@ -50,25 +41,13 @@ class DamageScenarioAdmin(admin.ModelAdmin):
         )
     process.short_description = 'Bereken schade voor geselecteerde scenarios'
 
-    def create_send_email_task(self, damage_scenario, mail_template, subject):
-        task_name = 'Send %s mail for scenario %d' % (mail_template, damage_scenario.id)
-        task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d", "mail_template": "%s", "subject": "%s"}' % (task_name, damage_scenario.id, mail_template, subject)
-        email_task, created = SecuredPeriodicTask.objects.get_or_create(
-            name=task_name, defaults={
-                'kwargs': task_kwargs,
-                'task' : 'lizard_damage.tasks.send_email'}
-            )
-        email_task.kwargs = task_kwargs
-        email_task.task = 'lizard_damage.tasks.send_email'
-        email_task.save()
-        email_task.send_task(username='admin')
-
     def send_received_email(self, request, queryset):
         """Create a send mail task and put it on the queue."""
         sent = 0
         for damage_scenario in queryset:
             subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
-            self.create_send_email_task(damage_scenario, 'email_received', subject)
+            tasks.send_email_to_task(
+                damage_scenario.id, 'email_received', subject, username='admin')
             sent += 1
         return self.message_user(
             request,
@@ -80,7 +59,8 @@ class DamageScenarioAdmin(admin.ModelAdmin):
         sent = 0
         for damage_scenario in queryset:
             subject = 'Schademodule: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
-            self.create_send_email_task(damage_scenario, 'email_ready', subject)
+            tasks.send_email_to_task(
+                damage_scenario.id, 'email_ready', subject, username='admin')
             sent += 1
         return self.message_user(
             request,

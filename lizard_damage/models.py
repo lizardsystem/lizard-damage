@@ -130,10 +130,11 @@ class DamageEvent(models.Model):
         default=EVENT_STATUS_RECEIVED,
     )
     scenario = models.ForeignKey(DamageScenario)
-    floodtime = models.FloatField(help_text='In seconds')
+    floodtime = models.FloatField(help_text='How long was it flooded, in seconds')
     repairtime = models.FloatField(help_text='In seconds')
     waterlevel = models.FileField(upload_to='scenario/waterlevel')
-    flooddate = models.DateTimeField()
+    # flooddate = models.DateTimeField()
+    floodmonth = models.IntegerField(default=9)
 
     # calculationtype = models.IntegerField()
     # repetitiontime = models.FloatField(help_text='In years')
@@ -142,8 +143,11 @@ class DamageEvent(models.Model):
     table = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s - %s' % (self.scenario.name,
-                            os.path.basename(self.waterlevel.path))
+        try:
+            return '%s - %s' % (self.scenario.name,
+                                os.path.basename(self.waterlevel.path))
+        except:
+            return '%s - (no waterlevel)' % (self.scenario.name)
 
     def process(self):
         # Calculate and put stuff in the media root like <scenario>
