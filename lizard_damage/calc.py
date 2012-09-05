@@ -113,6 +113,7 @@ def calc_damage_for_waterlevel(
     - schade_totaal.csv (see write_table)
     """
     ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
+    logger.info('data source water level: %s' % ds_wl_original)
 
     if damage_table_path is None:
         damage_table_path = 'data/damagetable/dt.cfg'
