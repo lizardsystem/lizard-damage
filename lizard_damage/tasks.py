@@ -14,13 +14,13 @@ from django.contrib.sites.models import Site
 import logging
 
 
-def damage_scenario_to_task(damage_scenario, username="admin"):
+def damage_scenario_to_task(damage_scenario, username="admin", email=""):
     """
     Send provided damage scenario as task
     """
     task_name = 'Calculate damage scenario %d' % damage_scenario.id
-    task_kwargs = '{"username": "%s", "taskname": "%s", "damage_scenario_id": "%d"}' % (
-        username, task_name, damage_scenario.id)
+    task_kwargs = '{"username": "%s", "taskname": "%s", "damage_scenario_id": "%d", "email": "%s"}' % (
+        username, task_name, damage_scenario.id, email)
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
             'kwargs': task_kwargs,
@@ -51,7 +51,7 @@ def send_email_to_task(damage_scenario_id, mail_template, subject, username='adm
 @task
 @task_logging
 def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
-               mail_template='email_received', subject='Onderwerp'):
+               mail_template='email_received', subject='Onderwerp', email=''):
     logger = logging.getLogger(taskname)
     # Do your thing
     logger.info("send_mail: %s" % mail_template)
@@ -68,7 +68,12 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     template_html = get_template("lizard_damage/%s.html" % mail_template)
 
     from_email = 'no-reply@nelen-schuurmans.nl'
-    to = damage_scenario.email
+    if not email:
+        # Default
+        to = damage_scenario.email
+    else:
+        # In case of user provided email (errors)
+        to = email
 
     logger.info("scenario: %s" % damage_scenario)
     logger.info("sending e-mail to: %s" % to)
@@ -95,6 +100,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
     import os
     from django.conf import settings
     logger.info("scenario %s" % (damage_scenario.name))
+    errors = 0
     for damage_event in damage_scenario.damageevent_set.all():
         # ds_wl_filename = os.path.join(
         #     settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
@@ -104,16 +110,27 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
         logger.info(" - month %s, floodtime %s, repairtime %s" % (
                 damage_event.floodmonth, damage_event.floodtime, damage_event.repairtime))
-        calc.calc_damage_for_waterlevel(
+        result = calc.calc_damage_for_waterlevel(
             ds_wl_filename=ds_wl_filename,
             damage_table_path='data/damagetable/dt.cfg',
             month=damage_event.floodmonth,
             floodtime=damage_event.floodtime,
             repairtime=damage_event.repairtime,
             logger=logger)
+        if result == False:
+            errors += 1
 
-    logger.info("creating email task")
-    subject = 'Schademodule: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
-    send_email_to_task(damage_scenario.id, 'email_ready', subject, username=username)
+    if errors == 0:
+        logger.info("creating email task")
+        subject = 'Schademodule: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
+        send_email_to_task(damage_scenario.id, 'email_ready', subject, username=username)
+        logger.info("finished")
+    else:
+        logger.info("there were errors")
+        logger.info("creating email task for error")
+        subject = 'Schademodule: scenario %s heeft fouten' % damage_scenario.name
+        send_email_to_task(damage_scenario.id, 'email_error', subject, username=username,
+                           email='jack.ha@nelen-schuurmans.nl')
+        logger.info("finished with errors")
+        return 'failure'
 
-    logger.info("finished")

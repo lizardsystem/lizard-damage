@@ -1,0 +1,10 @@
+{# template for error #}
+  Beste Schade Module beheerder,
+
+    Het schademodule scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Graag herstellen.
+
+
+  --
+  schade.lizard.net
+
+  Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.
