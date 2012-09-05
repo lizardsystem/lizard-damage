@@ -121,16 +121,14 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         if result:
             pass
             # result contains the result zip file in the temp dir.
-# class UploadedFile(models.Model):
-#   document = models.FileField(upload_to=PATH)
 
 
-# from django.core.files import File
+from django.core.files import File
 
 # doc = UploadedFile()
-# with open(filepath, 'rb') as doc_file:
-#    doc.documen.save(filename, File(doc_file), save=True)
-# doc.save()
+with open(filepath, 'rb') as doc_file:
+   damage_event.result.save(filename, File(doc_file), save=True)
+damage_event.save()
         if result == None:
             errors += 1
 

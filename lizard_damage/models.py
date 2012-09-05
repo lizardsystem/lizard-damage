@@ -98,10 +98,6 @@ class DamageScenario(models.Model):
     # token = models.CharField(max_length=32)
 
     datetime_created = models.DateTimeField(auto_now=True)
-    result = models.FileField(
-        upload_to='scenario/result',
-        null=True, blank=True,
-        help_text='Will be filled once the calculation has been done')
 
     def __unicode__(self):
         return self.name
@@ -147,6 +143,10 @@ class DamageEvent(models.Model):
 
     # Result
     table = models.TextField(null=True, blank=True)
+    result = models.FileField(
+        upload_to='scenario/result',
+        null=True, blank=True,
+        help_text='Will be filled once the calculation has been done')
 
     def __unicode__(self):
         try:
