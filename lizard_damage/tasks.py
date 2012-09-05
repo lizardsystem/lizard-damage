@@ -15,6 +15,8 @@ from django.contrib.sites.models import Site
 
 import logging
 import os
+import random
+import string
 
 
 def damage_scenario_to_task(damage_scenario, username="admin"):
@@ -127,7 +129,8 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                         logger.warning('Deleting existing results...')
                         damage_event.result.delete()  # Delete old results
                     logger.info('Saving results...')
-                    damage_event.result.save('result.zip', File(doc_file), save=True)
+                    damage_event.result.save('result_%s.zip' % ''.join(random.sample(string.letters, 10)),
+                                             File(doc_file), save=True)
                     damage_event.save()
                 except:
                     logger.error('Exception saving zipfile. Too big?')
