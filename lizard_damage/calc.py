@@ -50,9 +50,14 @@ def calculate(use, depth,
             dr.to_gamma_month(month)
         )
 
-        damage_area[code] = numpy.count_nonzero(
-            numpy.greater(result[index], 0)
-        ) * area_per_pixel
+        # New numpy
+        # damage_area[code] = numpy.count_nonzero(
+        #     numpy.greater(result[index], 0)
+        # ) * area_per_pixel
+        # The hard way...
+        result_greater = numpy.greater(result[index], 0)
+        damage_area[code] = len(result[index][numpy.nonzero(result_greater)]) * area_per_pixel
+        #logger.info("damage_area_code: %r %r" % (damage_area[code], damage_area_code))
 
         # The sum of an empty masked array is 'masked', so check that.
         if count[code] > 0:
