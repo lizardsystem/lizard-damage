@@ -141,7 +141,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             os.remove(result[0])  # remove temp file, whether it was saved or not
 
             if damage_event.damageeventresult_set.count() >= 0:
-                logger.warning("Removing old jpg images...")
+                logger.warning("Removing old images...")
                 for damage_event_result in damage_event.damageeventresult_set.all():
                     damage_event_result.image.delete()
                     damage_event_result.delete()
