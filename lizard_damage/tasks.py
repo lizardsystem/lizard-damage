@@ -1,3 +1,4 @@
+from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.template import Context
@@ -119,17 +120,22 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             repairtime=damage_event.repairtime,
             logger=logger)
         if result:
-            pass
             # result contains the result zip file in the temp dir.
-
-
-from django.core.files import File
-
-# doc = UploadedFile()
-with open(filepath, 'rb') as doc_file:
-   damage_event.result.save(filename, File(doc_file), save=True)
-damage_event.save()
-        if result == None:
+            with open(result, 'rb') as doc_file:
+                try:
+                    if damage_event.result:
+                        logger.warning('Deleting existing results...')
+                        damage_event.result.delete()  # Delete old results
+                    logger.info('Saving results...')
+                    damage_event.result.save('result.zip', File(doc_file), save=True)
+                    damage_event.save()
+                except:
+                    logger.error('Exception saving zipfile. Too big?')
+                    for exception_line in traceback.format_exc().split('\n'):
+                        logger.error(exception_line)
+                    errors += 1
+            os.remove(result)  # remove temp file, whether it was saved or not
+        else:
             errors += 1
 
     if errors == 0:

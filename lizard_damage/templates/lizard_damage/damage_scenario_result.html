@@ -7,7 +7,7 @@
 
 <ul>
   {% for event in view.damage_scenario.damageevent_set.all %}
-  <li>Gebeurtenis {{ event }} <a href="#">asc</a>&nbsp;<a href="#">tabel</a></li>
+  <li>Gebeurtenis {{ event }} <a href="{{ event.result.url }}">{{ event.result_display }}</a></li>
   {% empty %}
   <li>Er zijn geen events verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
   {% endfor %}

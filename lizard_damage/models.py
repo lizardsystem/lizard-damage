@@ -14,6 +14,20 @@ import string
 
 # from django.utils.translation import ugettext_lazy as _
 
+def friendly_filesize(size):
+    if size > 1024*1024*1024*1024*1024:
+        # Just for fun
+        return '%0.1fPB' % (float(size) / (1024*1024*1024*1024*1024))
+    if size > 1024*1024*1024*1024:
+        return '%0.1fTB' % (float(size) / (1024*1024*1024*1024))
+    if size > 1024*1024*1024:
+        return '%0.1fGB' % (float(size) / (1024*1024*1024))
+    if size > 1024*1024:
+        return '%0.1fMB' % (float(size) / (1024*1024))
+    if size > 1024:
+        return '%0.1fKB' % (float(size) / (1024))
+    return str(size)
+
 
 class AhnIndex(models.Model):
     """
@@ -152,20 +166,23 @@ class DamageEvent(models.Model):
         try:
             return '%s' % (os.path.basename(self.waterlevel.path))
         except:
-            return '(no waterlevel)' % (self.scenario.name)
+            return '(no waterlevel)'
 
-    def process(self):
-        # Calculate and put stuff in the media root like <scenario>
-        pass
+    @property
+    def result_display(self):
+        """display name of result"""
+        return '%s (%s)' % (
+            os.path.basename(self.result.name),
+            friendly_filesize(self.result.size))
 
-class DamageEventResult(models.Model):
-    """ Partial damage grid with corresponding damage table."""
-    table = models.TextField()
-    raster = models.FileField(upload_to='scenario/result')
-    """
-     with open('/tmp/test', 'rb') as testfile:
-         ds.waterlevel.save('blabla', File(testfile), save=True)
-    """
+# class DamageEventResult(models.Model):
+#     """ Partial damage grid with corresponding damage table."""
+#     table = models.TextField()
+#     raster = models.FileField(upload_to='scenario/result')
+#     """
+#      with open('/tmp/test', 'rb') as testfile:
+#          ds.waterlevel.save('blabla', File(testfile), save=True)
+#     """
 
 
 
