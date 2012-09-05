@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Folder>
+    <name>Lizard Schademodule</name>
+    <description>Lizard Schademodule resultaat    {{ view.damage_event }}
+</description>
+    {% for damage_event_result in view.damage_event.damageeventresult_set.all %}
+    <GroundOverlay>
+      <name>{{ damage_event_result.image.name }}</name>
+      <description>{{ damage_event_result.image.name }}</description>
+      <Icon>
+        <href>{{ view.root_url }}{{ damage_event_result.image.url }}</href>
+      </Icon>
+      <LatLonBox>
+        <north>37.91904192681665</north>
+        <south>37.46543388598137</south>
+        <east>15.35832653742206</east>
+        <west>14.60128369746704</west>
+        <rotation>-0.1556640799496235</rotation>
+      </LatLonBox>
+    </GroundOverlay>
+    {% endfor %}
+  </Folder>
+</kml>

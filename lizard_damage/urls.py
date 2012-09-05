@@ -49,6 +49,11 @@ urlpatterns = patterns(
         name='lizard_damage_result'
     ),
     url(
+        r'^event/(?P<slug>.*)/kml/$',
+        views.DamageEventKML.as_view(),
+        name='lizard_damage_event_kml'
+    ),
+    url(
         r'^thank_you/$',
         TemplateView.as_view(template_name="lizard_damage/thank_you.html"),
         name='lizard_damage_thank_you'

@@ -6,10 +6,14 @@ from django.core.urlresolvers import reverse
 # from lizard_map.views import MapView
 from django.views.generic import TemplateView
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.core.files.storage import FileSystemStorage
+from django.contrib.sites.models import Site
 
 from lizard_damage import tasks
 from lizard_damage.models import DamageScenario
+from lizard_damage.models import DamageEvent
 from lizard_ui.views import ViewContextMixin
 
 import datetime
@@ -67,3 +71,24 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     @property
     def damage_scenario(self):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])
+
+
+class DamageEventKML(ViewContextMixin, TemplateView):
+    template_name = 'lizard_damage/event_result.kml'
+
+    @property
+    def damage_event(self):
+        print 'hoi'
+        return get_object_or_404(DamageEvent, slug=self.kwargs['slug'])
+
+    @property
+    def root_url(self):
+        try:
+            root_url = 'http://%s' % Site.objects.all()[0].domain
+        except:
+            root_url = 'http://damage.lizard.net'
+        return root_url
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')

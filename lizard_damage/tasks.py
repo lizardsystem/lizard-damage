@@ -6,6 +6,7 @@ from django.template import Context
 from django.template.loader import get_template
 
 from lizard_damage.models import DamageScenario
+from lizard_damage.models import DamageEventResult
 from lizard_damage import calc
 from lizard_task.task import task_logging
 from lizard_task.models import SecuredPeriodicTask
@@ -122,14 +123,14 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             repairtime=damage_event.repairtime,
             logger=logger)
         if result:
-            # result contains the result zip file in the temp dir.
-            with open(result, 'rb') as doc_file:
+            # result[0] is the result zip file name in temp dir.
+            with open(result[0], 'rb') as doc_file:
                 try:
                     if damage_event.result:
                         logger.warning('Deleting existing results...')
                         damage_event.result.delete()  # Delete old results
                     logger.info('Saving results...')
-                    damage_event.result.save('result_%s.zip' % ''.join(random.sample(string.letters, 10)),
+                    damage_event.result.save('result_%s.zip' % damage_event.slug,
                                              File(doc_file), save=True)
                     damage_event.save()
                 except:
@@ -137,7 +138,21 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     for exception_line in traceback.format_exc().split('\n'):
                         logger.error(exception_line)
                     errors += 1
-            os.remove(result)  # remove temp file, whether it was saved or not
+            os.remove(result[0])  # remove temp file, whether it was saved or not
+
+            if damage_event.damageeventresult_set.count() >= 0:
+                logger.warning("Removing old jpg images...")
+                for damage_event_result in damage_event.damageeventresult_set.all():
+                    damage_event_result.image.delete()
+                    damage_event_result.delete()
+            # result[1] is a list of jpg files to be uploaded to the django db.
+            for img in result[1]:
+                damage_event_result = DamageEventResult(damage_event=damage_event)
+                with open(img['filename'], 'rb') as img_file:
+                    damage_event_result.image.save(img['dstname'] % damage_event.slug,
+                                                   File(img_file), save=True)
+                damage_event_result.save()
+                os.remove(img['filename'])
         else:
             errors += 1
 

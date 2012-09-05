@@ -11,11 +11,13 @@ import numpy
 import logging
 import os
 import tempfile
+import Image
 
 import zipfile
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
+from osgeo import gdal
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +107,38 @@ def write_table(name, damage, area, dt):
                 )
             )
 
+def write_image(name, values):
+    """
+    Create jpg image from values.
+
+    Values is a 2d numpy array
+    """
+    raster_r = values
+    raster_g = values
+    raster_b = values
+
+    format = "GTiff"
+
+    driver = gdal.GetDriverByName(str(format))
+    metadata = driver.GetMetadata()
+    #print('image driver supports: %r' % metadata)
+    #print dir(driver)
+    #dst_ds = driver.Create("out.tif", 512, 512, 1, gdal.GDT_Byte )
+    dst_ds = driver.Create(str(name), len(values[0]), len(values), 3, gdal.GDT_Byte )
+    #raster = zeros( (512, 512) )
+    #raster = 128*ones( (len(a), len(a[0])) )
+    #raster = zeros( (512, 512), dtype = uint8)
+    dst_ds.GetRasterBand(1).WriteArray(raster_r)
+    dst_ds.GetRasterBand(2).WriteArray(raster_g)
+    dst_ds.GetRasterBand(3).WriteArray(raster_b)
+    #dst_ds.GetRasterBand(4).WriteArray(255*ones( (len(a), len(a[0]))))
+    #outBand.SetNoDataValue(-99)
+    #dst_ds.GetRasterBand(1).WriteArray(raster)
+
+    # Once we're done, close properly the dataset
+    dst_ds = None
+
+
 def calc_damage_for_waterlevel(
     ds_wl_filename,
     dt_path=None,
@@ -123,6 +157,7 @@ def calc_damage_for_waterlevel(
     - schade_totaal.csv (see write_table)
     """
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
+    img_result = []
 
     ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
     logger.info('data source water level: %s' % ds_wl_original)
@@ -156,6 +191,7 @@ def calc_damage_for_waterlevel(
         depth = wl - ahn
         area_per_pixel = raster.get_area_per_pixel(ds_wl)
 
+        # Result is a numpy array
         damage, count, area, result = calculate(
             use=lgn, depth=depth,
             area_per_pixel=area_per_pixel,
@@ -172,6 +208,16 @@ def calc_damage_for_waterlevel(
             ds_template=ds_ahn,
         )
         zip_result.append(asc_result)
+
+        # Generate image. First in .tif, then convert it to .jpg
+        image_result = {
+            'filename': tempfile.mktemp(),
+            'dstname': 'schade_%s_' + ahn_name + '.tiff'}  # %s is for the damage_event.slug
+        write_image(
+            name=image_result['filename'],
+            values=result
+            )
+        img_result.append(image_result)
 
         csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
         write_table(
@@ -221,4 +267,4 @@ def calc_damage_for_waterlevel(
     for file_in_zip in zip_result:
         os.remove(file_in_zip['filename'])
 
-    return output_zipfile
+    return output_zipfile, img_result

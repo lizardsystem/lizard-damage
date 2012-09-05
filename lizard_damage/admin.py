@@ -11,9 +11,14 @@ class DamageEventInline(admin.TabularInline):
     model = models.DamageEvent
 
 
+class DamageEventResultInline(admin.TabularInline):
+    model = models.DamageEventResult
+
+
 class DamageEventAdmin(admin.ModelAdmin):
     list_display = ['__unicode__']
     actions = ['process']
+    inlines = [DamageEventResultInline]
 
     def process(self, request, queryset):
         for damage_event in queryset:
@@ -74,6 +79,8 @@ class DamageScenarioAdmin(admin.ModelAdmin):
 class UnitAdmin(admin.ModelAdmin):
     list_display = ['name', 'factor']
 
+
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.DamageEvent, DamageEventAdmin)
+admin.site.register(models.DamageEventResult)
 admin.site.register(models.DamageScenario, DamageScenarioAdmin)

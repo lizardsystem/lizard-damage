@@ -7,7 +7,7 @@
 
 <ul>
   {% for event in view.damage_scenario.damageevent_set.all %}
-  <li>Gebeurtenis {{ event }} <a href="{{ event.result.url }}">{{ event.result_display }}</a></li>
+  <li>Gebeurtenis {{ event }} <a href="{{ event.result.url }}">{{ event.result_display }}</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a></li>
   {% empty %}
   <li>Er zijn geen events verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
   {% endfor %}

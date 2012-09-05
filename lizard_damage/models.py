@@ -146,6 +146,7 @@ class DamageEvent(models.Model):
         default=EVENT_STATUS_RECEIVED,
     )
     scenario = models.ForeignKey(DamageScenario)
+    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     floodtime = models.FloatField(help_text='How long was it flooded, in seconds')
     repairtime = models.FloatField(help_text='In seconds')
     waterlevel = models.FileField(upload_to='scenario/waterlevel')
@@ -175,14 +176,31 @@ class DamageEvent(models.Model):
             os.path.basename(self.result.name),
             friendly_filesize(self.result.size))
 
-# class DamageEventResult(models.Model):
-#     """ Partial damage grid with corresponding damage table."""
-#     table = models.TextField()
-#     raster = models.FileField(upload_to='scenario/result')
-#     """
-#      with open('/tmp/test', 'rb') as testfile:
-#          ds.waterlevel.save('blabla', File(testfile), save=True)
-#     """
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = ''.join(random.sample(string.letters, 20))
+        return super(DamageEvent, self).save(*args, **kwargs)
+
+
+class DamageEventResult(models.Model):
+    """ Result of 1 tile of a Damage Event
+
+    Normally a Damage Event has multiple tiles
+    """
+
+    #table = models.TextField()
+    #raster = models.FileField(upload_to='scenario/result')
+
+    damage_event = models.ForeignKey(DamageEvent)
+    image = models.FileField(upload_to='scenario/image')
+
+    def __unicode__(self):
+        return '%s - %s' % (self.damage_event, self.image)
+
+    """
+     with open('/tmp/test', 'rb') as testfile:
+         ds.waterlevel.save('blabla', File(testfile), save=True)
+    """
 
 
 
