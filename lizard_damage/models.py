@@ -99,6 +99,7 @@ class DamageScenario(models.Model):
 
     datetime_created = models.DateTimeField(auto_now=True)
     result = models.FileField(
+        upload_to='scenario/result',
         null=True, blank=True,
         help_text='Will be filled once the calculation has been done')
 
