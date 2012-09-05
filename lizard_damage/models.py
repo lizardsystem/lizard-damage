@@ -98,6 +98,9 @@ class DamageScenario(models.Model):
     # token = models.CharField(max_length=32)
 
     datetime_created = models.DateTimeField(auto_now=True)
+    result = models.FileField(
+        null=True, blank=True,
+        help_text='Will be filled once the calculation has been done')
 
     def __unicode__(self):
         return self.name

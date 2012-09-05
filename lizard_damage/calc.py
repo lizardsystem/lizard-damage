@@ -10,7 +10,9 @@ from __future__ import (
 import numpy
 import logging
 import os
+import tempfile
 
+import zipfile
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
@@ -105,7 +107,7 @@ def write_table(name, damage, area, dt):
 
 def calc_damage_for_waterlevel(
     ds_wl_filename,
-    damage_table_path=None,
+    dt_path=None,
     month=9, floodtime=20*3600, repairtime=None, logger=logger):
     """
     Calculate damage for provided waterlevel file.
@@ -120,15 +122,17 @@ def calc_damage_for_waterlevel(
     - per ahn tile an .asc and .csv (see write_result and write_table)
     - schade_totaal.csv (see write_table)
     """
+    zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
+
     ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
     logger.info('data source water level: %s' % ds_wl_original)
     if ds_wl_original is None:
         logger.error('data source is not available, please check folder %s' % ds_wl_filename)
-        return False
+        return
 
-    if damage_table_path is None:
+    if dt_path is None:
         damage_table_path = 'data/damagetable/dt.cfg'
-    dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
+        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
     with open(dt_path) as cfg:
         dt = table.DamageTable.read_cfg(cfg)
 
@@ -161,17 +165,23 @@ def calc_damage_for_waterlevel(
         )
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
+        asc_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.asc'}
         write_result(
-            name='schade_' + ahn_name + '.asc',
+            name=asc_result['filename'],
             ma_result=result,
             ds_template=ds_ahn,
         )
+        zip_result.append(asc_result)
+
+        csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
         write_table(
-            name='schade_' + ahn_name + '.csv',
+            name=csv_result['filename'],
             damage=damage,
             area=area,
             dt=dt,
         )
+        zip_result.append(csv_result)
+
         for k in damage.keys():
             if k in overall_damage:
                 overall_damage[k] += damage[k]
@@ -188,10 +198,27 @@ def calc_damage_for_waterlevel(
         del lgn, depth, wl
         del result
 
+    csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv'}
     write_table(
-        name='schade_totaal.csv',
+        name=csv_result['filename'],
         damage=overall_damage,
         area=overall_area,
         dt=dt,
     )
-    return True
+    zip_result.append(csv_result)
+
+    # Now zip all files listed in zip_result
+    output_zipfile = tempfile.mktemp()
+    logger.info('zipping result into %s' % output_zipfile)
+    with zipfile.ZipFile(output_zipfile, 'w', zipfile.ZIP_DEFLATED) as myzip:
+        for file_in_zip in zip_result:
+            logger.info('writing %s' % file_in_zip['arcname'])
+            myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
+
+    logger.info('zipfile: %s' % output_zipfile)
+    # Clean up
+    logger.info('Cleaning up tempdir')
+    for file_in_zip in zip_result:
+        os.remove(file_in_zip['filename'])
+
+    return output_zipfile

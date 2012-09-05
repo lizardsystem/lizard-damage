@@ -1,4 +1,5 @@
 from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from django.template import Context
 #from django.template import Template
 from django.template.loader import get_template
@@ -12,6 +13,7 @@ from celery.task import task
 from django.contrib.sites.models import Site
 
 import logging
+import os
 
 
 def damage_scenario_to_task(damage_scenario, username="admin"):
@@ -97,8 +99,6 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
 
     logger.info("calculating...")
 
-    import os
-    from django.conf import settings
     logger.info("scenario %s" % (damage_scenario.name))
     errors = 0
     for damage_event in damage_scenario.damageevent_set.all():
@@ -110,14 +110,28 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
         logger.info(" - month %s, floodtime %s, repairtime %s" % (
                 damage_event.floodmonth, damage_event.floodtime, damage_event.repairtime))
+        dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
         result = calc.calc_damage_for_waterlevel(
             ds_wl_filename=ds_wl_filename,
-            damage_table_path='data/damagetable/dt.cfg',
+            dt_path=dt_path,
             month=damage_event.floodmonth,
             floodtime=damage_event.floodtime,
             repairtime=damage_event.repairtime,
             logger=logger)
-        if result == False:
+        if result:
+            pass
+            # result contains the result zip file in the temp dir.
+# class UploadedFile(models.Model):
+#   document = models.FileField(upload_to=PATH)
+
+
+# from django.core.files import File
+
+# doc = UploadedFile()
+# with open(filepath, 'rb') as doc_file:
+#    doc.documen.save(filename, File(doc_file), save=True)
+# doc.save()
+        if result == None:
             errors += 1
 
     if errors == 0:
