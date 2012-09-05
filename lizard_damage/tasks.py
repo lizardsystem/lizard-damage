@@ -133,4 +133,3 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                            email='jack.ha@nelen-schuurmans.nl')
         logger.info("finished with errors")
         return 'failure'
-

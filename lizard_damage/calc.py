@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def calculate(use, depth,
               area_per_pixel, table,
-              month, floodtime, repairtime):
+              month, floodtime, repairtime, logger=logger):
     """
     Calculate damage for an area.
 
@@ -35,9 +35,12 @@ def calculate(use, depth,
     damage_area = {}
 
     for code, dr in table.data.items():
-
         index = (numpy.ma.equal(use, code))
-        count[code] = numpy.count_nonzero(index)
+
+        # Only for new numpies
+        #count[code] = numpy.count_nonzero(index)
+        # Old numpies, works just as well. tested.
+        count[code] = len(index[numpy.nonzero(index)])
 
         result[index] = (
             area_per_pixel *
@@ -148,7 +151,8 @@ def calc_damage_for_waterlevel(
             use=lgn, depth=depth,
             area_per_pixel=area_per_pixel,
             table=dt, month=month,
-            floodtime=floodtime, repairtime=repairtime
+            floodtime=floodtime, repairtime=repairtime,
+            logger=logger
         )
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
