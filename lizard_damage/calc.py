@@ -116,6 +116,7 @@ def write_image(name, values):
     raster_r = values
     raster_g = values
     raster_b = values
+    raster_a = values*100
 
     format = "GTiff"
 
@@ -124,13 +125,14 @@ def write_image(name, values):
     #print('image driver supports: %r' % metadata)
     #print dir(driver)
     #dst_ds = driver.Create("out.tif", 512, 512, 1, gdal.GDT_Byte )
-    dst_ds = driver.Create(str(name), len(values[0]), len(values), 3, gdal.GDT_Byte )
+    dst_ds = driver.Create(str(name), len(values[0]), len(values), 4, gdal.GDT_Byte )
     #raster = zeros( (512, 512) )
     #raster = 128*ones( (len(a), len(a[0])) )
     #raster = zeros( (512, 512), dtype = uint8)
     dst_ds.GetRasterBand(1).WriteArray(raster_r)
     dst_ds.GetRasterBand(2).WriteArray(raster_g)
     dst_ds.GetRasterBand(3).WriteArray(raster_b)
+    dst_ds.GetRasterBand(4).WriteArray(raster_a)
     #dst_ds.GetRasterBand(4).WriteArray(255*ones( (len(a), len(a[0]))))
     #outBand.SetNoDataValue(-99)
     #dst_ds.GetRasterBand(1).WriteArray(raster)

@@ -12,11 +12,11 @@
         <href>{{ view.root_url }}{{ damage_event_result.image.url }}</href>
       </Icon>
       <LatLonBox>
-        <north>37.91904192681665</north>
-        <south>37.46543388598137</south>
-        <east>15.35832653742206</east>
-        <west>14.60128369746704</west>
-        <rotation>-0.1556640799496235</rotation>
+        <north>{{ damage_event_result.north }}</north>
+        <south>{{ damage_event_result.south }}</south>
+        <east>{{ damage_event_result.east }}</east>
+        <west>{{ damage_event_result.west }}</west>
+        <rotation>{{ damage_event_result.rotation }}</rotation>
       </LatLonBox>
     </GroundOverlay>
     {% endfor %}
