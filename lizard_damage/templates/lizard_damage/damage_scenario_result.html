@@ -1,4 +1,5 @@
 {% extends 'lizard_ui/lizardbase.html' %}
+{% load formatting %}
 
 {% block sidebar %}
 <div>
@@ -41,7 +42,7 @@
       <td>{{ data_row.code }}</td>
       <td>{{ data_row.description }}</td>
       <td>{{ data_row.area_ha|floatformat }}</td>
-      <td>{{ data_row.damage|floatformat }}</td>
+      <td>{% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}</td>
     </tr>
     {% endfor %}
   </tbody>
