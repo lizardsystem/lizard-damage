@@ -116,13 +116,22 @@ def get_area_per_pixel(ds):
     return area_per_pixel
 
 
-def get_ahn_names(ds):
-    """ Return the names of the ahn tiles that cover this dataset. """
+# def get_ahn_names(ds):
+#     """ Return the names of the ahn tiles that cover this dataset. """
+#     polygon = get_polygon(ds)
+#     ahn_names = models.AhnIndex.objects.filter(
+#         the_geom__intersects=polygon,
+#     ).values_list('bladnr', flat=True)
+#     return ahn_names
+
+
+def get_ahn_indices(ds):
+    """ Return the ahn index objects that cover this dataset. """
     polygon = get_polygon(ds)
-    ahn_names = models.AhnIndex.objects.filter(
+    ahn_indices = models.AhnIndex.objects.filter(
         the_geom__intersects=polygon,
-    ).values_list('bladnr', flat=True)
-    return ahn_names
+    )
+    return ahn_indices
 
 
 def init_dataset(ds, nodatavalue=None):

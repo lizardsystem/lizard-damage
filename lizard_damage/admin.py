@@ -80,6 +80,7 @@ class UnitAdmin(admin.ModelAdmin):
     list_display = ['name', 'factor']
 
 
+admin.site.register(models.AhnIndex)
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.DamageEvent, DamageEventAdmin)
 admin.site.register(models.DamageEventResult)

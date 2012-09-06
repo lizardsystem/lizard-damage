@@ -147,7 +147,12 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     damage_event_result.delete()
             # result[1] is a list of jpg files to be uploaded to the django db.
             for img in result[1]:
-                damage_event_result = DamageEventResult(damage_event=damage_event)
+                damage_event_result = DamageEventResult(
+                    damage_event=damage_event,
+                    west=img['extent'][0],
+                    south=img['extent'][1],
+                    east=img['extent'][2],
+                    north=img['extent'][3])
                 with open(img['filename'], 'rb') as img_file:
                     damage_event_result.image.save(img['dstname'] % damage_event.slug,
                                                    File(img_file), save=True)

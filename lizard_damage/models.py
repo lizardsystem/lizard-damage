@@ -7,6 +7,7 @@ from __future__ import (
   division,
 )
 from django.contrib.gis.db import models
+from lizard_map import coordinates
 
 import os
 import random
@@ -42,7 +43,7 @@ class AhnIndex(models.Model):
     since django doesn't handle postgis2 very well currently.
     """
     gid = models.IntegerField(primary_key=True)
-    x = models.FloatField(null=True, blank=True)
+    x = models.FloatField(null=True, blank=True)  # In RD
     y = models.FloatField(null=True, blank=True)
     cellsize = models.CharField(max_length=2, blank=True)
     lo_x = models.CharField(max_length=6, blank=True)
@@ -53,8 +54,18 @@ class AhnIndex(models.Model):
     min_datum = models.DateField(null=True, blank=True)
     max_datum = models.DateField(null=True, blank=True)
     ar = models.FloatField(null=True, blank=True)
-    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
+    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)  # All squares?
     objects = models.GeoManager()
+
+    def __unicode__(self):
+        return '%s %f %f %r' % (self.gid, self.x, self.y, self.extent_wgs84)
+
+    @property
+    def extent_wgs84(self):
+        e = self.the_geom.extent
+        x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
+        x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
+        return (x0, y0, x1, y1)
 
 
 class Unit(models.Model):
@@ -194,20 +205,25 @@ class DamageEventResult(models.Model):
     damage_event = models.ForeignKey(DamageEvent)
     image = models.FileField(upload_to='scenario/image')
 
+    north = models.FloatField()
+    south = models.FloatField()
+    east = models.FloatField()
+    west = models.FloatField()
+
     def __unicode__(self):
         return '%s - %s' % (self.damage_event, self.image)
 
-    def north(self):
-        return 37.91904192681665
+    # def north(self):
+    #     return 37.91904192681665
 
-    def south(self):
-        return 37.46543388598137
+    # def south(self):
+    #     return 37.46543388598137
 
-    def east(self):
-        return 15.35832653742206
+    # def east(self):
+    #     return 15.35832653742206
 
-    def west(self):
-        return 14.60128369746704
+    # def west(self):
+    #     return 14.60128369746704
 
     def rotation(self):
         return -0.1556640799496235

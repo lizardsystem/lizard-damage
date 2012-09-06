@@ -175,7 +175,8 @@ def calc_damage_for_waterlevel(
 
     overall_area = {}
     overall_damage = {}
-    for ahn_name in raster.get_ahn_names(ds_wl_original):
+    for ahn_index in raster.get_ahn_indices(ds_wl_original):
+        ahn_name = ahn_index.bladnr
         logger.info("calculating damage for tile %s..." % ahn_name)
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
@@ -214,7 +215,8 @@ def calc_damage_for_waterlevel(
         # Generate image. First in .tif, then convert it to .jpg
         image_result = {
             'filename': tempfile.mktemp(),
-            'dstname': 'schade_%s_' + ahn_name + '.tiff'}  # %s is for the damage_event.slug
+            'dstname': 'schade_%s_' + ahn_name + '.tiff',
+            'extent': ahn_index.extent_wgs84}  # %s is for the damage_event.slug
         write_image(
             name=image_result['filename'],
             values=result
