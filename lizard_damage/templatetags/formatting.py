@@ -4,7 +4,7 @@ register = template.Library()
 
 @register.filter()
 def euroformat(value):
-    if value > 100000000:
+    if value > 10000000:
         return '&euro; %0.0f miljoen' % (value/1000000.0)
     if value > 1000000:
         return '&euro; %0.1f miljoen' % (value/1000000.0)

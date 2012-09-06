@@ -29,7 +29,7 @@
 <div>
 <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>
 {% with event.parsed_table as event_table %}
-<table>
+<table class="table table-striped">
   <thead>
     {% for head_element in event_table.0 %}
     <th>{{ head_element.display }}</th>
