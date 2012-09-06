@@ -1,9 +1,13 @@
 {% extends 'lizard_ui/lizardbase.html' %}
 
-{% block main-area %}
-<h3>Resultaten berekening {{ view.damage_scenario }}</h3>
+{% block sidebar %}
+<div>
+Info {{ view.damage_scenario }}
+</div>
+{% endblock %}
 
-<a href="#">KML</a>&nbsp;<a href="#">tabel</a>
+{% block content %}
+<h3>Resultaten berekening {{ view.damage_scenario }}</h3>
 
 <ul>
   {% for event in view.damage_scenario.damageevent_set.all %}

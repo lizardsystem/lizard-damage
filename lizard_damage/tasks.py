@@ -153,11 +153,12 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     south=img['extent'][1],
                     east=img['extent'][2],
                     north=img['extent'][3])
-                with open(img['filename'], 'rb') as img_file:
+                with open(img['filename_png'], 'rb') as img_file:
                     damage_event_result.image.save(img['dstname'] % damage_event.slug,
                                                    File(img_file), save=True)
                 damage_event_result.save()
-                os.remove(img['filename'])
+                os.remove(img['filename_tiff'])
+                os.remove(img['filename_png'])
         else:
             errors += 1
 

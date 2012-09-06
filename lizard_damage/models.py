@@ -183,9 +183,7 @@ class DamageEvent(models.Model):
     @property
     def result_display(self):
         """display name of result"""
-        return '%s (%s)' % (
-            os.path.basename(self.result.name),
-            friendly_filesize(self.result.size))
+        return 'zipfile (%s)' % friendly_filesize(self.result.size)
 
     def save(self, *args, **kwargs):
         if not self.slug:

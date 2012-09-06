@@ -212,15 +212,18 @@ def calc_damage_for_waterlevel(
         )
         zip_result.append(asc_result)
 
-        # Generate image. First in .tif, then convert it to .jpg
+        # Generate image. First in .tif, then convert it to .png
         image_result = {
-            'filename': tempfile.mktemp(),
+            'filename_tiff': tempfile.mktemp(),
+            'filename_png': tempfile.mktemp(),
             'dstname': 'schade_%s_' + ahn_name + '.tiff',
             'extent': ahn_index.extent_wgs84}  # %s is for the damage_event.slug
         write_image(
-            name=image_result['filename'],
+            name=image_result['filename_tiff'],
             values=result
             )
+        img = Image.open(image_result['filename_tiff'])
+        img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
 
         csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
