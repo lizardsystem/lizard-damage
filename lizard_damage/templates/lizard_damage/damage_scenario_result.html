@@ -24,7 +24,7 @@
 
 <ul>
   {% for event in view.damage_scenario.damageevent_set.all %}
-  <li>Gebeurtenis {{ event }} <a href="{{ event.result.url }}">{{ event.result_display }}</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a></li>
+  <li>Gebeurtenis {{ event }} <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a></li>
   {% empty %}
   <li>Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
   {% endfor %}

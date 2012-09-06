@@ -69,6 +69,14 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
         return 'Schademodule resultatenpagina %s' % str(self.damage_scenario)
 
     @property
+    def root_url(self):
+        try:
+            root_url = 'http://%s' % Site.objects.all()[0].domain
+        except:
+            root_url = 'http://damage.lizard.net'
+        return root_url
+
+    @property
     def damage_scenario(self):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])
 
