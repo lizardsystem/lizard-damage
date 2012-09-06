@@ -27,7 +27,7 @@
 {% for event in view.damage_scenario.damageevent_set.all %}
 <h3>Gebeurtenis {{ event }}</h3>
 <div>
-<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>
+<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>{% if user.is_authenticated %}&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>{% endif %}
 {% with event.parsed_table as event_table %}
 <table class="table table-striped">
   <thead>
@@ -53,9 +53,5 @@
 Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.
 {% endfor %}
 </div>
-
-<font color="#aaaaaa">
-KML bestanden kunnen bekeken worden met Google Earth door het bestand te downloaden en vervolgens te openen in Google Earth.
-</font>
 </div>
 {% endblock %}
