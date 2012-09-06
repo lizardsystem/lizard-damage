@@ -1,5 +1,4 @@
 from django import template
-import math
 
 register = template.Library()
 
@@ -22,4 +21,8 @@ def haformat(value):
     """
     Hectare format, do not mix up with the "Jack Ha" Format.
     """
-    return '%0.0f ha' % math.ceil(value)
+    if value > 1:
+        return '%0.0f ha' % value
+    if value == 0.0:
+        return '0 ha'
+    return '%0.1f ha' % value
