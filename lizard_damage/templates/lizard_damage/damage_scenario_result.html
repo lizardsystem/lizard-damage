@@ -40,8 +40,8 @@
       <td>{{ data_row.source }}</td>
       <td>{{ data_row.code }}</td>
       <td>{{ data_row.description }}</td>
-      <td>{{ data_row.area_ha }}</td>
-      <td>{{ data_row.damage }}</td>
+      <td>{{ data_row.area_ha|floatformat }}</td>
+      <td>{{ data_row.damage|floatformat }}</td>
     </tr>
     {% endfor %}
   </tbody>
