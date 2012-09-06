@@ -38,7 +38,7 @@
   <tbody>
     {% for data_row in event_table.1 %}
     <tr>
-      <td title="{{ data_row.source }} - {{ data_row.code }}">
+      <td title="{{ data_row.description }} ({{ data_row.source }} - {{ data_row.code }})">
       {{ data_row.description }}
       </td>
       <td title="{{ data_row.area_ha|floatformat }}">
