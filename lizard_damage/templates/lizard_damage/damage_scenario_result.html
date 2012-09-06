@@ -31,18 +31,22 @@
 {% with event.parsed_table as event_table %}
 <table class="table table-striped">
   <thead>
-    {% for head_element in event_table.0 %}
-    <th>{{ head_element.display }}</th>
-    {% endfor %}
+    <th>Categorie</th>
+    <th>Oppervlakte met schade</th>
+    <th>Schade</th>
   </thead>
   <tbody>
     {% for data_row in event_table.1 %}
     <tr>
-      <td>{{ data_row.source }}</td>
-      <td>{{ data_row.code }}</td>
-      <td>{{ data_row.description }}</td>
-      <td>{{ data_row.area_ha|floatformat }}</td>
-      <td>{% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}</td>
+      <td title="{{ data_row.source }} - {{ data_row.code }}">
+      {{ data_row.description }}
+      </td>
+      <td title="{{ data_row.area_ha|floatformat }}">
+      {% autoescape off %}{{ data_row.area_ha|haformat }}{% endautoescape %}
+      </td>
+      <td title="{{ data_row.damage|floatformat }}">
+      {% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
