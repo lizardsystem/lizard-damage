@@ -87,6 +87,9 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     msg.attach_alternative(template_html.render(context), 'text/html')
     msg.send()
 
+    damage_scenario.status = damage_scenario.SCENARIO_STATUS_SENT
+    damage_scenario.save()
+
     logger.info("e-mail has been successfully sent")
 
 
@@ -104,6 +107,9 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
     logger.info("calculating...")
 
     logger.info("scenario %s" % (damage_scenario.name))
+    damage_scenario.status = damage_scenario.SCENARIO_STATUS_INPROGRESS
+    damage_scenario.save()
+
     errors = 0
     for damage_event in damage_scenario.damageevent_set.all():
         # ds_wl_filename = os.path.join(
@@ -161,6 +167,9 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                 os.remove(img['filename_png'])
         else:
             errors += 1
+
+    damage_scenario.status = damage_scenario.SCENARIO_STATUS_DONE
+    damage_scenario.save()
 
     if errors == 0:
         logger.info("creating email task")

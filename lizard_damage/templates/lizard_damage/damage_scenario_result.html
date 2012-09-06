@@ -2,7 +2,20 @@
 
 {% block sidebar %}
 <div>
-Info {{ view.damage_scenario }}
+  Info scenario
+  <dl>
+    <dt>Naam</dt>
+    <dd>{{ view.damage_scenario.name }}</dd>
+
+    <dt>Aangemaakt op</dt>
+    <dd>{{ view.damage_scenario.datetime_created }}</dd>
+
+    <dt>Status</dt>
+    <dd>{{ view.damage_scenario.display_status }}</dd>
+
+    <dt>Aantal gebeurtenissen</dt>
+    <dd>{{ view.damage_scenario.damageevent_set.count }}</dd>
+  </dl>
 </div>
 {% endblock %}
 
@@ -13,7 +26,7 @@ Info {{ view.damage_scenario }}
   {% for event in view.damage_scenario.damageevent_set.all %}
   <li>Gebeurtenis {{ event }} <a href="{{ event.result.url }}">{{ event.result_display }}</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a></li>
   {% empty %}
-  <li>Er zijn geen events verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
+  <li>Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
   {% endfor %}
 </ul>
 {% endblock %}

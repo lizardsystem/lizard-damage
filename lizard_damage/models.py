@@ -113,6 +113,8 @@ class DamageScenario(models.Model):
         (SCENARIO_STATUS_CLEANED, 'Opgeschoond'),
     )
 
+    SCENARIO_STATUS_DICT = dict(SCENARIO_STATUS_CHOICES)
+
     status = models.IntegerField(
         choices=SCENARIO_STATUS_CHOICES,
         default=SCENARIO_STATUS_RECEIVED,
@@ -134,6 +136,10 @@ class DamageScenario(models.Model):
         if not self.slug:
             self.slug = ''.join(random.sample(string.letters, 20))
         return super(DamageScenario, self).save(*args, **kwargs)
+
+    @property
+    def display_status(self):
+        return self.SCENARIO_STATUS_DICT.get(self.status, 'Onbekend')
 
 
 class DamageEvent(models.Model):
