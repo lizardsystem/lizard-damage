@@ -213,20 +213,8 @@ class DamageEventResult(models.Model):
     def __unicode__(self):
         return '%s - %s' % (self.damage_event, self.image)
 
-    # def north(self):
-    #     return 37.91904192681665
-
-    # def south(self):
-    #     return 37.46543388598137
-
-    # def east(self):
-    #     return 15.35832653742206
-
-    # def west(self):
-    #     return 14.60128369746704
-
     def rotation(self):
-        return -0.1556640799496235
+        return 0.0
 
     """
      with open('/tmp/test', 'rb') as testfile:
