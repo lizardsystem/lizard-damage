@@ -166,7 +166,7 @@ class DamageEvent(models.Model):
     scenario = models.ForeignKey(DamageScenario)
     slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     floodtime = models.FloatField(help_text='How long was it flooded, in seconds')
-    repairtime = models.FloatField(help_text='In seconds')
+    repairtime = models.FloatField(help_text='In seconds', null=True, blank=True, default=None)
     waterlevel = models.FileField(upload_to='scenario/waterlevel')
     # flooddate = models.DateTimeField()
     floodmonth = models.IntegerField(default=9)

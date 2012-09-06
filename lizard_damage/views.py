@@ -39,15 +39,18 @@ class Wizard(SessionWizardView):
         #import ipdb; ipdb.set_trace()
         #do_something_with_the_form_data(form_list)
 
-        # TODO: validate that everything is correct
-        #print self.file_storage
         all_form_data = self.get_all_cleaned_data()
         damage_scenario = DamageScenario(
             name=all_form_data['name'], email=all_form_data['email'])
         damage_scenario.save()
+        if all_form_data['repairtime'] is not None:
+            repairtime = all_form_data['repairtime'] * 3600
+        else:
+            print all_form_data['repairtime']
+            repairtime = None
         damage_scenario.damageevent_set.create(
             floodtime=all_form_data['floodtime'] * 3600,
-            repairtime=all_form_data['repairtime'] * 3600,
+            repairtime=repairtime,
             waterlevel=all_form_data['waterlevel'],
             floodmonth=all_form_data['floodmonth'])
 

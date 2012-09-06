@@ -33,12 +33,12 @@ urlpatterns = patterns(
             forms.Form3,
         ], initial_dict={
                 '0': {
-                    'name': 'Jack',
+                    'name': 'Nieuw scenario',
                     'email': 'jack.ha@nelen-schuurmans.nl',
                     },
                 '1': {
                     'floodtime': 1,
-                    'repairtime': 1,
+                    'repairtime': None,
                     'flooddate': 9,
                     }}),
         name='lizard_damage_form'

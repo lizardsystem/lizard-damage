@@ -121,6 +121,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
         logger.info(" - month %s, floodtime %s, repairtime %s" % (
                 damage_event.floodmonth, damage_event.floodtime, damage_event.repairtime))
+        #if damage_event.damage_table
         dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
         result = calc.calc_damage_for_waterlevel(
             ds_wl_filename=ds_wl_filename,
