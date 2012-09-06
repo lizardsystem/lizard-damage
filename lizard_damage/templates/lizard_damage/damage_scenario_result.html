@@ -29,6 +29,21 @@
 <h3>Gebeurtenis {{ event }}</h3>
 <div>
 <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>{% if user.is_authenticated %}&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>{% endif %}
+
+<dl>
+  <dt>Duur overlast</dt>
+  <dd>{{ event.floodtime|hoursformat }}</dd>
+
+  <dt>Hersteltijd</dt>
+  <dd>{{ event.repairtime|hoursformat }}</dd>
+
+  <dt>Maand gebeurtenis</dt>
+  <dd>{{ event.floodmonth|monthformat }}</dd>
+
+  <dt>Waterstand</dt>
+  <dd>{{ event.waterlevel }}</dd>
+</dl>
+
 {% with event.parsed_table as event_table %}
 <table class="table table-striped">
   <thead>
