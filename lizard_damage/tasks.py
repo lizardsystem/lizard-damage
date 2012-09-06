@@ -18,6 +18,7 @@ import logging
 import os
 import random
 import string
+import json
 
 
 def damage_scenario_to_task(damage_scenario, username="admin"):
@@ -146,12 +147,16 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     errors += 1
             os.remove(result[0])  # remove temp file, whether it was saved or not
 
+            # result[2] is the table in a data structure
+            damage_event.table = json.dumps(result[2])
+            damage_event.save()
+
+            # result[1] is a list of png files to be uploaded to the django db.
             if damage_event.damageeventresult_set.count() >= 0:
                 logger.warning("Removing old images...")
                 for damage_event_result in damage_event.damageeventresult_set.all():
                     damage_event_result.image.delete()
                     damage_event_result.delete()
-            # result[1] is a list of jpg files to be uploaded to the django db.
             for img in result[1]:
                 damage_event_result = DamageEventResult(
                     damage_event=damage_event,

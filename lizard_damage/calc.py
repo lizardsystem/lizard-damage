@@ -107,16 +107,39 @@ def write_table(name, damage, area, dt):
                 )
             )
 
+def result_as_dict(name, damage, area, damage_table):
+    """
+    return data structure of result which can be stored and looped
+    """
+    data = []
+    head = [{'display': 'bron', 'key': 'source'},
+            {'display': 'code', 'key': 'code'},
+            {'display': 'omschrijving', 'key': 'description'},
+            {'display': 'oppervlakte met schade [ha]', 'key': 'area_ha'},
+            {'display': 'schade', 'key': 'damage'}]
+    for code, dr in damage_table.data.items():
+        data.append({
+                'source': dr.source,
+                'code': dr.code,
+                'description': dr.description,
+                'area_ha': area[dr.code] / 10000.,
+                'damage': damage[dr.code],
+                })
+    return (head, data)
+
 def write_image(name, values):
     """
     Create jpg image from values.
 
     Values is a 2d numpy array
     """
-    raster_r = values
-    raster_g = values
-    raster_b = values
-    raster_a = values*100
+    raster_r = values*3
+    raster_g = values*0.5
+    raster_b = values*0.5
+    raster_a = values*3
+
+    #max is 87.5 for demo set.
+    #print("max %r min %r" % (numpy.max(values), numpy.min(values)))
 
     format = "GTiff"
 
@@ -220,8 +243,7 @@ def calc_damage_for_waterlevel(
             'extent': ahn_index.extent_wgs84}  # %s is for the damage_event.slug
         write_image(
             name=image_result['filename_tiff'],
-            values=result
-            )
+            values=result)
         img = Image.open(image_result['filename_tiff'])
         img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
@@ -256,8 +278,14 @@ def calc_damage_for_waterlevel(
         name=csv_result['filename'],
         damage=overall_damage,
         area=overall_area,
-        dt=dt,
-    )
+        dt=dt
+        )
+    result_table = result_as_dict(
+        name=csv_result['filename'],
+        damage=overall_damage,
+        area=overall_area,
+        damage_table=dt
+        )
     zip_result.append(csv_result)
 
     # Now zip all files listed in zip_result
@@ -274,4 +302,4 @@ def calc_damage_for_waterlevel(
     for file_in_zip in zip_result:
         os.remove(file_in_zip['filename'])
 
-    return output_zipfile, img_result
+    return output_zipfile, img_result, result_table

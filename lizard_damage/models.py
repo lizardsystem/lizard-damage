@@ -12,6 +12,7 @@ from lizard_map import coordinates
 import os
 import random
 import string
+import json
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -174,7 +175,7 @@ class DamageEvent(models.Model):
     # repetitiontime = models.FloatField(help_text='In years')
 
     # Result
-    table = models.TextField(null=True, blank=True)
+    table = models.TextField(null=True, blank=True, help_text='in json format')
     result = models.FileField(
         upload_to='scenario/result',
         null=True, blank=True,
@@ -195,6 +196,10 @@ class DamageEvent(models.Model):
         if not self.slug:
             self.slug = ''.join(random.sample(string.letters, 20))
         return super(DamageEvent, self).save(*args, **kwargs)
+
+    @property
+    def parsed_table(self):
+        return json.loads(self.table)
 
 
 class DamageEventResult(models.Model):

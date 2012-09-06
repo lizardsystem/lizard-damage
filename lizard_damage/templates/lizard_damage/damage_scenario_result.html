@@ -20,13 +20,41 @@
 {% endblock %}
 
 {% block content %}
-<h3>Resultaten berekening {{ view.damage_scenario }}</h3>
+<div class="textual-content">
+<h2>Resultaten berekening {{ view.damage_scenario }}</h2>
 
-<ul>
-  {% for event in view.damage_scenario.damageevent_set.all %}
-  <li>Gebeurtenis {{ event }} <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a></li>
-  {% empty %}
-  <li>Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.</li>
-  {% endfor %}
-</ul>
+{% for event in view.damage_scenario.damageevent_set.all %}
+<h3>Gebeurtenis {{ event }}</h3>
+<div>
+<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>
+{% with event.parsed_table as event_table %}
+<table>
+  <thead>
+    {% for head_element in event_table.0 %}
+    <th>{{ head_element.display }}</th>
+    {% endfor %}
+  </thead>
+  <tbody>
+    {% for data_row in event_table.1 %}
+    <tr>
+      <td>{{ data_row.source }}</td>
+      <td>{{ data_row.code }}</td>
+      <td>{{ data_row.description }}</td>
+      <td>{{ data_row.area_ha }}</td>
+      <td>{{ data_row.damage }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endwith %}
+
+{% empty %}
+Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.
+{% endfor %}
+</div>
+
+<font color="#aaaaaa">
+KML bestanden kunnen bekeken worden met Google Earth door het bestand te downloaden en vervolgens te openen in Google Earth.
+</font>
+</div>
 {% endblock %}
