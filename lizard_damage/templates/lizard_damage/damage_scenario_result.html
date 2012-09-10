@@ -45,6 +45,10 @@
 
   <dt>Waterstand</dt>
   <dd>{{ event.waterlevel }}</dd>
+
+  <dt>Schadetabel</dt>
+  <dd>{% firstof view.damage_scenario.damagetable 'standaard' %}</dd>
+
 </dl>
 
 {% with event.parsed_table as event_table %}

@@ -193,7 +193,8 @@ def calc_damage_for_waterlevel(
     img_result = []
 
     ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
-    logger.info('data source water level: %s' % ds_wl_original)
+    logger.info('water level: %s' % ds_wl_filename)
+    logger.info('damage table: %s' % dt_path)
     if ds_wl_original is None:
         logger.error('data source is not available, please check folder %s' % ds_wl_filename)
         return

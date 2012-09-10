@@ -70,6 +70,7 @@ class Form3(forms.Form):
         )
 
     waterlevel = forms.FileField(label="Ascii bestand maximale waterstand", required=True)
+    damagetable = forms.FileField(label="Schadetabel", required=False)
     floodtime = forms.FloatField(label="Duur overlast (uur)", help_text="")
     repairtime_roads = forms.ChoiceField(
         label="Hersteltijd wegen", help_text="", required=True,

@@ -123,15 +123,20 @@ class DamageScenario(models.Model):
     name = models.CharField(max_length=64)
     slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
-    # token = models.CharField(max_length=32)
 
     datetime_created = models.DateTimeField(auto_now=True)
+
+    damagetable = models.FileField(
+        upload_to='scenario/damage_table',
+        null=True, blank=True,
+        help_text='Optionele schadetabel, indien niet ingevuld wordt de default gebruikt'
+        )
 
     def __unicode__(self):
         return self.name
 
-    def process(self):
-        pass
+    # def process(self):
+    #     pass
 
     def save(self, *args, **kwargs):
         if not self.slug:

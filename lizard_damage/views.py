@@ -56,6 +56,8 @@ class Wizard(SessionWizardView):
         all_form_data = self.get_all_cleaned_data()
         damage_scenario = DamageScenario(
             name=all_form_data['name'], email=all_form_data['email'])
+        if all_form_data['damagetable']:
+            damage_scenario.damagetable=all_form_data['damagetable']
         damage_scenario.save()
         repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
         repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
