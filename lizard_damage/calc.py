@@ -35,6 +35,7 @@ def calculate(use, depth,
     of flooding, flood time and repair time.
     """
     result = numpy.ma.zeros(depth.shape)
+    result_indirect = numpy.ma.zeros(depth.shape)
     result.mask = depth.mask
 
     count = {}
@@ -55,6 +56,12 @@ def calculate(use, depth,
             dr.to_gamma_depth(depth[index]) *
             dr.to_gamma_floodtime(floodtime) *
             dr.to_gamma_month(month)
+        )
+
+        result_indirect[index] = (
+            area_per_pixel *
+            dr.to_indirect_damage('max') *
+            dr.to_gamma_repairtime(dr.header.get_default_repairtime())
         )
 
         # New numpy
