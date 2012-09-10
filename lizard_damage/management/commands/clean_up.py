@@ -10,6 +10,7 @@ from __future__ import (
 from django.core.management.base import BaseCommand, CommandError
 
 from lizard_damage import models
+from lizard_task.models import SecuredPeriodicTask
 
 import logging
 import datetime
@@ -23,13 +24,16 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        logger.info("Cleaning up scenarios older than one week...")
-        expiration_date = datetime.datetime.now() - datetime.timedelta(days=7)
+        logger.info("Cleaning up scenarios which are expired...")
+        now = datetime.datetime.now()
         for damage_scenario in models.DamageScenario.objects.filter(
-            datetime_created__lte=expiration_date):
+            expiration_date__lte=now):
 
-            logger.info("Deleting scenario %d (%s), events and results..." % (
+            logger.info("Deleting scenario %d (%s), tasks, events and results..." % (
                     damage_scenario.id, str(damage_scenario)))
+
+            SecuredPeriodicTask.objects.filter(
+                name__contains='scenario %d' % damage_scenario.id).delete()
 
             for damage_event in damage_scenario.damageevent_set.all():
                 for damage_event_result in damage_event.damageeventresult_set.all():
