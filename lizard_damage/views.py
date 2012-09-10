@@ -55,7 +55,8 @@ class Wizard(SessionWizardView):
 
         all_form_data = self.get_all_cleaned_data()
         damage_scenario = DamageScenario(
-            name=all_form_data['name'], email=all_form_data['email'])
+            name=all_form_data['name'], email=all_form_data['email'],
+            calc_type=all_form_data['calc_type'])
         if all_form_data['damagetable']:
             damage_scenario.damagetable=all_form_data['damagetable']
         damage_scenario.save()

@@ -116,6 +116,16 @@ class DamageScenario(models.Model):
 
     SCENARIO_STATUS_DICT = dict(SCENARIO_STATUS_CHOICES)
 
+    CALC_TYPE_MIN = 1
+    CALC_TYPE_MAX = 2
+    CALC_TYPE_AVG = 3
+
+    CALC_TYPE_CHOICES = (
+        (CALC_TYPE_MIN, 'Minimale schadebedragen en schadefuncties'),
+        (CALC_TYPE_MAX, 'Maximale schadebedragen en schadefuncties'),
+        (CALC_TYPE_AVG, 'Gemiddelde schadebedragen en schadefuncties'),
+        )
+
     status = models.IntegerField(
         choices=SCENARIO_STATUS_CHOICES,
         default=SCENARIO_STATUS_RECEIVED,
@@ -131,6 +141,9 @@ class DamageScenario(models.Model):
         null=True, blank=True,
         help_text='Optionele schadetabel, indien niet ingevuld wordt de default gebruikt'
         )
+
+    calc_type = models.IntegerField(
+        choices=CALC_TYPE_CHOICES, default=CALC_TYPE_MAX)
 
     def __unicode__(self):
         return self.name
