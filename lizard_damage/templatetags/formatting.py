@@ -39,7 +39,7 @@ def hoursformat(value):
 @register.filter
 def daysformat(value):
     if value:
-        return '%0.f uur' % (value / 3600.0 / 24.0)
+        return '%0.f dag(en)' % (value / 3600.0 / 24.0)
     else:
         return '-'
 
