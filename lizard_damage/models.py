@@ -116,6 +116,16 @@ class DamageScenario(models.Model):
 
     SCENARIO_STATUS_DICT = dict(SCENARIO_STATUS_CHOICES)
 
+    CALC_TYPE_MIN = 1
+    CALC_TYPE_MAX = 2
+    CALC_TYPE_AVG = 3
+
+    CALC_TYPE_CHOICES = (
+        (CALC_TYPE_MIN, 'Minimale schadebedragen en schadefuncties'),
+        (CALC_TYPE_MAX, 'Maximale schadebedragen en schadefuncties'),
+        (CALC_TYPE_AVG, 'Gemiddelde schadebedragen en schadefuncties'),
+        )
+
     status = models.IntegerField(
         choices=SCENARIO_STATUS_CHOICES,
         default=SCENARIO_STATUS_RECEIVED,
@@ -123,15 +133,23 @@ class DamageScenario(models.Model):
     name = models.CharField(max_length=64)
     slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
-    # token = models.CharField(max_length=32)
 
     datetime_created = models.DateTimeField(auto_now=True)
+
+    damagetable = models.FileField(
+        upload_to='scenario/damage_table',
+        null=True, blank=True,
+        help_text='Optionele schadetabel, indien niet ingevuld wordt de default gebruikt'
+        )
+
+    calc_type = models.IntegerField(
+        choices=CALC_TYPE_CHOICES, default=CALC_TYPE_MAX)
 
     def __unicode__(self):
         return self.name
 
-    def process(self):
-        pass
+    # def process(self):
+    #     pass
 
     def save(self, *args, **kwargs):
         if not self.slug:

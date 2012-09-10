@@ -37,6 +37,14 @@ def hoursformat(value):
 
 
 @register.filter
+def daysformat(value):
+    if value:
+        return '%0.f dag(en)' % (value / 3600.0 / 24.0)
+    else:
+        return '-'
+
+
+@register.filter
 def monthformat(value):
     month_dict = {
         1: 'januari',

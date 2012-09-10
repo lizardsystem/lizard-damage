@@ -11,6 +11,7 @@ from django import forms
 from django.utils.safestring import SafeUnicode
 from xml.etree import ElementTree
 import logging
+from lizard_damage.models import DamageScenario
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,7 @@ class Form3(forms.Form):
         )
 
     waterlevel = forms.FileField(label="Ascii bestand maximale waterstand", required=True)
+    damagetable = forms.FileField(label="Optioneel: eigen schadetabel", required=False)
     floodtime = forms.FloatField(label="Duur overlast (uur)", help_text="")
     repairtime_roads = forms.ChoiceField(
         label="Hersteltijd wegen", help_text="", required=True,
@@ -79,6 +81,10 @@ class Form3(forms.Form):
         label="Hersteltijd bebouwing", help_text="", required=True,
         choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen"))
         )
-    floodmonth = forms.ChoiceField(label="Wat is de maand van de gebeurtenis?",
-                                  choices=MONTH_CHOICES)
-    #damage_table = forms.FileField(label="Optioneel: eigen schadetabel", required=False)
+    floodmonth = forms.ChoiceField(
+        label="Wat is de maand van de gebeurtenis?",
+        choices=MONTH_CHOICES)
+    calc_type = forms.ChoiceField(
+        label="Gemiddelde, minimale of maximale schadebedragen en schadefuncties",
+        choices=DamageScenario.CALC_TYPE_CHOICES,
+        initial=DamageScenario.CALC_TYPE_MAX)
