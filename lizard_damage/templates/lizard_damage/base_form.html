@@ -23,6 +23,7 @@
 {% endblock css %}
 
 {% block content %}
+<h3>{% firstof wizard.form.display_title '' %}</h3>
 <p>Stap {{ wizard.steps.step1 }} van {{ wizard.steps.count }}</p>
 <form action="#" method="post" enctype="multipart/form-data">{% csrf_token %}
 <table>
@@ -40,6 +41,6 @@
 <!-- <button class="btn" name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">{% trans "first step" %}</button> -->
 <!-- <button class="btn" name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">{% trans "prev step" %}</button> -->
 {% endif %}
-<input class="btn btn-primary" type="submit" value="{% trans "submit" %}"/>
+<input class="btn btn-primary" type="submit" value="verder"/>
 </form>
 {% endblock %}

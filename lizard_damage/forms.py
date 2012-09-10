@@ -25,11 +25,15 @@ CALCULATION_TYPES = (
         'waterstand van meerdere gebeurtenissen'),
 )
 
+CALCULATION_TYPES_DICT = dict(CALCULATION_TYPES)
 
-class Form1(forms.Form):
+
+class FormStep0(forms.Form):
     """
     Name and e-mail
     """
+    display_title = 'Lizard Schademodule'
+
     name = forms.CharField(
         max_length=100,
         label='Hoe wilt u het scenario noemen?',
@@ -38,11 +42,6 @@ class Form1(forms.Form):
         label='Emailadres',
     )
 
-
-class Form2(forms.Form):
-    """
-    Type of calculation
-    """
     calculation_type = forms.ChoiceField(
         label='Kies het type gegevens waarmee u '
               'een schadeberekening wilt uitvoeren',
@@ -51,10 +50,12 @@ class Form2(forms.Form):
     )
 
 
-class Form3(forms.Form):
+class FormStep1(forms.Form):
     """
     Scenario info (based on 1 kaart, 1 gebeurtenis)
     """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[0]
+
     MONTH_CHOICES = (
         (1, 'januari'),
         (2, 'februari'),
@@ -88,3 +89,51 @@ class Form3(forms.Form):
         label="Gemiddelde, minimale of maximale schadebedragen en schadefuncties",
         choices=DamageScenario.CALC_TYPE_CHOICES,
         initial=DamageScenario.CALC_TYPE_MAX)
+
+
+class FormStep2(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[1]
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+
+
+class FormStep3(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[2]
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+
+
+class FormStep4(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[3]
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+
+
+class FormStep5(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[4]
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+
+
+class FormStep6(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[5]
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+
+
+class FormStep7(forms.Form):
+    """
+    """
+    display_title = 'Controle invoer'
+
+    zipfile = forms.FileField(label="Zipbestand scenario", required=True)

@@ -22,9 +22,15 @@ urlpatterns = patterns(
     url(
         r'^$',
         views.Wizard.as_view(
-            [forms.Form1,
-             #forms.Form2,
-             forms.Form3],
+            [forms.FormStep0,
+             forms.FormStep1,
+             forms.FormStep2,
+             forms.FormStep3,
+             forms.FormStep4,
+             forms.FormStep5,
+             forms.FormStep6,
+             forms.FormStep7,
+             ],
             initial_dict={
                 '0': {
                     'name': 'Nieuw scenario',
@@ -32,13 +38,18 @@ urlpatterns = patterns(
                     },
                 '1': {
                     'floodtime': 1,
-                    'repairtime': None,
                     'flooddate': 9,
                     }
                 },
             condition_dict={
-                '0': views.show_form_condition,
-                '1': views.show_form_condition,
+                # '0': views.show_form_condition,
+                '1': views.show_form_condition(0),  # Step 1, enable for calc_type 0
+                '2': views.show_form_condition(1),  # Step 2, enable for calc_type 1, etc
+                '3': views.show_form_condition(2),
+                '4': views.show_form_condition(3),
+                '5': views.show_form_condition(4),
+                '6': views.show_form_condition(5),
+                '7': views.show_form_condition(1),  # Check page
                 }
             ),
         name='lizard_damage_form'
