@@ -34,8 +34,11 @@
   <dt>Duur overlast</dt>
   <dd>{{ event.floodtime|hoursformat }}</dd>
 
-  <dt>Hersteltijd</dt>
-  <dd>{{ event.repairtime|hoursformat }}</dd>
+  <dt>Hersteltijd wegen</dt>
+  <dd>{{ event.repairtime_roads|daysformat }}</dd>
+
+  <dt>Hersteltijd bebouwing</dt>
+  <dd>{{ event.repairtime_buildings|daysformat }}</dd>
 
   <dt>Maand gebeurtenis</dt>
   <dd>{{ event.floodmonth|monthformat }}</dd>
