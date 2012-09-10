@@ -21,11 +21,11 @@ urlpatterns = patterns(
 
     url(
         r'^$',
-        views.Wizard.as_view([
-            forms.Form1,
-            #forms.Form2,
-            forms.Form3,
-        ], initial_dict={
+        views.Wizard.as_view(
+            [forms.Form1,
+             #forms.Form2,
+             forms.Form3],
+            initial_dict={
                 '0': {
                     'name': 'Nieuw scenario',
                     'email': 'jack.ha@nelen-schuurmans.nl',
@@ -34,7 +34,13 @@ urlpatterns = patterns(
                     'floodtime': 1,
                     'repairtime': None,
                     'flooddate': 9,
-                    }}),
+                    }
+                },
+            condition_dict={
+                '0': views.show_form_condition,
+                '1': views.show_form_condition,
+                }
+            ),
         name='lizard_damage_form'
     ),
     url(

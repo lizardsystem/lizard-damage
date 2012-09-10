@@ -83,6 +83,7 @@ def write_result(name, ma_result, ds_template):
         ds=ds_result,
     )
 
+
 def write_table(name, damage, area, dt):
     with open(name, 'w') as resultfile:
         resultfile.write(
@@ -107,6 +108,7 @@ def write_table(name, damage, area, dt):
                 )
             )
 
+
 def result_as_dict(name, damage, area, damage_table):
     """
     return data structure of result which can be stored and looped
@@ -126,6 +128,7 @@ def result_as_dict(name, damage, area, damage_table):
                 'damage': damage[dr.code],
                 })
     return (head, data)
+
 
 def write_image(name, values):
     """

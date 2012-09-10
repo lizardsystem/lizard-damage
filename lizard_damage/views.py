@@ -28,6 +28,16 @@ temp_storage = FileSystemStorage(location=temp_storage_location)
 from django.http import HttpResponseRedirect
 from django.contrib.formtools.wizard.views import SessionWizardView
 
+
+def show_form_condition(wizard):
+    """Determine for a specific wizard step if it should be shown."""
+    # # try to get the cleaned data of step 1
+    # cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
+    # # check if the field ``leave_message`` was checked.
+    # return cleaned_data.get('leave_message', True)
+    return True
+
+
 class Wizard(SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     file_storage = temp_storage
@@ -92,7 +102,6 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
     @property
     def damage_event(self):
-        print 'hoi'
         return get_object_or_404(DamageEvent, slug=self.kwargs['slug'])
 
     @property
