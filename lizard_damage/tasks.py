@@ -119,8 +119,8 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         ds_wl_filename = damage_event.waterlevel.path
         logger.info("event %s" % (damage_event))
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
-        logger.info(" - month %s, floodtime %s, repairtime %s" % (
-                damage_event.floodmonth, damage_event.floodtime, damage_event.repairtime))
+        logger.info(" - month %s, floodtime %s" % (
+                damage_event.floodmonth, damage_event.floodtime))
         #if damage_event.damage_table
         dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
         result = calc.calc_damage_for_waterlevel(
@@ -128,7 +128,8 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             dt_path=dt_path,
             month=damage_event.floodmonth,
             floodtime=damage_event.floodtime,
-            repairtime=damage_event.repairtime,
+            repairtime_roads=damage_event.repairtime_roads,
+            repairtime_buildings=damage_event.repairtime_buildings,
             logger=logger)
         if result:
             # result[0] is the result zip file name in temp dir.

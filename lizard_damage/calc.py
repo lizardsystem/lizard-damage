@@ -24,7 +24,10 @@ logger = logging.getLogger(__name__)
 
 def calculate(use, depth,
               area_per_pixel, table,
-              month, floodtime, repairtime, logger=logger):
+              month, floodtime,
+              repairtime_roads,
+              repairtime_buildings,
+              logger=logger):
     """
     Calculate damage for an area.
 
@@ -170,7 +173,9 @@ def write_image(name, values):
 def calc_damage_for_waterlevel(
     ds_wl_filename,
     dt_path=None,
-    month=9, floodtime=20*3600, repairtime=None, logger=logger):
+    month=9, floodtime=20*3600,
+    repairtime_roads=None, repairtime_buildings=None,
+    logger=logger):
     """
     Calculate damage for provided waterlevel file.
 
@@ -225,7 +230,9 @@ def calc_damage_for_waterlevel(
             use=lgn, depth=depth,
             area_per_pixel=area_per_pixel,
             table=dt, month=month,
-            floodtime=floodtime, repairtime=repairtime,
+            floodtime=floodtime,
+            repairtime_roads=repairtime_roads,
+            repairtime_buildings=repairtime_buildings,
             logger=logger
         )
         #print(result.sum())

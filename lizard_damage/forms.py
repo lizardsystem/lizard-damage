@@ -71,7 +71,14 @@ class Form3(forms.Form):
 
     waterlevel = forms.FileField(label="Ascii bestand maximale waterstand", required=True)
     floodtime = forms.FloatField(label="Duur overlast (uur)", help_text="")
-    repairtime = forms.FloatField(label="Hersteltijd (uur)", help_text="", required=False)
+    repairtime_roads = forms.ChoiceField(
+        label="Hersteltijd wegen", help_text="", required=True,
+        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen"))
+        )
+    repairtime_buildings = forms.ChoiceField(
+        label="Hersteltijd bebouwing", help_text="", required=True,
+        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen"))
+        )
     floodmonth = forms.ChoiceField(label="Wat is de maand van de gebeurtenis?",
                                   choices=MONTH_CHOICES)
     #damage_table = forms.FileField(label="Optioneel: eigen schadetabel", required=False)

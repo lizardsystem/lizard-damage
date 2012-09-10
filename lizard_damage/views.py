@@ -57,13 +57,12 @@ class Wizard(SessionWizardView):
         damage_scenario = DamageScenario(
             name=all_form_data['name'], email=all_form_data['email'])
         damage_scenario.save()
-        if all_form_data['repairtime'] is not None:
-            repairtime = all_form_data['repairtime'] * 3600
-        else:
-            repairtime = None
+        repairtime_roads = all_form_data['repairtime_roads'] * 3600 * 24
+        repairtime_buildings = all_form_data['repairtime_roads'] * 3600 * 24
         damage_scenario.damageevent_set.create(
             floodtime=all_form_data['floodtime'] * 3600,
-            repairtime=repairtime,
+            repairtime_roads=repairtime_roads,
+            repairtime_buildings=repairtime_buildings,
             waterlevel=all_form_data['waterlevel'],
             floodmonth=all_form_data['floodmonth'])
 
