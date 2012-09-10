@@ -175,19 +175,29 @@ def calc_damage_for_waterlevel(
     dt_path=None,
     month=9, floodtime=20*3600,
     repairtime_roads=None, repairtime_buildings=None,
+    calc_type=2,  # 1: Min, 2: Max, 3: Avg
     logger=logger):
     """
     Calculate damage for provided waterlevel file.
 
     in:
+
     - waterlevel file (provided by user)
+
     - damage table (optionally provided by user, else default)
-    - AHN: models.AhnIndex refer to ahn tiles available on <settings.DATA_ROOT>/...
-    - month, floodtime (s), repairtime (s): provided by user, used by calc.calculate
+
+    - AHN: models.AhnIndex refer to ahn tiles available on
+      <settings.DATA_ROOT>/...
+
+    - month, floodtime (s), repairtime_roads/buildings (s): provided
+      by user, used by calc.calculate
 
     out:
+
     - per ahn tile an .asc and .csv (see write_result and write_table)
+
     - schade_totaal.csv (see write_table)
+
     """
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []

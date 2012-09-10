@@ -133,6 +133,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             floodtime=damage_event.floodtime,
             repairtime_roads=damage_event.repairtime_roads,
             repairtime_buildings=damage_event.repairtime_buildings,
+            calc_type=damage_scenario.calc_type,
             logger=logger)
         if result:
             # result[0] is the result zip file name in temp dir.
