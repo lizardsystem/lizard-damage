@@ -36,6 +36,10 @@ class Wizard(SessionWizardView):
     #     return form.files
 
     def done(self, form_list, **kwargs):
+        """
+        The Wizard is finished: create a new DamageScenario object and
+        launch the calculation task associated to it.
+        """
         #import ipdb; ipdb.set_trace()
         #do_something_with_the_form_data(form_list)
 
@@ -46,7 +50,6 @@ class Wizard(SessionWizardView):
         if all_form_data['repairtime'] is not None:
             repairtime = all_form_data['repairtime'] * 3600
         else:
-            print all_form_data['repairtime']
             repairtime = None
         damage_scenario.damageevent_set.create(
             floodtime=all_form_data['floodtime'] * 3600,
