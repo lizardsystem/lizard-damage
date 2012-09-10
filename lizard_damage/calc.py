@@ -17,6 +17,7 @@ import zipfile
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
+from lizard_damage import tools
 from osgeo import gdal
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,19 @@ def write_result(name, ma_result, ds_template):
     )
 
 
-def write_table(name, damage, area, dt):
+def write_table(name, damage, area, dt, meta=[]):
+    """
+    Write results in a csv table on disk.
+
+    Optionally provide meta in a list and they are on top.
+
+    i.e. [['name', 'amahoela'], ['description','moehaha']]
+    """
     with open(name, 'w') as resultfile:
+        # Some meta data
+        for l in meta:
+            resultfile.write('%s\r\n' % (','.join(l)))
+
         resultfile.write(
             '"%s","%s","%s","%s","%s"\r\n' %
             (
@@ -270,11 +282,23 @@ def calc_damage_for_waterlevel(
         img_result.append(image_result)
 
         csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
+        meta = [
+            ['schade module versie', tools.version()],
+            ['waterlevel', ds_wl_filename],
+            ['damage table', dt_path],
+            ['maand', str(month)],
+            ['duur overstroming (s)', str(floodtime)],
+            ['hersteltijd wegen (s)', str(repairtime_roads)],
+            ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+            ['berekening', {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+            ['ahn_name', ahn_name],
+            ]
         write_table(
             name=csv_result['filename'],
             damage=damage,
             area=area,
             dt=dt,
+            meta=meta,
         )
         zip_result.append(csv_result)
 
@@ -295,11 +319,22 @@ def calc_damage_for_waterlevel(
         del result
 
     csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv'}
+    meta = [
+        ['schade module versie', tools.version()],
+        ['waterlevel', ds_wl_filename],
+        ['damage table', dt_path],
+        ['maand', str(month)],
+        ['duur overstroming (s)', str(floodtime)],
+        ['hersteltijd wegen (s)', str(repairtime_roads)],
+        ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+        ['berekening', {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+        ]
     write_table(
         name=csv_result['filename'],
         damage=overall_damage,
         area=overall_area,
-        dt=dt
+        dt=dt,
+        meta=meta
         )
     result_table = result_as_dict(
         name=csv_result['filename'],

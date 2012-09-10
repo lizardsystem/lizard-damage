@@ -15,6 +15,7 @@ from lizard_damage import tasks
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
 from lizard_ui.views import ViewContextMixin
+from lizard_damage import tools
 
 import datetime
 import tempfile
@@ -85,6 +86,9 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
 
     def title(self):
         return 'Schademodule resultatenpagina %s' % str(self.damage_scenario)
+
+    def version(self):
+        return tools.version()
 
     @property
     def root_url(self):
