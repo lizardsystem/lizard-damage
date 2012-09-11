@@ -249,6 +249,7 @@ def write_image(name, values):
 
 
 def calc_damage_for_waterlevel(
+    repetition_time,
     ds_wl_filename,
     dt_path=None,
     month=9, floodtime=20*3600,
@@ -301,7 +302,7 @@ def calc_damage_for_waterlevel(
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
             ds_wl_original=ds_wl_original,
-            method='filesystem',
+            method='database',
         )
 
         # Prepare data for calculation
@@ -321,7 +322,10 @@ def calc_damage_for_waterlevel(
         )
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.asc'}
+        arcname = 'schade_{}'.format(ahn_name)
+        if repetition_time:
+            arcname += '_T%.1f' % repetition_time
+        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc'}
         write_result(
             name=asc_result['filename'],
             ma_result=result,
@@ -342,7 +346,7 @@ def calc_damage_for_waterlevel(
         img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
+        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv'}
         meta = [
             ['schade module versie', tools.version()],
             ['waterlevel', ds_wl_filename],
