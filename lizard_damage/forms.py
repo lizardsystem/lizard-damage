@@ -15,18 +15,9 @@ from lizard_damage.models import DamageScenario
 
 logger = logging.getLogger(__name__)
 
-CALCULATION_TYPES = (
-    (0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
-    (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
-    (2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
-    (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.'),
-    (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
-    (5, 'Tijdserie aan kaarten met per tijdstip de '
-        'waterstand van meerdere gebeurtenissen'),
-)
 
-CALCULATION_TYPES_DICT = dict(CALCULATION_TYPES)
-
+SCENARIO_TYPES = DamageScenario.SCENARIO_TYPES
+SCENARIO_TYPES_DICT = DamageScenario.SCENARIO_TYPES_DICT
 
 class FormStep0(forms.Form):
     """
@@ -42,10 +33,10 @@ class FormStep0(forms.Form):
         label='Emailadres',
     )
 
-    calculation_type = forms.ChoiceField(
+    scenario_type = forms.ChoiceField(
         label='Kies het type gegevens waarmee u '
               'een schadeberekening wilt uitvoeren',
-        choices = CALCULATION_TYPES,
+        choices = SCENARIO_TYPES,
         widget = forms.widgets.RadioSelect,
     )
 
@@ -54,7 +45,7 @@ class FormStep1(forms.Form):
     """
     Scenario info (based on 1 kaart, 1 gebeurtenis)
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[0]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[0]
 
     MONTH_CHOICES = (
         (1, 'januari'),
@@ -91,18 +82,18 @@ class FormStep1(forms.Form):
         initial=DamageScenario.CALC_TYPE_MAX)
 
 
-class FormStep2(forms.Form):
+class FormStep2(FormStep1):
     """
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[1]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[1]
+    repetition_time = forms.FloatField(label="Herhalingstijd (jaar)", help_text="")
 
-    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
 
 
 class FormStep3(forms.Form):
     """
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[2]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[2]
 
     zipfile = forms.FileField(label="Zipbestand scenario", required=True)
 
@@ -110,7 +101,7 @@ class FormStep3(forms.Form):
 class FormStep4(forms.Form):
     """
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[3]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[3]
 
     zipfile = forms.FileField(label="Zipbestand scenario", required=True)
 
@@ -118,7 +109,7 @@ class FormStep4(forms.Form):
 class FormStep5(forms.Form):
     """
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[4]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[4]
 
     zipfile = forms.FileField(label="Zipbestand scenario", required=True)
 
@@ -126,7 +117,7 @@ class FormStep5(forms.Form):
 class FormStep6(forms.Form):
     """
     """
-    display_title = 'Invoer voor "%s"' % CALCULATION_TYPES_DICT[5]
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[5]
 
     zipfile = forms.FileField(label="Zipbestand scenario", required=True)
 
