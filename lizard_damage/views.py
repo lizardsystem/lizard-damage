@@ -15,6 +15,7 @@ from lizard_damage import tasks
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
 from lizard_ui.views import ViewContextMixin
+from lizard_damage import tools
 
 import datetime
 import tempfile
@@ -29,13 +30,13 @@ from django.http import HttpResponseRedirect
 from django.contrib.formtools.wizard.views import SessionWizardView
 
 
-def show_form_condition(wizard):
+def show_form_condition(condition):
     """Determine for a specific wizard step if it should be shown."""
-    # # try to get the cleaned data of step 1
-    # cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-    # # check if the field ``leave_message`` was checked.
-    # return cleaned_data.get('leave_message', True)
-    return True
+    def show_form_fun(wizard):
+        cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
+        calc_type = int(cleaned_data.get('calculation_type', 0))
+        return calc_type == condition
+    return show_form_fun
 
 
 class Wizard(SessionWizardView):
@@ -85,6 +86,9 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
 
     def title(self):
         return 'Schademodule resultatenpagina %s' % str(self.damage_scenario)
+
+    def version(self):
+        return tools.version()
 
     @property
     def root_url(self):

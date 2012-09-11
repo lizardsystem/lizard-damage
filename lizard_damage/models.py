@@ -8,7 +8,9 @@ from __future__ import (
 )
 from django.contrib.gis.db import models
 from lizard_map import coordinates
+from lizard_task.models import SecuredPeriodicTask
 
+import datetime
 import os
 import random
 import string
@@ -157,6 +159,9 @@ class DamageScenario(models.Model):
     email = models.EmailField(max_length=128)
 
     datetime_created = models.DateTimeField(auto_now=True)
+    expiration_date = models.DateTimeField()
+    # For cleaning up
+    #task = models.ForeignKey(SecuredPeriodicTask, null=True, blank=True)
 
     damagetable = models.FileField(
         upload_to='scenario/damage_table',
@@ -176,6 +181,8 @@ class DamageScenario(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = ''.join(random.sample(string.letters, 20))
+        if not self.expiration_date:
+            self.expiration_date = datetime.datetime.now() + datetime.timedelta(days=7)
         return super(DamageScenario, self).save(*args, **kwargs)
 
     @property

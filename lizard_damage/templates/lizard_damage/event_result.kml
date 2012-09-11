@@ -2,8 +2,8 @@
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Folder>
     <name>Lizard Schademodule</name>
-    <description>Lizard Schademodule resultaat    {{ view.damage_event }}
-</description>
+    <description>Resultaat {{ view.damage_event }} (beschikbaar tot {{ view.damage_event.scenario.expiration_date|date:"d-m-y" }})
+    </description>
     {% for damage_event_result in view.damage_event.damageeventresult_set.all %}
     <GroundOverlay>
       <name>{{ damage_event_result.image.name }}</name>
@@ -20,5 +20,16 @@
       </LatLonBox>
     </GroundOverlay>
     {% endfor %}
+    <ScreenOverlay>
+      <name>Legenda</name>
+      <visibility>0</visibility>
+      <Icon>
+        <href>{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg</href>
+      </Icon>
+      <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
+      <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>
+      <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
+      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
+    </ScreenOverlay>
   </Folder>
 </kml>
