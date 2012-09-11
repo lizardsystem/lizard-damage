@@ -41,21 +41,21 @@ def result_indirect_roads_part(
         code, geo, depth, index, damage_per_pixel,
     ):
     """
-    
+
     """
     area_per_pixel = raster.geo2cellsize(geo)
     result_indirect = numpy.zeros(depth.shape)
     roads = raster.get_roads(ROAD_GRIDCODE[code], geo, depth.shape)
-    
+
     for road in roads:
         mask = raster.get_mask(road, depth.shape, geo)
         flooded_m2 = (mask * area_per_pixel).sum()
         logger.debug('This road is {} m2 flooded'.format(flooded_m2))
         if flooded_m2 > 50:
             result_indirect += mask * damage_per_pixel
-    
+
     return result_indirect[index]
-            
+
 
 def calculate(use, depth, geo,
               calc_type, table,
@@ -75,7 +75,7 @@ def calculate(use, depth, geo,
     count = {}
     damage = {}
     damage_area = {}
-    
+
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
 
@@ -84,7 +84,7 @@ def calculate(use, depth, geo,
             repairtime = repairtime_buildings
         else:
             repairtime = default_repairtime
-        
+
         index = (numpy.ma.equal(use, code))
         count[code] = index.sum()
 
@@ -99,7 +99,7 @@ def calculate(use, depth, geo,
         if code in ROAD_GRIDCODE:
             damage_per_pixel = (
                 area_per_pixel *
-                repairtime_roads * 
+                repairtime_roads *
                 dr.to_gamma_repairtime(repairtime_roads) *
                 dr.to_indirect_damage(CALC_TYPES[calc_type]) /
                 (3600 * 24)  # Indirect damage is specified per day
@@ -131,7 +131,7 @@ def calculate(use, depth, geo,
 
         logger.debug(
             '%s - %s: %.f dir + %.f ind = %.f tot' %
-            (    
+            (
                 dr.source,
                 dr.description,
                 partial_result_direct.sum(),
@@ -293,6 +293,7 @@ def calc_damage_for_waterlevel(
         dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
     with open(dt_path) as cfg:
         dt = table.DamageTable.read_cfg(cfg)
+    zip_result.append({'filename': dt_path, 'arcname': 'dt.cfg'})
 
     overall_area = {}
     overall_damage = {}

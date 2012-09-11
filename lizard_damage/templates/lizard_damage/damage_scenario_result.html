@@ -33,7 +33,7 @@
 {% for event in view.damage_scenario.damageevent_set.all %}
 <h3>Gebeurtenis {{ event }}</h3>
 <div>
-<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>{% if user.is_authenticated %}&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>{% endif %}
+<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>
 
 <dl>
   <dt>Waterstand</dt>
