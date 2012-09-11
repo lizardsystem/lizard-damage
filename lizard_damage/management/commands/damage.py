@@ -41,6 +41,7 @@ class Command(BaseCommand):
             settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
         )
         calc.calc_damage_for_waterlevel(
+            repetition_time=None,
             ds_wl_filename=ds_wl_filename,
             dt_path='data/damagetable/dt.cfg',
             month=9, floodtime=20*3600,

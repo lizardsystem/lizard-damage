@@ -302,7 +302,7 @@ def calc_damage_for_waterlevel(
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
             ds_wl_original=ds_wl_original,
-            method='database',
+            method=settings.RASTER_SOURCE,
         )
 
         # Prepare data for calculation
