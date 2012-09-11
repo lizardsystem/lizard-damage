@@ -13,6 +13,7 @@ from lizard_task.models import SecuredPeriodicTask
 
 from celery.task import task
 from django.contrib.sites.models import Site
+from django.template.defaultfilters import slugify
 
 import logging
 import os
@@ -112,7 +113,9 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
     damage_scenario.save()
 
     errors = 0
-    for damage_event in damage_scenario.damageevent_set.all():
+    for damage_event_index, damage_event in enumerate(
+        damage_scenario.damageevent_set.all(),
+    ):
         # ds_wl_filename = os.path.join(
         #     settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
         #     )
@@ -127,6 +130,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             # Default
             dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
         result = calc.calc_damage_for_waterlevel(
+            repetition_time=damage_event.repetition_time,
             ds_wl_filename=ds_wl_filename,
             dt_path=dt_path,
             month=damage_event.floodmonth,
@@ -143,8 +147,9 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                         logger.warning('Deleting existing results...')
                         damage_event.result.delete()  # Delete old results
                     logger.info('Saving results...')
-                    damage_event.result.save('result_%s.zip' % damage_event.slug,
-                                             File(doc_file), save=True)
+                    damage_event.result.save('%s%i.zip' % (
+                            slugify(damage_scenario.name), damage_event_index + 1),
+                        File(doc_file),save=True)
                     damage_event.save()
                 except:
                     logger.error('Exception saving zipfile. Too big?')

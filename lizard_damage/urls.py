@@ -49,7 +49,7 @@ urlpatterns = patterns(
                 '4': views.show_form_condition(3),
                 '5': views.show_form_condition(4),
                 '6': views.show_form_condition(5),
-                '7': views.show_form_condition(1),  # Check page
+                '7': views.show_form_condition(2),  # Check page
                 }
             ),
         name='lizard_damage_form'

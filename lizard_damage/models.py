@@ -7,6 +7,7 @@ from __future__ import (
   division,
 )
 from django.contrib.gis.db import models
+from django.core.urlresolvers import reverse
 from lizard_map import coordinates
 from lizard_task.models import SecuredPeriodicTask
 
@@ -71,6 +72,27 @@ class AhnIndex(models.Model):
         return (x0, y0, x1, y1)
 
 
+class Roads(models.Model):
+    """
+    Generated with bin/django inspectdb after executing:
+
+    shp2pgsql -s 28992 wegen_indirect public.lizard_damage_roads |\
+    sed s/geom/the_geom/g | psql schademodule --username buildout
+
+    When using postgis2, shp2pgsql must take care of the table creation
+    since django doesn't handle postgis2 very well currently.
+    """
+    gid = models.IntegerField(primary_key=True)
+    typeinfr_1 = models.CharField(max_length=25, blank=True)
+    typeweg = models.CharField(max_length=120, blank=True)
+    gridcode = models.SmallIntegerField(null=True, blank=True)
+    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = 'data_roads'
+
+
 class Unit(models.Model):
     name = models.CharField(
         max_length=64,
@@ -128,6 +150,17 @@ class DamageScenario(models.Model):
         (CALC_TYPE_AVG, 'Gemiddelde schadebedragen en schadefuncties'),
         )
 
+    SCENARIO_TYPES = (
+        (0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
+        (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
+        (2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
+        (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.'),
+        (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
+        (5, 'Tijdserie aan kaarten met per tijdstip de '
+            'waterstand van meerdere gebeurtenissen'),
+    )
+    SCENARIO_TYPES_DICT = dict(SCENARIO_TYPES)
+
     status = models.IntegerField(
         choices=SCENARIO_STATUS_CHOICES,
         default=SCENARIO_STATUS_RECEIVED,
@@ -150,6 +183,9 @@ class DamageScenario(models.Model):
     calc_type = models.IntegerField(
         choices=CALC_TYPE_CHOICES, default=CALC_TYPE_MAX)
 
+    scenario_type = models.IntegerField(
+        choices=SCENARIO_TYPES, default=0)
+    
     def __unicode__(self):
         return self.name
 
@@ -166,6 +202,9 @@ class DamageScenario(models.Model):
     @property
     def display_status(self):
         return self.SCENARIO_STATUS_DICT.get(self.status, 'Onbekend')
+
+    def get_absolute_url(self):
+        return reverse('lizard_damage_result', kwargs=dict(slug=self.slug))
 
 
 class DamageEvent(models.Model):
@@ -197,8 +236,8 @@ class DamageEvent(models.Model):
     # flooddate = models.DateTimeField()
     floodmonth = models.IntegerField(default=9)
 
-    # calculationtype = models.IntegerField()
-    # repetitiontime = models.FloatField(help_text='In years')
+    repetition_time = models.FloatField(blank=True, null=True,
+        help_text='In years!')
 
     # Result
     table = models.TextField(null=True, blank=True, help_text='in json format')

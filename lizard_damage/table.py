@@ -65,8 +65,8 @@ class DamageHeader(object):
                                       for t in self.floodtime]
 
         self.repairtime = repairtime
-        self._floodtime_in_seconds = [self._to_seconds(t)
-                                      for t in self.floodtime]
+        self._repairtime_in_seconds = [self._to_seconds(t)
+                                      for t in self.repairtime]
 
         self.default_floodtime = default_floodtime
         self._default_floodtime_in_seconds = self._to_seconds(

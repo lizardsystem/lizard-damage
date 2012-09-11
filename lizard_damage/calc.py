@@ -22,9 +22,43 @@ from osgeo import gdal
 
 logger = logging.getLogger(__name__)
 
+CALC_TYPE_MIN = 1
+CALC_TYPE_MAX = 2
+CALC_TYPE_AVG = 3
 
-def calculate(use, depth,
-              area_per_pixel, table,
+CALC_TYPES = {
+    1: 'min',
+    2: 'max',
+    3: 'avg',
+}
+
+# {landuse-code: gridcode} mapping for roads
+ROAD_GRIDCODE = {21: 21, 22: 22}
+BUILDING_SOURCES = ('BAG', )
+
+
+def result_indirect_roads_part(
+        code, geo, depth, index, damage_per_pixel,
+    ):
+    """
+    
+    """
+    area_per_pixel = raster.geo2cellsize(geo)
+    result_indirect = numpy.zeros(depth.shape)
+    roads = raster.get_roads(ROAD_GRIDCODE[code], geo, depth.shape)
+    
+    for road in roads:
+        mask = raster.get_mask(road, depth.shape, geo)
+        flooded_m2 = (mask * area_per_pixel).sum()
+        logger.debug('This road is {} m2 flooded'.format(flooded_m2))
+        if flooded_m2 > 50:
+            result_indirect += mask * damage_per_pixel
+    
+    return result_indirect[index]
+            
+
+def calculate(use, depth, geo,
+              calc_type, table,
               month, floodtime,
               repairtime_roads,
               repairtime_buildings,
@@ -41,31 +75,52 @@ def calculate(use, depth,
     count = {}
     damage = {}
     damage_area = {}
+    
+    area_per_pixel = raster.geo2cellsize(geo)
+    default_repairtime = table.header.get_default_repairtime()
 
     for code, dr in table.data.items():
+        if code in BUILDING_SOURCES:
+            repairtime = repairtime_buildings
+        else:
+            repairtime = default_repairtime
+        
         index = (numpy.ma.equal(use, code))
+        count[code] = index.sum()
 
-        # Only for new numpies
-        #count[code] = numpy.count_nonzero(index)
-        # Old numpies, works just as well. tested.
-        count[code] = len(index[numpy.nonzero(index)])
-
-        result[index] = (
+        partial_result_direct = (
             area_per_pixel *
-            dr.to_direct_damage('max') *
+            dr.to_direct_damage(CALC_TYPES[calc_type]) *
             dr.to_gamma_depth(depth[index]) *
             dr.to_gamma_floodtime(floodtime) *
             dr.to_gamma_month(month)
         )
 
-        # New numpy
-        # damage_area[code] = numpy.count_nonzero(
-        #     numpy.greater(result[index], 0)
-        # ) * area_per_pixel
-        # The hard way...
-        result_greater = numpy.greater(result[index], 0)
-        damage_area[code] = len(result[index][numpy.nonzero(result_greater)]) * area_per_pixel
-        #logger.info("damage_area_code: %r %r" % (damage_area[code], damage_area_code))
+        if code in ROAD_GRIDCODE:
+            damage_per_pixel = (
+                area_per_pixel *
+                repairtime_roads * 
+                dr.to_gamma_repairtime(repairtime_roads) *
+                dr.to_indirect_damage(CALC_TYPES[calc_type]) /
+                (3600 * 24)  # Indirect damage is specified per day
+            )
+            partial_result_indirect = result_indirect_roads_part(
+                code=code, geo=geo, depth=depth, index=index,
+                damage_per_pixel=damage_per_pixel,
+            )
+        else:
+            partial_result_indirect = (
+                area_per_pixel *
+                dr.to_gamma_repairtime(repairtime) *
+                dr.to_indirect_damage(CALC_TYPES[calc_type]) /
+                (3600 * 24)  # Indirect damage is specified per day
+            ) * numpy.ones(depth.shape)[index]
+
+        result[index] = partial_result_direct + partial_result_indirect
+
+        damage_area[code] = numpy.where(
+            numpy.greater(result[index], 0), area_per_pixel, 0,
+        ).sum()
 
         # The sum of an empty masked array is 'masked', so check that.
         if count[code] > 0:
@@ -73,6 +128,17 @@ def calculate(use, depth,
         else:
             damage[code] = 0.
 
+
+        logger.debug(
+            '%s - %s: %.f dir + %.f ind = %.f tot' %
+            (    
+                dr.source,
+                dr.description,
+                partial_result_direct.sum(),
+                partial_result_indirect.sum(),
+                damage[code],
+            ),
+        )
         logger.debug(dr.source + ' - ' +
                      dr.description + ': ' + unicode(damage[code]))
 
@@ -183,11 +249,12 @@ def write_image(name, values):
 
 
 def calc_damage_for_waterlevel(
+    repetition_time,
     ds_wl_filename,
     dt_path=None,
     month=9, floodtime=20*3600,
     repairtime_roads=None, repairtime_buildings=None,
-    calc_type=2,  # 1: Min, 2: Max, 3: Avg
+    calc_type=CALC_TYPE_MAX,
     logger=logger):
     """
     Calculate damage for provided waterlevel file.
@@ -235,32 +302,30 @@ def calc_damage_for_waterlevel(
         ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
             ahn_name=ahn_name,
             ds_wl_original=ds_wl_original,
-            method='filesystem',
+            method='database',
         )
 
         # Prepare data for calculation
         wl = raster.to_masked_array(ds_wl)
-        try:
-            ahn = raster.to_masked_array(ds_ahn, mask=wl.mask)
-            lgn = raster.to_masked_array(ds_lgn, mask=wl.mask)
-        except ValueError as e:
-            raise CommandError(e)
+        ahn = raster.to_masked_array(ds_ahn, mask=wl.mask, ahn_name=ahn_name)
+        lgn = raster.to_masked_array(ds_lgn, mask=wl.mask, ahn_name=ahn_name)
         depth = wl - ahn
-        area_per_pixel = raster.get_area_per_pixel(ds_wl)
+        geo = raster.get_geo(ds_wl)
 
         # Result is a numpy array
         damage, count, area, result = calculate(
-            use=lgn, depth=depth,
-            area_per_pixel=area_per_pixel,
-            table=dt, month=month,
-            floodtime=floodtime,
+            use=lgn, depth=depth, geo=geo, calc_type=calc_type,
+            table=dt, month=month, floodtime=floodtime,
             repairtime_roads=repairtime_roads,
             repairtime_buildings=repairtime_buildings,
             logger=logger
         )
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.asc'}
+        arcname = 'schade_{}'.format(ahn_name)
+        if repetition_time:
+            arcname += '_T%.1f' % repetition_time
+        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc'}
         write_result(
             name=asc_result['filename'],
             ma_result=result,
@@ -281,7 +346,7 @@ def calc_damage_for_waterlevel(
         img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_' + ahn_name + '.csv'}
+        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv'}
         meta = [
             ['schade module versie', tools.version()],
             ['waterlevel', ds_wl_filename],

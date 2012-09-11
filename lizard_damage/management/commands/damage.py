@@ -42,5 +42,8 @@ class Command(BaseCommand):
         )
         calc.calc_damage_for_waterlevel(
             ds_wl_filename=ds_wl_filename,
-            damage_table_path='data/damagetable/dt.cfg',
-            month=9, floodtime=20*3600, repairtime=None)
+            dt_path='data/damagetable/dt.cfg',
+            month=9, floodtime=20*3600,
+            repairtime_roads=5*24*3600,
+            repairtime_buildings=10*24*3600,
+            )

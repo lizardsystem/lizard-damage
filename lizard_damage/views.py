@@ -34,17 +34,71 @@ def show_form_condition(condition):
     """Determine for a specific wizard step if it should be shown."""
     def show_form_fun(wizard):
         cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-        calc_type = int(cleaned_data.get('calculation_type', 0))
-        return calc_type == condition
+        scenario_type = int(cleaned_data.get('scenario_type', 0))
+        return scenario_type == condition
     return show_form_fun
+
+
+"""
+DamageScenario types:
+0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
+1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
+2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
+3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.'),
+4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
+5, 'Tijdserie aan kaarten met per tijdstip de '
+   'waterstand van meerdere gebeurtenissen'),
+"""
+def damage_scenario_from_type_0(all_form_data):
+    damage_scenario = DamageScenario(
+        name=all_form_data['name'], email=all_form_data['email'],
+        calc_type=all_form_data['calc_type'])
+    if all_form_data['damagetable']:
+        damage_scenario.damagetable=all_form_data['damagetable']
+    damage_scenario.save()
+    repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
+    repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
+    damage_scenario.damageevent_set.create(
+        floodtime=all_form_data['floodtime'] * 3600,
+        repairtime_roads=repairtime_roads,
+        repairtime_buildings=repairtime_buildings,
+        waterlevel=all_form_data['waterlevel'],
+        floodmonth=all_form_data['floodmonth'])
+    return damage_scenario
+
+def damage_scenario_from_type_1(all_form_data):
+    damage_scenario = DamageScenario(
+        name=all_form_data['name'], email=all_form_data['email'],
+        calc_type=all_form_data['calc_type'])
+    if all_form_data['damagetable']:
+        damage_scenario.damagetable=all_form_data['damagetable']
+    damage_scenario.save()
+    repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
+    repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
+    damage_scenario.damageevent_set.create(
+        repetition_time=all_form_data['repetition_time'],  # Difference is here
+        floodtime=all_form_data['floodtime'] * 3600,
+        repairtime_roads=repairtime_roads,
+        repairtime_buildings=repairtime_buildings,
+        waterlevel=all_form_data['waterlevel'],
+        floodmonth=all_form_data['floodmonth'])
+    return damage_scenario
+    
+    
 
 
 class Wizard(SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     file_storage = temp_storage
 
-    # def get_form_step_files(self, form):
-    #     return form.files
+    SCENARIO_TYPE_FUNCTIONS = {
+        0: damage_scenario_from_type_0,
+        1: damage_scenario_from_type_1,
+        #2: damage_scenario_from_type_2,
+        #3: damage_scenario_from_type_3,
+        #4: damage_scenario_from_type_4,
+        #5: damage_scenario_from_type_5,
+    }
 
     def done(self, form_list, **kwargs):
         """
@@ -55,21 +109,10 @@ class Wizard(SessionWizardView):
         #do_something_with_the_form_data(form_list)
 
         all_form_data = self.get_all_cleaned_data()
-        damage_scenario = DamageScenario(
-            name=all_form_data['name'], email=all_form_data['email'],
-            calc_type=all_form_data['calc_type'])
-        if all_form_data['damagetable']:
-            damage_scenario.damagetable=all_form_data['damagetable']
-        damage_scenario.save()
-        repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-        repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
-        damage_scenario.damageevent_set.create(
-            floodtime=all_form_data['floodtime'] * 3600,
-            repairtime_roads=repairtime_roads,
-            repairtime_buildings=repairtime_buildings,
-            waterlevel=all_form_data['waterlevel'],
-            floodmonth=all_form_data['floodmonth'])
 
+        scenario_type = int(all_form_data['scenario_type'])
+        damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
+        
         # launch task
         tasks.damage_scenario_to_task(damage_scenario, username="web")
 
