@@ -185,7 +185,7 @@ class DamageScenario(models.Model):
 
     scenario_type = models.IntegerField(
         choices=SCENARIO_TYPES, default=0)
-    
+
     def __unicode__(self):
         return self.name
 
@@ -205,6 +205,10 @@ class DamageScenario(models.Model):
 
     def get_absolute_url(self):
         return reverse('lizard_damage_result', kwargs=dict(slug=self.slug))
+
+    @property
+    def scenario_type_str(self):
+        return self.SCENARIO_TYPES_DICT[self.scenario_type]
 
 
 class DamageEvent(models.Model):
