@@ -69,6 +69,28 @@ class AhnIndex(models.Model):
         return (x0, y0, x1, y1)
 
 
+class Roads(models.Model):
+    """
+    Generated with bin/django inspectdb after executing:
+
+    shp2pgsql -s 28992 wegen_indirect public.lizard_damage_roads |\
+    sed s/geom/the_geom/g | psql schademodule --username buildout
+
+    When using postgis2, shp2pgsql must take care of the table creation
+    since django doesn't handle postgis2 very well currently.
+    """
+    gid = models.IntegerField(primary_key=True)
+    typeinfr_1 = models.CharField(max_length=25, blank=True)
+    typeweg = models.CharField(max_length=120, blank=True)
+    gridcode = models.SmallIntegerField(null=True, blank=True)
+    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = 'data_roads'
+
+
+
 class Unit(models.Model):
     name = models.CharField(
         max_length=64,

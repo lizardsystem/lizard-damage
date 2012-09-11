@@ -44,6 +44,6 @@ class Command(BaseCommand):
             ds_wl_filename=ds_wl_filename,
             dt_path='data/damagetable/dt.cfg',
             month=9, floodtime=20*3600,
-            repairtime_roads=None,
-            repairtime_buildings=None,
+            repairtime_roads=5*24*3600,
+            repairtime_buildings=10*24*3600,
             )

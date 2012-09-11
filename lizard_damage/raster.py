@@ -7,11 +7,10 @@ from __future__ import (
   division,
 )
 
-from osgeo import (
-    gdal,
-    gdalconst,
-    osr,
-)
+from osgeo import gdal
+from osgeo import gdalconst
+from osgeo import ogr
+from osgeo import osr
 
 from django.contrib.gis.geos import Polygon
 from django.db import connections
@@ -94,6 +93,23 @@ def get_postgisraster_nodatavalue(dbname, table, filename):
     return row[0][0]
 
 
+def get_polygon_from_geo_and_shape(geo, shape):
+    gt = geo[1]
+    x1 = gt[0]
+    x2 = x1 + shape[1] * gt[1]
+    y2 = gt[3]
+    y1 = y2 + shape[0] * gt[5]
+    coordinates = (
+        (x1, y1),
+        (x2, y1),
+        (x2, y2),
+        (x1, y2),
+        (x1, y1),
+    )
+    return Polygon(coordinates, srid=28992)
+
+
+
 def get_polygon(ds):
     gs = ds.GetGeoTransform()
     x1 = gs[0]
@@ -116,13 +132,20 @@ def get_area_per_pixel(ds):
     return area_per_pixel
 
 
-# def get_ahn_names(ds):
-#     """ Return the names of the ahn tiles that cover this dataset. """
-#     polygon = get_polygon(ds)
-#     ahn_names = models.AhnIndex.objects.filter(
-#         the_geom__intersects=polygon,
-#     ).values_list('bladnr', flat=True)
-#     return ahn_names
+def get_geo(ds):
+    """ Return tuple (projection, geotransform) """
+    return  ds.GetProjection(), ds.GetGeoTransform()
+
+
+def set_geo(ds, geo):
+    """ Put geo in ds """
+    ds.SetProjection(geo[0])
+    ds.SetGeoTransform(geo[1])
+
+
+def geo2cellsize(geo):
+    """ Return cell size. """
+    return abs(geo[1][1] * geo[1][5])
 
 
 def get_ahn_indices(ds):
@@ -132,6 +155,15 @@ def get_ahn_indices(ds):
         the_geom__intersects=polygon,
     )
     return ahn_indices
+
+
+def get_roads(gridcode, geo, shape):
+    """ Return roads contained by dataset with gridcode gridcode. """
+    polygon = get_polygon_from_geo_and_shape(geo, shape)
+    roads = models.Roads.objects.filter(
+        the_geom__intersects=polygon, gridcode=gridcode,
+    )
+    return roads
 
 
 def init_dataset(ds, nodatavalue=None):
@@ -264,7 +296,7 @@ def fill_dataset(ds, masked_array):
     ds.GetRasterBand(1).WriteArray(array)
 
 
-def to_masked_array(ds, mask=None):
+def to_masked_array(ds, mask=None, ahn_name=''):
     """
     Read masked array from dataset.
 
@@ -284,6 +316,31 @@ def to_masked_array(ds, mask=None):
     result = numpy.ma.array(array, mask=mask)
 
     if numpy.equal(result, nodatavalue).any():
-        raise ValueError('Nodata value found outside mask')
+        print('Nodata value found outside mask for tile %s' % ahn_name)
 
     return result
+
+
+def get_mask(road, shape, geo):
+        """ Return boolean array True where the road is. """
+        sr = osr.SpatialReference()
+        sr.ImportFromWkt(geo[0])
+
+        # Prepare in-memory ogr layer 
+        ds_ogr = ogr.GetDriverByName(b'Memory').CreateDataSource('')
+        layer = ds_ogr.CreateLayer(b'', sr)
+        layerdefinition = layer.GetLayerDefn()
+        feature = ogr.Feature(layerdefinition)
+        feature.SetGeometry(ogr.CreateGeometryFromWkb(str(road.the_geom.wkb)))
+        layer.CreateFeature(feature)
+
+        # Prepare in-memory copy of ds_gdal
+        ds_road = gdal.GetDriverByName(b'mem').Create(
+            '', shape[1], shape[0], 1, gdalconst.GDT_Byte,
+        )
+        set_geo(ds_road, geo)
+
+
+        # Rasterize and return
+        gdal.RasterizeLayer(ds_road,(1,),layer, burn_values=(1,))
+        return ds_road.GetRasterBand(1).ReadAsArray()
