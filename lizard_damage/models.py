@@ -236,7 +236,8 @@ class DamageEvent(models.Model):
     floodtime = models.FloatField(help_text='How long was it flooded, in seconds')
     repairtime_roads = models.FloatField(help_text='In seconds', default=5*3600*24)
     repairtime_buildings = models.FloatField(help_text='In seconds', default=5*3600*24)
-    waterlevel = models.FileField(upload_to='scenario/waterlevel')
+    waterlevel = models.FileField(upload_to='scenario/waterlevel',
+        blank=True, null=True)
     # flooddate = models.DateTimeField()
     floodmonth = models.IntegerField(default=9)
 
@@ -298,6 +299,14 @@ class DamageEventResult(models.Model):
      with open('/tmp/test', 'rb') as testfile:
          ds.waterlevel.save('blabla', File(testfile), save=True)
     """
+
+class DamageEventWaterlevel(models.Model):
+    """
+    One waterlevel file to be used for a timeseries of waterlevels.
+    """
+    waterlevel = models.FileField(upload_to='scenario/waterlevel')
+    event = models.ForeignKey(DamageEvent)
+
 
 
 
