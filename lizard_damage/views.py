@@ -52,6 +52,7 @@ DamageScenario types:
 def damage_scenario_from_type_0(all_form_data):
     damage_scenario = DamageScenario(
         name=all_form_data['name'], email=all_form_data['email'],
+        scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
     if all_form_data['damagetable']:
         damage_scenario.damagetable=all_form_data['damagetable']
@@ -69,6 +70,7 @@ def damage_scenario_from_type_0(all_form_data):
 def damage_scenario_from_type_1(all_form_data):
     damage_scenario = DamageScenario(
         name=all_form_data['name'], email=all_form_data['email'],
+        scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
     if all_form_data['damagetable']:
         damage_scenario.damagetable=all_form_data['damagetable']
@@ -83,8 +85,8 @@ def damage_scenario_from_type_1(all_form_data):
         waterlevel=all_form_data['waterlevel'],
         floodmonth=all_form_data['floodmonth'])
     return damage_scenario
-    
-    
+
+
 
 
 class Wizard(SessionWizardView):
@@ -112,7 +114,7 @@ class Wizard(SessionWizardView):
 
         scenario_type = int(all_form_data['scenario_type'])
         damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
-        
+
         # launch task
         tasks.damage_scenario_to_task(damage_scenario, username="web")
 

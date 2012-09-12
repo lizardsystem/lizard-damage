@@ -48,6 +48,12 @@
   <dt>Duur overlast</dt>
   <dd>{{ event.floodtime|hoursformat }}</dd>
 
+  {% ifequal view.damage_scenario.scenario_type 1 %}
+  {# scenario_type  (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),  #}
+  <dt>Herhalingstijd</dt>
+  <dd>1 op de {{ event.repetition_time|floatformat }} jaar</dd>
+  {% endifequal %}
+
   <dt>Hersteltijd wegen</dt>
   <dd>{{ event.repairtime_roads|daysformat }}</dd>
 
