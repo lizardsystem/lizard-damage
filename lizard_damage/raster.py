@@ -262,7 +262,7 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
-def get_ds_for_tile(ahn_name, ds_wl_original, method='filesystem'):
+def get_ds_for_tile(ahn_name, method='filesystem'):
     """
     Return datasets (waterlevel, height, landuse).
 
@@ -283,9 +283,33 @@ def get_ds_for_tile(ahn_name, ds_wl_original, method='filesystem'):
     ds_ahn = import_dataset(ds_ahn_filename, driver)
     ds_lgn = import_dataset(ds_lgn_filename, driver)
 
-    ds_wl = reproject(ds_wl_original, ds_ahn)
+    return ds_ahn, ds_lgn
 
-    return ds_wl, ds_ahn, ds_lgn
+def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
+
+    ds_height, ds_landuse = get_ds_for_tile(
+        ahn_name=ahn_name, method=method,
+    )
+    geo = get_geo(ds_height)
+
+    logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
+
+    height = to_masked_array(ds_height)
+    if height.mask.any():
+        logger.warn('Nodata value found for height tile %s' % ahn_name)
+    landuse = to_masked_array(ds_landuse)
+    if landuse.mask.any():
+        logger.warn('Nodata value found for landuse tile %s' % ahn_name)
+    
+    depths = numpy.array(
+        [to_masked_array(reproject(ds_waterlevel, ds_height)) 
+         for ds_waterlevel in waterlevel_datasets],
+    ) - height
+
+    depth = depths.max(0)
+    floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
+
+    return landuse, depth, geo, floodtime_px, ds_height
 
 
 def fill_dataset(ds, masked_array):
@@ -297,7 +321,7 @@ def fill_dataset(ds, masked_array):
     ds.GetRasterBand(1).WriteArray(array)
 
 
-def to_masked_array(ds, mask=None, ahn_name=''):
+def to_masked_array(ds, mask=None):
     """
     Read masked array from dataset.
 
@@ -315,9 +339,6 @@ def to_masked_array(ds, mask=None, ahn_name=''):
         return result
 
     result = numpy.ma.array(array, mask=mask)
-
-    if numpy.equal(result, nodatavalue).any():
-        print('Nodata value found outside mask for tile %s' % ahn_name)
 
     return result
 

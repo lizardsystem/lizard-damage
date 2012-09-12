@@ -92,7 +92,7 @@ def calculate(use, depth, geo,
             area_per_pixel *
             dr.to_direct_damage(CALC_TYPES[calc_type]) *
             dr.to_gamma_depth(depth[index]) *
-            dr.to_gamma_floodtime(floodtime) *
+            dr.to_gamma_floodtime(floodtime[index]) *
             dr.to_gamma_month(month)
         )
 
@@ -281,12 +281,19 @@ def calc_damage_for_waterlevel(
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []
 
-    ds_wl_original = raster.import_dataset(ds_wl_filename, 'AAIGrid')
     logger.info('water level: %s' % ds_wl_filename)
     logger.info('damage table: %s' % dt_path)
-    if ds_wl_original is None:
-        logger.error('data source is not available, please check folder %s' % ds_wl_filename)
-        return
+    if isinstance(ds_wl_filename, (unicode, str)):
+        waterlevel_ascfiles = [ds_wl_filename]
+    else:
+        waterlevel_ascfiles = ds_wl_filename
+    waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
+                           for waterlevel_ascfile in waterlevel_ascfiles]
+    for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
+        if ds is None:
+            logger.error('data source is not available,'
+                         ' please check folder %s' % fn)
+            return
 
     if dt_path is None:
         damage_table_path = 'data/damagetable/dt.cfg'
@@ -297,41 +304,39 @@ def calc_damage_for_waterlevel(
 
     overall_area = {}
     overall_damage = {}
-    for ahn_index in raster.get_ahn_indices(ds_wl_original):
+    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
         ahn_name = ahn_index.bladnr
         logger.info("calculating damage for tile %s..." % ahn_name)
-        ds_wl, ds_ahn, ds_lgn = raster.get_ds_for_tile(
-            ahn_name=ahn_name,
-            ds_wl_original=ds_wl_original,
-            method=settings.RASTER_SOURCE,
-        )
 
         # Prepare data for calculation
-        wl = raster.to_masked_array(ds_wl)
-        ahn = raster.to_masked_array(ds_ahn, mask=wl.mask, ahn_name=ahn_name)
-        lgn = raster.to_masked_array(ds_lgn, mask=wl.mask, ahn_name=ahn_name)
-        depth = wl - ahn
-        geo = raster.get_geo(ds_wl)
+        from utils.monitor import Monitor;mon = Monitor()
+        depth, landuse, geo, floodtime_px, ds_height = raster.get_calc_data(
+            waterlevel_datasets=waterlevel_datasets,
+            method=settings.RASTER_SOURCE,
+            floodtime=floodtime,
+            ahn_name=ahn_name,
+            logger=logger,
+        )
+        mon.check()
 
         # Result is a numpy array
         damage, count, area, result = calculate(
-            use=lgn, depth=depth, geo=geo, calc_type=calc_type,
-            table=dt, month=month, floodtime=floodtime,
+            use=landuse, depth=depth, geo=geo, calc_type=calc_type,
+            table=dt, month=month, floodtime=floodtime_px,
             repairtime_roads=repairtime_roads,
             repairtime_buildings=repairtime_buildings,
-            logger=logger
+            logger=logger,
         )
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
             arcname += '_T%.1f' % repetition_time
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc',
-                      'delete_after': True}
+        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc'}
         write_result(
             name=asc_result['filename'],
             ma_result=result,
-            ds_template=ds_ahn,
+            ds_template=ds_height,
         )
         zip_result.append(asc_result)
 
@@ -348,11 +353,10 @@ def calc_damage_for_waterlevel(
         img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
-                      'delete_after': True}
+        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv'}
         meta = [
             ['schade module versie', tools.version()],
-            ['waterlevel', ds_wl_filename],
+            ['waterlevel', waterlevel_ascfiles[0]],
             ['damage table', dt_path],
             ['maand', str(month)],
             ['duur overstroming (s)', str(floodtime)],
@@ -382,16 +386,11 @@ def calc_damage_for_waterlevel(
             else:
                 overall_area[k] = area[k]
 
-        del ds_wl, ds_ahn, ds_lgn
-        del lgn, depth, wl
-        del result
 
-    csv_result = {
-        'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv',
-        'delete_after': True}
+    csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv'}
     meta = [
         ['schade module versie', tools.version()],
-        ['waterlevel', ds_wl_filename],
+        ['waterlevel', waterlevel_ascfiles[0]],
         ['damage table', dt_path],
         ['maand', str(month)],
         ['duur overstroming (s)', str(floodtime)],
@@ -426,7 +425,6 @@ def calc_damage_for_waterlevel(
     # Clean up
     logger.info('Cleaning up tempdir')
     for file_in_zip in zip_result:
-        if file_in_zip.get('delete_after', False):
-            os.remove(file_in_zip['filename'])
+        os.remove(file_in_zip['filename'])
 
     return output_zipfile, img_result, result_table
