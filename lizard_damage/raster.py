@@ -238,6 +238,7 @@ def import_dataset(filepath, driver):
         open_argument = filepath
     dataset = gdal.Open(str(open_argument))
 
+    print ('Opening dataset: %s', open_argument)
     logger.debug('Opening dataset: %s', open_argument)
 
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
@@ -326,7 +327,7 @@ def get_mask(road, shape, geo):
         sr = osr.SpatialReference()
         sr.ImportFromWkt(geo[0])
 
-        # Prepare in-memory ogr layer 
+        # Prepare in-memory ogr layer
         ds_ogr = ogr.GetDriverByName(b'Memory').CreateDataSource('')
         layer = ds_ogr.CreateLayer(b'', sr)
         layerdefinition = layer.GetLayerDefn()
