@@ -130,11 +130,11 @@ def unpack_zipfile_into_scenario(zipfile):
                             File(damage_table_file), save=True)
             else:
                 # This is an event
-                line[0]  # TODO: store event name
                 water_level_tempdir = tempfile.mktemp()
                 myzip.extract(line[1], water_level_tempdir)
                 with open(os.path.join(water_level_tempdir, line[1])) as water_level_tempfile:
                     damage_event = DamageEvent(
+                        name=line[0],
                         scenario=damage_scenario,
                         floodtime=float(line[2]) * 3600,
                         repairtime_roads=float(line[3]) * 3600 * 24,
