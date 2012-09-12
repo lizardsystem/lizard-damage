@@ -227,6 +227,7 @@ class DamageEvent(models.Model):
         (EVENT_STATUS_CLEANED, 'Opgeschoond'),
     )
 
+    name = models.CharField(max_length=100, null=True, blank=True)
     status = models.IntegerField(
         choices=EVENT_STATUS_CHOICES,
         default=EVENT_STATUS_RECEIVED,
@@ -252,6 +253,7 @@ class DamageEvent(models.Model):
         help_text='Will be filled once the calculation has been done')
 
     def __unicode__(self):
+        if self.name: return self.name
         try:
             return '%s' % (os.path.basename(self.waterlevel.path))
         except:
