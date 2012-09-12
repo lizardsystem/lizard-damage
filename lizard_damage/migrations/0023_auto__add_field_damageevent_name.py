@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
             'slug': ('django.db.models.fields.SlugField', [], {'db_index': 'True', 'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'table': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'waterlevel': ('django.db.models.fields.files.FileField', [], {'max_length': '100'})
+            'waterlevel': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'})
         },
         'lizard_damage.damageeventresult': {
             'Meta': {'object_name': 'DamageEventResult'},
@@ -60,6 +60,12 @@ class Migration(SchemaMigration):
             'north': ('django.db.models.fields.FloatField', [], {}),
             'south': ('django.db.models.fields.FloatField', [], {}),
             'west': ('django.db.models.fields.FloatField', [], {})
+        },
+        'lizard_damage.damageeventwaterlevel': {
+            'Meta': {'object_name': 'DamageEventWaterlevel'},
+            'event': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lizard_damage.DamageEvent']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'waterlevel': ('django.db.models.fields.files.FileField', [], {'max_length': '100'})
         },
         'lizard_damage.damagescenario': {
             'Meta': {'object_name': 'DamageScenario'},
