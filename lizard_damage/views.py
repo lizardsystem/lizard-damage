@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext as _
+from django.core.files import File
 from django.core.urlresolvers import reverse
 # from lizard_map.views import MapView
 from django.views.generic import TemplateView
@@ -16,9 +17,12 @@ from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
 from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
+from lizard_damage import forms
 
 import datetime
 import tempfile
+import os
+from zipfile import ZipFile
 
 temp_storage_location = tempfile.mkdtemp()
 temp_storage = FileSystemStorage(location=temp_storage_location)
@@ -31,11 +35,14 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 
 
 def show_form_condition(condition):
-    """Determine for a specific wizard step if it should be shown."""
+    """Determine for a specific wizard step if it should be shown.
+
+    condition is [] with ints which indicate a scenario_type
+    """
     def show_form_fun(wizard):
         cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
         scenario_type = int(cleaned_data.get('scenario_type', 0))
-        return scenario_type == condition
+        return scenario_type in condition
     return show_form_fun
 
 
@@ -67,6 +74,7 @@ def damage_scenario_from_type_0(all_form_data):
         floodmonth=all_form_data['floodmonth'])
     return damage_scenario
 
+
 def damage_scenario_from_type_1(all_form_data):
     damage_scenario = DamageScenario(
         name=all_form_data['name'], email=all_form_data['email'],
@@ -87,6 +95,74 @@ def damage_scenario_from_type_1(all_form_data):
     return damage_scenario
 
 
+def unpack_zipfile_into_scenario(zipfile):
+    with ZipFile(zipfile, 'r') as myzip:
+        index = myzip.read('index.csv')
+        index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
+
+        scenario_data = {}
+        damage_table = None
+        for line in index_data:
+            print '%r' % line[0]
+            if line[0] == 'scenario_name':
+                scenario_data['name'] = line[1]
+            elif line[0] == 'scenario_email':
+                scenario_data['email'] = line[1]
+            elif line[0] == 'scenario_type':
+                scenario_data['scenario_type'] = line[1]
+            elif line[0] == 'scenario_calc_type':
+                scenario_data['calc_type'] = {'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
+            elif line[0] == 'scenario_damage_table':
+                if line[1]:
+                    zip_temp = tempfile.mktemp()
+                    myzip.extract(line[1], zip_temp)  # extract to temp dir
+                    damage_table = os.path.join(zip_temp, line[1])
+            elif line[0] == 'event_name':
+                # Header for second part: create damage_scenario object
+                print 'Create a damage scenario using %r' % scenario_data
+                damage_scenario = DamageScenario(**scenario_data)
+                damage_scenario.save()
+                if damage_table:
+                    print 'adding damage table...'
+                    with open(damage_table) as damage_table_file:
+                        damage_scenario.damagetable.save(
+                            os.path.basename(damage_table),
+                            File(damage_table_file), save=True)
+            else:
+                # This is an event
+                line[0]  # TODO: store event name
+                water_level_tempdir = tempfile.mktemp()
+                myzip.extract(line[1], water_level_tempdir)
+                with open(os.path.join(water_level_tempdir, line[1])) as water_level_tempfile:
+                    damage_event = DamageEvent(
+                        scenario=damage_scenario,
+                        floodtime=float(line[2]) * 3600,
+                        repairtime_roads=float(line[3]) * 3600 * 24,
+                        repairtime_buildings=float(line[4]) * 3600 * 24,
+                        floodmonth=line[5]
+                        )
+                    if line[6]:
+                        damage_event.repetition_time = line[6]
+                    damage_event.waterlevel.save(line[1], File(water_level_tempfile), save=True)
+                    damage_event.save()
+
+    return damage_scenario
+
+def damage_scenario_from_type_3(all_form_data):
+    """
+    Unpack zipfile, make scenario with events
+    """
+    zipfile = all_form_data['zipfile']
+    damage_scenario = unpack_zipfile_into_scenario(zipfile)
+
+    return damage_scenario
+
+
+# def check_zip_file(zipfile):
+#     """
+#     TODO: check zip file
+#     """
+#     return True
 
 
 class Wizard(SessionWizardView):
@@ -97,10 +173,31 @@ class Wizard(SessionWizardView):
         0: damage_scenario_from_type_0,
         1: damage_scenario_from_type_1,
         #2: damage_scenario_from_type_2,
-        #3: damage_scenario_from_type_3,
+        3: damage_scenario_from_type_3,
         #4: damage_scenario_from_type_4,
         #5: damage_scenario_from_type_5,
     }
+
+    def get_form_initial(self, step):
+        if step == '7':
+            return {'test': 'jaja'}
+        return super(Wizard, self).get_form_initial(step)
+
+    # def get_form(self, step=None, data=None, files=None):
+    #     if step == '7':
+    #         #form = forms.FormStep7(initial={'test_title': 'asdf'})
+    #         #from django.forms.models import inlineformset_factory
+    #         from django.forms.formsets import formset_factory
+    #         # FormSetScenario = formset_factory(forms.FormScenario)
+    #         # FormSetEvent = formset_factory(forms.FormEvent, extra=2)
+    #         # FormSet =
+    #         #FormSet = inlineformset_factory(DamageScenario, DamageEvent)
+    #         FormSet = formset_factory(forms.FormZipResult)
+    #         form = FormSet(initial=[{'test': '1'}, {'test': 'event 2'}])
+    #         #form = forms.FormZipResult(extra=(('extra', 'Extra veld'),))
+    #     else:
+    #         form = super(Wizard, self).get_form(step, data, files)
+    #     return form
 
     def done(self, form_list, **kwargs):
         """
