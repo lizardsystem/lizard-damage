@@ -25,13 +25,22 @@
 {% block content %}
 <h3>{% firstof wizard.form.display_title '' %}</h3>
 <p>Stap {{ wizard.steps.step1 }} van {{ wizard.steps.count }}</p>
+{% if wizard.form.display_content %}
+{% autoescape off %}
+{{ wizard.form.display_content }}
+{% endautoescape %}
+{% endif %}
 <form action="#" method="post" enctype="multipart/form-data">{% csrf_token %}
 <table>
 {{ wizard.management_form }}
 {% if wizard.form.forms %}
     {{ wizard.form.management_form }}
     {% for form in wizard.form.forms %}
-        {{ form }}
+    <div class="wizard-item-row">
+      <ul>
+        {{ form.as_ul }}
+      </ul>
+    </div>
     {% endfor %}
 {% else %}
     {{ wizard.form.as_p }}

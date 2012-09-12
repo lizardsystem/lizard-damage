@@ -84,10 +84,10 @@ class FormStep1(forms.Form):
 
 class FormStep2(FormStep1):
     """
+    Scenario_type 1
     """
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[1]
     repetition_time = forms.FloatField(label="Herhalingstijd (jaar)", help_text="")
-
 
 
 class FormStep3(forms.Form):
@@ -127,4 +127,23 @@ class FormStep7(forms.Form):
     """
     display_title = 'Controle invoer'
 
-    zipfile = forms.FileField(label="Zipbestand scenario", required=True)
+    test_title = forms.CharField(max_length=100)
+
+
+class FormZipResult(forms.Form):
+    """
+    """
+    display_title = 'Controle invoer'
+
+    display_content = 'Inhoud zipbestand'
+
+    test = forms.CharField(max_length=100, label="")
+    # test2 = forms.CharField(max_length=100, label="")
+
+
+    # def __init__(self, *args, **kwargs):
+    #     extra = kwargs.pop('extra')
+    #     super(FormZipResult, self).__init__(*args, **kwargs)
+
+    #     for i, question in extra:
+    #         self.fields['custom_%s' % i] = forms.CharField(label=question)

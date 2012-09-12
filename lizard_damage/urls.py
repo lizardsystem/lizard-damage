@@ -29,7 +29,7 @@ urlpatterns = patterns(
              forms.FormStep4,
              forms.FormStep5,
              forms.FormStep6,
-             forms.FormStep7,
+             forms.FormZipResult, # '7'
              ],
             initial_dict={
                 '0': {
@@ -43,13 +43,13 @@ urlpatterns = patterns(
                 },
             condition_dict={
                 # '0': views.show_form_condition,
-                '1': views.show_form_condition(0),  # Step 1, enable for calc_type 0
-                '2': views.show_form_condition(1),  # Step 2, enable for calc_type 1, etc
-                '3': views.show_form_condition(2),
-                '4': views.show_form_condition(3),
-                '5': views.show_form_condition(4),
-                '6': views.show_form_condition(5),
-                '7': views.show_form_condition(2),  # Check page
+                '1': views.show_form_condition([0]),  # Step 1, enable for calc_type 0
+                '2': views.show_form_condition([1]),  # Step 2, enable for calc_type 1, etc
+                '3': views.show_form_condition([2]),
+                '4': views.show_form_condition([3]),
+                '5': views.show_form_condition([4]),
+                '6': views.show_form_condition([5]),
+                '7': views.show_form_condition([2,3,4,5]),  # Check zipfile and show results
                 }
             ),
         name='lizard_damage_form'
