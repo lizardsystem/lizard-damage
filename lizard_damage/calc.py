@@ -326,7 +326,8 @@ def calc_damage_for_waterlevel(
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
             arcname += '_T%.1f' % repetition_time
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc'}
+        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc',
+                      'delete_after': True}
         write_result(
             name=asc_result['filename'],
             ma_result=result,
@@ -347,7 +348,8 @@ def calc_damage_for_waterlevel(
         img.save(image_result['filename_png'], 'PNG')
         img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv'}
+        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
+                      'delete_after': True}
         meta = [
             ['schade module versie', tools.version()],
             ['waterlevel', ds_wl_filename],
@@ -384,7 +386,9 @@ def calc_damage_for_waterlevel(
         del lgn, depth, wl
         del result
 
-    csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv'}
+    csv_result = {
+        'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv',
+        'delete_after': True}
     meta = [
         ['schade module versie', tools.version()],
         ['waterlevel', ds_wl_filename],
@@ -422,6 +426,7 @@ def calc_damage_for_waterlevel(
     # Clean up
     logger.info('Cleaning up tempdir')
     for file_in_zip in zip_result:
-        os.remove(file_in_zip['filename'])
+        if file_in_zip.get('delete_after', False):
+            os.remove(file_in_zip['filename'])
 
     return output_zipfile, img_result, result_table
