@@ -309,7 +309,6 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        from utils.monitor import Monitor;mon = Monitor()
         depth, landuse, geo, floodtime_px, ds_height = raster.get_calc_data(
             waterlevel_datasets=waterlevel_datasets,
             method=settings.RASTER_SOURCE,
@@ -317,7 +316,6 @@ def calc_damage_for_waterlevel(
             ahn_name=ahn_name,
             logger=logger,
         )
-        mon.check()
 
         # Result is a numpy array
         damage, count, area, result = calculate(
