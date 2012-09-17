@@ -199,11 +199,46 @@ def damage_scenario_from_zip_type(all_form_data):
 def analyze_zip_file(zipfile):
     """
     Analyze zip file: generate kind of logging
+
+    This function is kinda dirty, because parts are copied from
+    unpack_zipfile_into_scenario.
     """
     result = []
 
     with ZipFile(zipfile, 'r') as myzip:
-        result.append('zip bestand herkend')
+        zip_file_names = myzip.namelist()
+
+        try:
+            index = myzip.read('index.csv')
+            index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
+        except:
+            result.append('index.csv is afwezig of is niet goed')
+
+        for line in index_data:
+            if line[0] == 'scenario_type':
+                try:
+                    DamageScenario.SCENARIO_TYPES_DICT[int(line[1])]
+                except:
+                    result.append('Scenario type "%s" niet goed (moet 0..4 zijn)' % line[1])
+            elif line[0] == 'scenario_name':
+                pass
+            elif line[0] == 'scenario_email':
+                pass
+            elif line[0] == 'scenario_calc_type':
+                if line[1].lower() not in ['min', 'max', 'avg']:
+                    result.append('FOUT: scenario type "%s" moet min, max of avg zijn' % line[1].lower())
+            elif line[0] == 'scenario_damage_table':
+                if line[1] not in zip_file_names:
+                    result.append('FOUT: schadetabel %s (NIET gevonden in zipfile)' % line[1])
+            elif line[0] == 'event_name':
+                pass
+            else:
+                # result.append('gebeurtenis (naam, waterlevel, overstromingsduur, reparatie wegen, rep. bebouwing, maand): %s' % ', '.join(line))
+                if line[1] not in zip_file_names:
+                    result.append('FOUT: waterlevel %s NIET gevonden' % line[1])
+    if not result:
+        # Everything seems to be ok
+        result.append("zip bestand ok")
 
     return '\n'.join(result)
 
@@ -229,6 +264,10 @@ class Wizard(SessionWizardView):
                 if form_data:
                     form_datas.update(form_data)
             return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+            # try:
+            #     return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+            # except:
+            #     return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
         return super(Wizard, self).get_form_initial(step)
 
     # def get_form(self, step=None, data=None, files=None):
