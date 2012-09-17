@@ -290,6 +290,7 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
     ds_height, ds_landuse = get_ds_for_tile(
         ahn_name=ahn_name, method=method,
     )
+    print (ds_height)
     geo = get_geo(ds_height)
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
@@ -300,9 +301,9 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
     landuse = to_masked_array(ds_landuse)
     if landuse.mask.any():
         logger.warn('Nodata value found for landuse tile %s' % ahn_name)
-    
+
     depths = numpy.array(
-        [to_masked_array(reproject(ds_waterlevel, ds_height)) 
+        [to_masked_array(reproject(ds_waterlevel, ds_height))
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 

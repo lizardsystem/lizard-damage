@@ -97,19 +97,25 @@ def damage_scenario_from_type_1(all_form_data):
     return damage_scenario
 
 
-def unpack_zipfile_into_scenario(zipfile):
+def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
     with ZipFile(zipfile, 'r') as myzip:
         index = myzip.read('index.csv')
         index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
 
         scenario_data = {}
+        if scenario_name:
+            scenario_data['name'] = scenario_name
+        if scenario_email:
+            scenario_data['email'] = scenario_email
         damage_table = None
         for line in index_data:
             print '%r' % line[0]
             if line[0] == 'scenario_name':
-                scenario_data['name'] = line[1]
+                if not scenario_data['name']:
+                    scenario_data['name'] = line[1]
             elif line[0] == 'scenario_email':
-                scenario_data['email'] = line[1]
+                if not scenario_data['email']:
+                    scenario_data['email'] = line[1]
             elif line[0] == 'scenario_type':
                 scenario_data['scenario_type'] = int(line[1])
             elif line[0] == 'scenario_calc_type':
@@ -174,16 +180,26 @@ def damage_scenario_from_zip_type(all_form_data):
     Unpack zipfile, make scenario with events
     """
     zipfile = all_form_data['zipfile']
-    damage_scenario = unpack_zipfile_into_scenario(zipfile)
+    scenario_name = all_form_data['name']
+    scenario_email = all_form_data['email']
+
+    damage_scenario = unpack_zipfile_into_scenario(
+        zipfile, scenario_name=scenario_name,
+        scenario_email=scenario_email)
 
     return damage_scenario
 
 
-# def check_zip_file(zipfile):
-#     """
-#     TODO: check zip file
-#     """
-#     return True
+def analyze_zip_file(zipfile):
+    """
+    Analyze zip file: generate kind of logging
+    """
+    result = []
+
+    with ZipFile(zipfile, 'r') as myzip:
+        result.append('zip bestand herkend')
+
+    return '\n'.join(result)
 
 
 class Wizard(SessionWizardView):
@@ -201,7 +217,8 @@ class Wizard(SessionWizardView):
 
     def get_form_initial(self, step):
         if step == '7':
-            return {'test': 'jaja'}
+            form_data = self.get_cleaned_data_for_step('4')
+            return {'zip_content': analyze_zip_file(form_data['zipfile'])}
         return super(Wizard, self).get_form_initial(step)
 
     # def get_form(self, step=None, data=None, files=None):

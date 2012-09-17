@@ -135,9 +135,18 @@ class FormZipResult(forms.Form):
     """
     display_title = 'Controle invoer'
 
-    display_content = 'Inhoud zipbestand'
+    zip_content = forms.CharField(
+        max_length=100,
+        label="zipfile analyse",
+        widget=forms.Textarea(attrs={'readonly':'readonly'}))
 
-    test = forms.CharField(max_length=100, label="")
+    # def __init__(self, *args, **kwargs):
+    #     super(FormZipResult, self).__init__(*args, **kwargs)
+    #     instance = getattr(self, 'instance', None)
+    #     if instance and instance.id:
+    #         self.fields['zip_content'].widget.attrs['readonly'] = True
+
+    #test = forms.CharField(max_length=100, label="")
     # test2 = forms.CharField(max_length=100, label="")
 
 
