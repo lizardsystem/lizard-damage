@@ -217,8 +217,12 @@ class Wizard(SessionWizardView):
 
     def get_form_initial(self, step):
         if step == '7':
-            form_data = self.get_cleaned_data_for_step('4')
-            return {'zip_content': analyze_zip_file(form_data['zipfile'])}
+            form_datas = {}
+            for form_step in ('3', '4', '5'):
+                form_data = self.get_cleaned_data_for_step(form_step)
+                if form_data:
+                    form_datas.update(form_data)
+            return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
         return super(Wizard, self).get_form_initial(step)
 
     # def get_form(self, step=None, data=None, files=None):
