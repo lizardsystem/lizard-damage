@@ -252,8 +252,8 @@ class Wizard(SessionWizardView):
         1: damage_scenario_from_type_1,
         2: damage_scenario_from_zip_type,
         3: damage_scenario_from_zip_type,
-        #4: damage_scenario_from_type_4,
-        #5: damage_scenario_from_type_5,
+        4: damage_scenario_from_zip_type,
+        # 5: damage_scenario_from_zip_type,
     }
 
     def get_form_initial(self, step):

@@ -12,12 +12,39 @@ from django.utils.safestring import SafeUnicode
 from xml.etree import ElementTree
 import logging
 from lizard_damage.models import DamageScenario
+from django.utils.safestring import mark_safe
+from django.utils.encoding import force_unicode
 
 logger = logging.getLogger(__name__)
 
 
 SCENARIO_TYPES = DamageScenario.SCENARIO_TYPES
 SCENARIO_TYPES_DICT = DamageScenario.SCENARIO_TYPES_DICT
+
+
+class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
+    """ Modifies some of the Radio buttons to be disabled in HTML,
+    based on an externally-appended Actives list. """
+    def render(self):
+        if not hasattr(self, "actives"): # oops, forgot to add an Actives list
+            return self.original_render()
+        print('my render')
+        return self.my_render()
+
+    def original_render(self):
+        return mark_safe(u'<ul>\n%s\n</ul>' % u'\n'.join([u'<li>%s</li>'
+            % force_unicode(w) for w in self]))
+
+    def my_render(self):
+        midList = []
+        for x, wid in enumerate(self):
+            if self.actives[x] == False:
+                wid.attrs['disabled'] = True
+            midList.append(u'<li>%s</li>' % force_unicode(wid))
+        finalList = mark_safe(u'<ul>\n%s\n</ul>' % u'\n'.join([u'<li>%s</li>'
+            % w for w in midList]))
+        return finalList
+
 
 class FormStep0(forms.Form):
     """
@@ -36,9 +63,10 @@ class FormStep0(forms.Form):
     scenario_type = forms.ChoiceField(
         label='Kies het type gegevens waarmee u '
               'een schadeberekening wilt uitvoeren',
-        choices = SCENARIO_TYPES,
-        widget = forms.widgets.RadioSelect,
+        choices=SCENARIO_TYPES,
+        widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
+    scenario_type.widget.renderer.actives = [True, True, True, True, True, False]
 
 
 class FormStep1(forms.Form):

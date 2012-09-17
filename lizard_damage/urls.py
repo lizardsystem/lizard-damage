@@ -34,7 +34,6 @@ urlpatterns = patterns(
             initial_dict={
                 '0': {
                     'name': 'Nieuw scenario',
-                    'email': 'jack.ha@nelen-schuurmans.nl',
                     },
                 '1': {
                     'floodtime': 1,
