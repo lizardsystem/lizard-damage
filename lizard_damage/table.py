@@ -178,9 +178,6 @@ class DamageTable(object):
     CFG_TYPE = 2
 
     def __init__(self, from_type, from_filename):
-        print (from_type)
-        print (from_filename)
-        print (models.Unit.objects.all())
         self._units = dict((u.name, u) for u in models.Unit.objects.all())
         self.importers[from_type](self, from_filename)
 
