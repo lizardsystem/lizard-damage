@@ -119,7 +119,10 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         # ds_wl_filename = os.path.join(
         #     settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
         #     )
-        ds_wl_filename = damage_event.waterlevel.path
+
+        # damage_event.waterlevel.path
+        ds_wl_filenames = [dewl.waterlevel.path for dewl in
+                          damage_event.damageeventwaterlevel_set.all()]
         logger.info("event %s" % (damage_event))
         #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
         logger.info(" - month %s, floodtime %s" % (
@@ -131,7 +134,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             dt_path = os.path.join(settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
         result = calc.calc_damage_for_waterlevel(
             repetition_time=damage_event.repetition_time,
-            ds_wl_filename=ds_wl_filename,
+            ds_wl_filenames=ds_wl_filenames,
             dt_path=dt_path,
             month=damage_event.floodmonth,
             floodtime=damage_event.floodtime,

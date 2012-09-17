@@ -11,6 +11,10 @@ class DamageEventInline(admin.TabularInline):
     model = models.DamageEvent
 
 
+class DamageEventWaterlevelInline(admin.TabularInline):
+    model = models.DamageEventWaterlevel
+
+
 class DamageEventResultInline(admin.TabularInline):
     model = models.DamageEventResult
 
@@ -18,7 +22,7 @@ class DamageEventResultInline(admin.TabularInline):
 class DamageEventAdmin(admin.ModelAdmin):
     list_display = ['__unicode__']
     actions = ['process']
-    inlines = [DamageEventResultInline]
+    inlines = [DamageEventResultInline, DamageEventWaterlevelInline]
 
     def process(self, request, queryset):
         for damage_event in queryset:

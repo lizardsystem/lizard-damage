@@ -250,7 +250,7 @@ def write_image(name, values):
 
 def calc_damage_for_waterlevel(
     repetition_time,
-    ds_wl_filename,
+    ds_wl_filenames,
     dt_path=None,
     month=9, floodtime=20*3600,
     repairtime_roads=None, repairtime_buildings=None,
@@ -281,12 +281,13 @@ def calc_damage_for_waterlevel(
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []
 
-    logger.info('water level: %s' % ds_wl_filename)
+    logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
-    if isinstance(ds_wl_filename, (unicode, str)):
-        waterlevel_ascfiles = [ds_wl_filename]
-    else:
-        waterlevel_ascfiles = ds_wl_filename
+    waterlevel_ascfiles = ds_wl_filenames
+    # if isinstance(ds_wl_filenames, (unicode, str)):
+    #     waterlevel_ascfiles = [ds_wl_filenames]
+    # else:
+    #     waterlevel_ascfiles = ds_wl_filenames
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
                            for waterlevel_ascfile in waterlevel_ascfiles]
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):

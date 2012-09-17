@@ -41,7 +41,7 @@ CFG_ROW_G_FLOODTIME = 'gamma_inundatieduur'
 CFG_ROW_G_REPAIRTIME = 'gamma_herstelperiode'
 CFG_ROW_G_MONTH = 'gamma_maand'
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 
 class Damage(object):
@@ -55,13 +55,13 @@ class Damage(object):
 class DamageHeader(object):
     """ Store header ranges, added from table importer."""
     def __init__(self, units, depth, floodtime, repairtime,
-                 default_floodtime='1 dag', 
+                 default_floodtime='1 dag',
                  default_repairtime='5 dagen', default_month=9):
         self._units = units
         self.depth = depth
 
         self.floodtime = floodtime
-        self._floodtime_in_seconds = [self._to_seconds(t) 
+        self._floodtime_in_seconds = [self._to_seconds(t)
                                       for t in self.floodtime]
 
         self.repairtime = repairtime
@@ -178,6 +178,9 @@ class DamageTable(object):
     CFG_TYPE = 2
 
     def __init__(self, from_type, from_filename):
+        print (from_type)
+        print (from_filename)
+        print (models.Unit.objects.all())
         self._units = dict((u.name, u) for u in models.Unit.objects.all())
         self.importers[from_type](self, from_filename)
 

@@ -15,6 +15,7 @@ from django.contrib.sites.models import Site
 from lizard_damage import tasks
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
+from lizard_damage.models import DamageEventWaterlevel
 from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 from lizard_damage import forms
@@ -22,6 +23,7 @@ from lizard_damage import forms
 import datetime
 import tempfile
 import os
+import re
 from zipfile import ZipFile
 
 temp_storage_location = tempfile.mkdtemp()
@@ -109,7 +111,7 @@ def unpack_zipfile_into_scenario(zipfile):
             elif line[0] == 'scenario_email':
                 scenario_data['email'] = line[1]
             elif line[0] == 'scenario_type':
-                scenario_data['scenario_type'] = line[1]
+                scenario_data['scenario_type'] = int(line[1])
             elif line[0] == 'scenario_calc_type':
                 scenario_data['calc_type'] = {'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
             elif line[0] == 'scenario_damage_table':
@@ -130,25 +132,44 @@ def unpack_zipfile_into_scenario(zipfile):
                             File(damage_table_file), save=True)
             else:
                 # This is an event
-                water_level_tempdir = tempfile.mktemp()
-                myzip.extract(line[1], water_level_tempdir)
-                with open(os.path.join(water_level_tempdir, line[1])) as water_level_tempfile:
-                    damage_event = DamageEvent(
-                        name=line[0],
-                        scenario=damage_scenario,
-                        floodtime=float(line[2]) * 3600,
-                        repairtime_roads=float(line[3]) * 3600 * 24,
-                        repairtime_buildings=float(line[4]) * 3600 * 24,
-                        floodmonth=line[5]
-                        )
-                    if line[6]:
-                        damage_event.repetition_time = line[6]
-                    damage_event.waterlevel.save(line[1], File(water_level_tempfile), save=True)
-                    damage_event.save()
+                damage_event = DamageEvent(
+                    name=line[0],
+                    scenario=damage_scenario,
+                    floodtime=float(line[2]) * 3600,
+                    repairtime_roads=float(line[3]) * 3600 * 24,
+                    repairtime_buildings=float(line[4]) * 3600 * 24,
+                    floodmonth=line[5]
+                    )
+                if line[6]:
+                    damage_event.repetition_time = line[6]
+                damage_event.save()
 
+                if scenario_data['scenario_type'] == 2:
+                    zip_file_names = myzip.namelist()
+                    re_match = re.match(
+                        '(.*[^0-9])([0-9]+)(\.asc)$', line[1]).groups()  # i.e. ('ws', '324', '.asc')
+
+                    re_pattern = re.compile('%s[0-9]+%s' % (re_match[0], re_match[2]))
+                    water_level_filenames = [
+                        fn for fn in zip_file_names if re.match(re_pattern, fn)]
+                    water_level_filenames.sort()
+                else:
+                    water_level_filenames = [line[1], ]
+
+                for index, water_level_filename in enumerate(water_level_filenames):
+                    water_level_tempdir = tempfile.mktemp()
+                    myzip.extract(water_level_filename, water_level_tempdir)
+                    tempfilename = os.path.join(water_level_tempdir, water_level_filename)
+                    with open(tempfilename) as water_level_tempfile:
+                        damage_event_waterlevel = DamageEventWaterlevel(event=damage_event, index=index)
+                        damage_event_waterlevel.waterlevel.save(
+                            water_level_filename, File(water_level_tempfile), save=True)
+                        damage_event_waterlevel.save()
+                    os.remove(tempfilename)
     return damage_scenario
 
-def damage_scenario_from_type_3(all_form_data):
+
+def damage_scenario_from_zip_type(all_form_data):
     """
     Unpack zipfile, make scenario with events
     """
@@ -172,8 +193,8 @@ class Wizard(SessionWizardView):
     SCENARIO_TYPE_FUNCTIONS = {
         0: damage_scenario_from_type_0,
         1: damage_scenario_from_type_1,
-        #2: damage_scenario_from_type_2,
-        3: damage_scenario_from_type_3,
+        2: damage_scenario_from_zip_type,
+        3: damage_scenario_from_zip_type,
         #4: damage_scenario_from_type_4,
         #5: damage_scenario_from_type_5,
     }
