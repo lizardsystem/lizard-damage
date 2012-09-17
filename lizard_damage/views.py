@@ -98,6 +98,12 @@ def damage_scenario_from_type_1(all_form_data):
 
 
 def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
+    """
+    Create scenario structure from (user uploaded) zip file
+
+    TODO: make a class for index.csv
+    (so we can use it in analyze_zip_file as well)
+    """
     with ZipFile(zipfile, 'r') as myzip:
         index = myzip.read('index.csv')
         index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
