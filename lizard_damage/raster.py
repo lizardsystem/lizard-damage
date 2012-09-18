@@ -297,10 +297,14 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
 
     height = to_masked_array(ds_height)
     if height.mask.any():
-        logger.warn('Nodata value found for height tile %s' % ahn_name)
+        logger.warn('%s nodata pixels in height tile %s',
+        height.mask.sum(), ahn_name,
+    )
     landuse = to_masked_array(ds_landuse)
     if landuse.mask.any():
-        logger.warn('Nodata value found for landuse tile %s' % ahn_name)
+        logger.warn('%s nodata pixels in landuse tile %s',
+        landuse.mask.sum(), ahn_name,
+    )
 
     # Here all the datasets are read in one big array.
     # Mem reduction could be achieved here by incrementally read and update.
@@ -347,7 +351,10 @@ def to_masked_array(ds, mask=None):
 
 
 def get_mask(road, shape, geo):
-        """ Return boolean array True where the road is. """
+        """ 
+        Return boolean array True where the road is. Shape is the
+        numpy shape of the raster.
+        """
         sr = osr.SpatialReference()
         sr.ImportFromWkt(geo[0])
 

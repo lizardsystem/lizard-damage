@@ -40,11 +40,14 @@ class Command(BaseCommand):
         ds_wl_filenames = [os.path.join(
             settings.DATA_ROOT, 'waterlevel', 'ws%i.asc' % i
         ) for i in range(5)]
+        ds_wl_filenames = [
+            os.path.join(settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc'),
+        ]
         calc.calc_damage_for_waterlevel(
             repetition_time=None,
             ds_wl_filenames=ds_wl_filenames,
             dt_path='data/damagetable/dt.cfg',
-            month=9, floodtime=20*3600,
+            month=5, floodtime=20*3600,
             repairtime_roads=5*24*3600,
             repairtime_buildings=10*24*3600,
             )
