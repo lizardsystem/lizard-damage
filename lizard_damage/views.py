@@ -68,12 +68,15 @@ def damage_scenario_from_type_0(all_form_data):
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
     repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
-    damage_scenario.damageevent_set.create(
+    damage_event = damage_scenario.damageevent_set.create(
         floodtime=all_form_data['floodtime'] * 3600,
         repairtime_roads=repairtime_roads,
         repairtime_buildings=repairtime_buildings,
-        waterlevel=all_form_data['waterlevel'],
         floodmonth=all_form_data['floodmonth'])
+    damage_event.damageeventwaterlevel_set.create(
+        waterlevel=all_form_data['waterlevel'],
+        index=1
+        )
     return damage_scenario
 
 
@@ -87,13 +90,16 @@ def damage_scenario_from_type_1(all_form_data):
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
     repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
-    damage_scenario.damageevent_set.create(
+    damage_event = damage_scenario.damageevent_set.create(
         repetition_time=all_form_data['repetition_time'],  # Difference is here
         floodtime=all_form_data['floodtime'] * 3600,
         repairtime_roads=repairtime_roads,
         repairtime_buildings=repairtime_buildings,
-        waterlevel=all_form_data['waterlevel'],
         floodmonth=all_form_data['floodmonth'])
+    damage_event.damageeventwaterlevel_set.create(
+        waterlevel=all_form_data['waterlevel'],
+        index=1
+        )
     return damage_scenario
 
 
@@ -263,11 +269,11 @@ class Wizard(SessionWizardView):
                 form_data = self.get_cleaned_data_for_step(form_step)
                 if form_data:
                     form_datas.update(form_data)
-            return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
-            # try:
-            #     return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
-            # except:
-            #     return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
+            # return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+            try:
+                return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+            except:
+                return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
         return super(Wizard, self).get_form_initial(step)
 
     # def get_form(self, step=None, data=None, files=None):
@@ -295,6 +301,7 @@ class Wizard(SessionWizardView):
         #do_something_with_the_form_data(form_list)
 
         all_form_data = self.get_all_cleaned_data()
+        print all_form_data
 
         scenario_type = int(all_form_data['scenario_type'])
         damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
