@@ -37,12 +37,12 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        ds_wl_filename = [os.path.join(
+        ds_wl_filenames = [os.path.join(
             settings.DATA_ROOT, 'waterlevel', 'ws%i.asc' % i
         ) for i in range(5)]
         calc.calc_damage_for_waterlevel(
             repetition_time=None,
-            ds_wl_filename=ds_wl_filename,
+            ds_wl_filenames=ds_wl_filenames,
             dt_path='data/damagetable/dt.cfg',
             month=9, floodtime=20*3600,
             repairtime_roads=5*24*3600,

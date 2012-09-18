@@ -146,7 +146,7 @@ def calculate(use, depth, geo,
 
 
 def write_result(name, ma_result, ds_template):
-    ds_result = raster.init_dataset(ds_template, nodatavalue=-1234)
+    ds_result = raster.init_dataset(ds_template, nodatavalue=-9999)
     raster.fill_dataset(ds_result, ma_result)
     raster.export_dataset(
         filepath=name,
