@@ -154,7 +154,7 @@ def write_result(name, ma_result, ds_template):
     )
 
 
-def write_table(name, damage, area, dt, meta=[]):
+def write_table(name, damage, area, dt, meta=[], include_total=False):
     """
     Write results in a csv table on disk.
 
@@ -177,6 +177,17 @@ def write_table(name, damage, area, dt, meta=[]):
                 'schade',
             )
         )
+        if include_total:
+            resultfile.write(
+                '%s,%s,%s,%s,%s\r\n' %
+                (
+                    '-',
+                    '-',
+                    'Totaal',
+                    sum(area.values()) / 10000.,
+                    sum(damage.values()),
+                )
+            )
         for code, dr in dt.data.items():
             resultfile.write(
                 '%s,%s,%s,%s,%s\r\n' %
@@ -405,7 +416,8 @@ def calc_damage_for_waterlevel(
         damage=overall_damage,
         area=overall_area,
         dt=dt,
-        meta=meta
+        meta=meta,
+        include_total=True,
         )
     result_table = result_as_dict(
         name=csv_result['filename'],
