@@ -5,10 +5,11 @@
 // Format the form.
 $(document).ready(function () {
   $('div#content').addClass('container')
-  $('form p').wrap('<div class="row" />')
-  $('form p label').wrap('<div class="span4 offset1" />')
-  $('form p input[type="text"]').wrap('<div class="span4" />')
-  $('form input[type="submit"]').wrap('<div class="span4" />')
-  $('form li label').wrap('<div class="span8 offset1" />')
+  //$('form p').wrap('<div class="row" />')
+  //$('form p input[type="text"]').wrap('<div class="span4" />')
+  //$('form p label').wrap('<div class="span4 offset1" />')
+  //$('form p div.help_tooltip').wrap('<div class="span1" />')
+  //$('form input[type="submit"]').wrap('<div class="span4" />')
+  //$('form li label').parents('ul').wrap('<div class="span8" />')
 })
 
