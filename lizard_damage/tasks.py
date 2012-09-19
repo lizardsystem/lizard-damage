@@ -182,7 +182,6 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     damage_event_result.image.save(img['dstname'] % damage_event.slug,
                                                    File(img_file), save=True)
                 damage_event_result.save()
-                os.remove(img['filename_tiff'])
                 os.remove(img['filename_png'])
         else:
             errors += 1

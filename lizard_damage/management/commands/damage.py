@@ -23,15 +23,6 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def show(arr):
-    """ Visualize an array with PIL """
-    import Image
-    tmp = numpy.ma.copy(arr)
-    tmp = (tmp - tmp.min()) * 255. / (tmp.max() - tmp.min())
-    tmp[tmp.mask] = 0
-    Image.fromarray(tmp[::4,::4]).show()
-
-
 class Command(BaseCommand):
     args = 'Command args'
     help = 'Command help'
@@ -42,6 +33,9 @@ class Command(BaseCommand):
         ) for i in range(5)]
         ds_wl_filenames = [
             os.path.join(settings.DATA_ROOT, 'waterlevel', '1_ha_gras.asc'),
+        ]
+        ds_wl_filenames = [
+            os.path.join(settings.DATA_ROOT, 'waterlevel', 'ws1.asc'),
         ]
         calc.calc_damage_for_waterlevel(
             repetition_time=None,
