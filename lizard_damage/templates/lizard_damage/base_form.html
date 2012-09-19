@@ -36,14 +36,23 @@
 {% if wizard.form.forms %}
     {{ wizard.form.management_form }}
     {% for form in wizard.form.forms %}
-    <div class="wizard-item-row">
+    <div class="wizard-item-row row">
       <ul>
         {{ form.as_ul }}
       </ul>
     </div>
     {% endfor %}
 {% else %}
-    {{ wizard.form.as_p }}
+    {#{ wizard.form.as_p }#}
+    {% for field in wizard.form %}
+      <div class="row">
+        <div class="span4">
+          <div class="help_tooltip{% if field.help_text %} ss_sprite ss_help{% endif %}" title="{{ field.help_text }}">&nbsp;</div>        
+          {{ field.label_tag }}
+        </div>
+        {{ field }}
+      </div>
+    {% endfor %}
 {% endif %}
 </table>
 {% if wizard.steps.prev %}

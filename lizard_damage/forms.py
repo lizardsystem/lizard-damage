@@ -28,7 +28,6 @@ class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
     def render(self):
         if not hasattr(self, "actives"): # oops, forgot to add an Actives list
             return self.original_render()
-        print('my render')
         return self.my_render()
 
     def original_render(self):
@@ -36,13 +35,21 @@ class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
             % force_unicode(w) for w in self]))
 
     def my_render(self):
+        """My render function
+
+        Kinda dirty, but it works in our case.
+        """
         midList = []
         for x, wid in enumerate(self):
+            print(wid)
             if self.actives[x] == False:
                 wid.attrs['disabled'] = True
-            midList.append(u'<li>%s</li>' % force_unicode(wid))
-        finalList = mark_safe(u'<ul>\n%s\n</ul>' % u'\n'.join([u'<li>%s</li>'
-            % w for w in midList]))
+            if self.help_texts[x]:
+                help_text = '<div class="help_tooltip ss_sprite ss_help" title="%s">&nbsp;</div>' % self.help_texts[x]
+            else:
+                help_text = '<div class="help_tooltip">&nbsp;</div>'
+            midList.append(u'<div class="wizard-item-row">%s%s</div>' % (help_text, force_unicode(wid)))
+        finalList = mark_safe(u'<div class="span9 wizard-radio-select">%s</div>' % u'\n'.join(midList))
         return finalList
 
 
@@ -55,6 +62,7 @@ class FormStep0(forms.Form):
     name = forms.CharField(
         max_length=100,
         label='Hoe wilt u het scenario noemen?',
+        help_text='Deze naam wordt gebruikt voor het uitvoerbestand. Indien u niets opgeeft wordt de naam van het waterstand-invoerbestand gebruikt en voorzien van de suffix ‘resultaat’.'
     )
     email = forms.EmailField(
         label='Emailadres',
@@ -67,6 +75,13 @@ class FormStep0(forms.Form):
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
     scenario_type.widget.renderer.actives = [True, True, True, True, True, False]
+    scenario_type.widget.renderer.help_texts = [
+        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.',
+        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één herhalingstijd. Het gewenste formaat is ASCI met RD als coordinaten-stelsel. De afmetingen van de grid-cellen moeten ≥ 0.5 m en ≤ 25 m.', 
+        'Kies deze optie indien u voor alle tijdstappen van een wateroverlast-gebeurtenis kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
+        'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
+        'Kies deze optie indien u voor meerdere herhalingstijden kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
+        'Kies deze optie indien u voor een tijdserie kaarten heeft met per tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m2.']
 
 
 class FormStep1(forms.Form):

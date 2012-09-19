@@ -3,11 +3,24 @@
 form ul {
     list-style-type:none;
 }
+
 form input[type=radio] {
     display:inline
 }
 
-.wizard-item-row ul {
+form label input[type=radio]{
+    margin-left: 1em;
+}
+
+.help_tooltip {
+    width: 3em;
+    display: block;
+    float: left;
+    padding-left: 0px;
+    margin-top: 5px;
+}
+
+.wizard-item-row {
     clear: both;
 }
 
@@ -15,4 +28,9 @@ form input[type=radio] {
     list-style:none;
     display: block;
     float: left;
+}
+
+.wizard-radio-select {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
