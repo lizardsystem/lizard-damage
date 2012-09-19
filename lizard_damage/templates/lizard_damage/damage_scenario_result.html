@@ -68,8 +68,8 @@
 <table class="table table-striped">
   <thead>
     <th>Categorie</th>
-    <th>Oppervlakte met schade</th>
-    <th>Schade</th>
+    <th style="text-align: right">Oppervlakte met schade</th>
+    <th style="text-align: right">Schade</th>
   </thead>
   <tbody>
     {% for data_row in event_table.1 %}
@@ -78,10 +78,10 @@
       <td title="{{ data_row.description }} ({{ data_row.source }} - {{ data_row.code }})">
       {{ data_row.description }}
       </td>
-      <td title="{{ data_row.area_ha|floatformat }}">
+      <td title="{{ data_row.area_ha|floatformat }}" style="text-align: right">
       {% autoescape off %}{{ data_row.area_ha|haformat }}{% endautoescape %}
       </td>
-      <td title="{{ data_row.damage|floatformat }}">
+      <td title="{{ data_row.damage|floatformat }}" style="text-align: right">
       {% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}
       </td>
       {% endif %}
