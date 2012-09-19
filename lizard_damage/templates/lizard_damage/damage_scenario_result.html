@@ -74,6 +74,7 @@
   <tbody>
     {% for data_row in event_table.1 %}
     <tr>
+      {% if data_row.damage %}
       <td title="{{ data_row.description }} ({{ data_row.source }} - {{ data_row.code }})">
       {{ data_row.description }}
       </td>
@@ -83,6 +84,7 @@
       <td title="{{ data_row.damage|floatformat }}">
       {% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}
       </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </tbody>

@@ -2,18 +2,18 @@ from django import template
 
 register = template.Library()
 
+
+def split_len(seq, length):
+    """splits a string into length sized strings, beginning at the end"""
+    result = [seq[max(i-length, 0):i] for i in range(len(seq), 0, -length)]
+    result.reverse()
+    return result
+
+
 @register.filter()
 def euroformat(value):
-    if value > 10000000:
-        return '&euro; %0.0f miljoen' % (value/1000000.0)
-    if value > 1000000:
-        return '&euro; %0.1f miljoen' % (value/1000000.0)
-    if value > 10000:
-        return '&euro; %0.0f duizend' % (value/1000.0)
-    if value > 1000:
-        return '&euro; %0.1f duizend' % (value/1000.0)
-
-    return '&euro; %0.0f' % (value)
+    value_str = '%0.0f' % value
+    return '&euro; %s,-' % ('.'.join(split_len(value_str, 3)))
 
 
 @register.filter
@@ -21,11 +21,9 @@ def haformat(value):
     """
     Hectare format, do not mix up with the "Jack Ha" Format.
     """
-    if value > 1:
-        return '%0.0f ha' % value
     if value == 0.0:
         return '0 ha'
-    return '%0.1f ha' % value
+    return '%0.0f ha' % value
 
 
 @register.filter
