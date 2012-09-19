@@ -20,10 +20,13 @@ from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
 from lizard_damage import tools
+from lizard_damage import models
 
 from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
+
+from arjan.geoimage import GeoImage
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +41,8 @@ CALC_TYPES = {
 }
 
 # {landuse-code: gridcode} mapping for roads
-ROAD_GRIDCODE = {21: 21, 22: 22}
+ROAD_GRIDCODE = {22: 21, 23: 22}
 BUILDING_SOURCES = ('BAG', )
-
-
-def result_indirect_roads_part(
-        code, geo, depth, index, damage_per_pixel,
-    ):
-    """
-
-    """
-    area_per_pixel = raster.geo2cellsize(geo)
-    result_indirect = np.zeros(depth.shape)
-    roads = raster.get_roads(ROAD_GRIDCODE[code], geo, depth.shape)
-
-    for road in roads:
-        mask = raster.get_mask(road, depth.shape, geo)
-        flooded_m2 = (mask * area_per_pixel).sum()
-        logger.debug('This road is {} m2 flooded'.format(flooded_m2))
-        if flooded_m2 > 50:
-            result_indirect += mask * damage_per_pixel
-
-    return result_indirect[index]
 
 
 def get_roads_flooded_for_tile_and_code(code, depth, geo):
@@ -72,6 +55,7 @@ def get_roads_flooded_for_tile_and_code(code, depth, geo):
         flooded_m2 = (mask * area_per_pixel * np.greater(depth, 0)).sum()
         if flooded_m2:
             roads_flooded_for_tile_and_code[road.pk] = flooded_m2
+
     return roads_flooded_for_tile_and_code
 
 
@@ -121,17 +105,6 @@ def calculate(use, depth, geo,
                 code=code, depth=depth, geo=geo,
             )
             partial_result_indirect = np.array(0)
-            #damage_per_pixel = (
-                #area_per_pixel *
-                #repairtime_roads *
-                #dr.to_gamma_repairtime(repairtime_roads) *
-                #dr.to_indirect_damage(CALC_TYPES[calc_type]) /
-                #(3600 * 24)  # Indirect damage is specified per day
-            #)
-            #partial_result_indirect = result_indirect_roads_part(
-                #code=code, geo=geo, depth=depth, index=index,
-                #damage_per_pixel=damage_per_pixel,
-            #)
         else:
             partial_result_indirect = (
                 area_per_pixel *
@@ -300,10 +273,6 @@ def calc_damage_for_waterlevel(
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
     waterlevel_ascfiles = ds_wl_filenames
-    # if isinstance(ds_wl_filenames, (unicode, str)):
-    #     waterlevel_ascfiles = [ds_wl_filenames]
-    # else:
-    #     waterlevel_ascfiles = ds_wl_filenames
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
                            for waterlevel_ascfile in waterlevel_ascfiles]
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
@@ -321,10 +290,9 @@ def calc_damage_for_waterlevel(
 
     overall_area = {}
     overall_damage = {}
-    roads_flooded_global = {i: collections.defaultdict(float)
-                            for i in ROAD_GRIDCODE}
+    roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
 
-    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
+    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0])[0:1]:
         ahn_name = ahn_index.bladnr
         logger.info("calculating damage for tile %s..." % ahn_name)
 
@@ -348,7 +316,14 @@ def calc_damage_for_waterlevel(
 
         for code, roads_flooded in roads_flooded_for_tile.iteritems():
             for road, flooded_m2 in roads_flooded.iteritems():
-                roads_flooded_global[code][road] += flooded_m2
+                if road in roads_flooded_global[code]:
+                    roads_flooded_global[code][road]['area'] += flooded_m2
+                else:
+                    roads_flooded_global[code][road] = dict(
+                        shape=depth.shape,
+                        area=flooded_m2,
+                        geo=geo,
+                    )
 
         #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
@@ -406,6 +381,18 @@ def calc_damage_for_waterlevel(
             else:
                 overall_area[k] = area[k]
 
+    for code, roads_flooded in roads_flooded_global.iteritems():
+        for road, info in roads_flooded.iteritems():
+            if info['area'] > 50:
+                overall_damage[code] += (
+                    dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) /
+                    (3600 * 24) *  # Indirect damage is specified per day
+                    models.Roads.objects.get(pk=road).the_geom.area *
+                    repairtime_roads *
+                    dt.data[code].to_gamma_repairtime(repairtime_roads)
+                )
+                # Rasterize road on geo and shape (which? Include it!)
+                # Write png indirect roads, and remove it in tasks.py
 
 
     csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv',

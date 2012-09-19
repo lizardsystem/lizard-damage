@@ -375,7 +375,6 @@ def get_mask(road, shape, geo):
         )
         set_geo(ds_road, geo)
 
-
         # Rasterize and return
         gdal.RasterizeLayer(ds_road,(1,),layer, burn_values=(1,))
         return ds_road.GetRasterBand(1).ReadAsArray()
