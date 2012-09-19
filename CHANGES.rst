@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.3.2 (unreleased)
+0.3.2 (2012-09-19)
 ------------------
 
 - Remove tiff removal.
