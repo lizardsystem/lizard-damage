@@ -41,7 +41,7 @@ class Command(BaseCommand):
             settings.DATA_ROOT, 'waterlevel', 'ws%i.asc' % i
         ) for i in range(5)]
         ds_wl_filenames = [
-            os.path.join(settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc'),
+            os.path.join(settings.DATA_ROOT, 'waterlevel', '1_ha_gras.asc'),
         ]
         calc.calc_damage_for_waterlevel(
             repetition_time=None,

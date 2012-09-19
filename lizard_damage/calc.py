@@ -154,8 +154,9 @@ def calculate(use, depth, geo,
 
 
         logger.debug(
-            '%s - %s: %.f dir + %.f ind = %.f tot' %
+            '%s - %s - %s: %.2f dir + %.2f ind = %.2f tot' %
             (
+                dr.code,
                 dr.source,
                 dr.description,
                 partial_result_direct.sum(),
@@ -163,8 +164,8 @@ def calculate(use, depth, geo,
                 damage[code],
             ),
         )
-        logger.debug(dr.source + ' - ' +
-                     dr.description + ': ' + unicode(damage[code]))
+        #logger.debug(dr.source + ' - ' +
+                     #dr.description + ': ' + unicode(damage[code]))
 
     return damage, count, damage_area, result, roads_flooded_for_tile
 
@@ -328,7 +329,7 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        depth, landuse, geo, floodtime_px, ds_height = raster.get_calc_data(
+        landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
             waterlevel_datasets=waterlevel_datasets,
             method=settings.RASTER_SOURCE,
             floodtime=floodtime,

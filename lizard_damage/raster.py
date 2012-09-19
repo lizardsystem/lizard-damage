@@ -238,7 +238,6 @@ def import_dataset(filepath, driver):
         open_argument = filepath
     dataset = gdal.Open(str(open_argument))
 
-    print ('Opening dataset: %s', open_argument)
     logger.debug('Opening dataset: %s', open_argument)
 
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
@@ -293,28 +292,32 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
     print (ds_height)
     geo = get_geo(ds_height)
 
-    logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
+    logger.info('Reading datasets for %s' % ahn_name)
 
     height = to_masked_array(ds_height)
     if height.mask.any():
         logger.warn('%s nodata pixels in height tile %s',
         height.mask.sum(), ahn_name,
     )
+    
     landuse = to_masked_array(ds_landuse)
     if landuse.mask.any():
         logger.warn('%s nodata pixels in landuse tile %s',
         landuse.mask.sum(), ahn_name,
     )
 
+    logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
+
     # Here all the datasets are read in one big array.
     # Mem reduction could be achieved here by incrementally read and update.
-    depths = numpy.array(
+    depths = numpy.ma.array(
         [to_masked_array(reproject(ds_waterlevel, ds_height))
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 
     depth = depths.max(0)
     floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
+    landuse.mask = depth.mask
 
     return landuse, depth, geo, floodtime_px, ds_height
 
