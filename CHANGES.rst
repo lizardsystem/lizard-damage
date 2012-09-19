@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix bug in calculation of swapped depth and height
+- Fix wrong mask being used in calculation
 
 
 0.3 (2012-09-18)
