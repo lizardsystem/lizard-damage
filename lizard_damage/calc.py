@@ -292,7 +292,7 @@ def calc_damage_for_waterlevel(
     overall_damage = {}
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
 
-    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0])[0:1]:
+    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
         ahn_name = ahn_index.bladnr
         logger.info("calculating damage for tile %s..." % ahn_name)
 
