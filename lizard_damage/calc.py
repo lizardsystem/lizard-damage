@@ -26,8 +26,6 @@ from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
 
-from arjan.geoimage import GeoImage
-
 logger = logging.getLogger(__name__)
 
 CALC_TYPE_MIN = 1
