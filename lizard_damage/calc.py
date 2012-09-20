@@ -89,7 +89,10 @@ def calculate(use, depth, geo,
         else:
             repairtime = default_repairtime
 
-        index = (np.ma.equal(use, code))
+        index = np.logical_and(
+            np.equal(use.data, code),
+            ~use.mask,
+        )
         count[code] = index.sum()
 
         partial_result_direct = (
