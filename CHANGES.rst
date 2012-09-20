@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.4.2 (unreleased)
+0.4.2 (2012-09-20)
 ------------------
 
 - Change index creation to be more transparent and to work with older numpy.
