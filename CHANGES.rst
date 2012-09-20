@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.4.3 (unreleased)
+0.4.3 (2012-09-20)
 ------------------
 
 - Remove debugging import.
