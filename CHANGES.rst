@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.4.4 (unreleased)
 ------------------
 
+- Fixed IE layout by adding property for .container.
+
 - Added extra help texts.
 
 - Renamed Schademodule to Schade Calculator.
