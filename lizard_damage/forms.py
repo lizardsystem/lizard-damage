@@ -57,7 +57,7 @@ class FormStep0(forms.Form):
     """
     Name and e-mail
     """
-    display_title = 'Lizard Schademodule'
+    display_title = 'Schade Calculator'
 
     name = forms.CharField(
         max_length=100,
