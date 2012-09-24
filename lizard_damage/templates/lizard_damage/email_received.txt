@@ -1,7 +1,7 @@
 {# template for received notification in txt #}
 L.S.,
 
-Het schademodule scenario "{{ damage_scenario.name }}" is in goede
+Het schade calculator scenario "{{ damage_scenario.name }}" is in goede
 orde ontvangen. Als de berekening klaar is krijgt U een nieuw bericht.
 
 --

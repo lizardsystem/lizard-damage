@@ -118,11 +118,11 @@ class FormStep1(forms.Form):
         )
     floodmonth = forms.ChoiceField(
         label="Wat is de maand van de gebeurtenis?",
-        choices=MONTH_CHOICES)
+        choices=MONTH_CHOICES, initial=9)
     calc_type = forms.ChoiceField(
         label="Gemiddelde, minimale of maximale schadebedragen en schadefuncties",
         choices=DamageScenario.CALC_TYPE_CHOICES,
-        initial=DamageScenario.CALC_TYPE_MAX)
+        initial=DamageScenario.CALC_TYPE_AVG)
 
 
 class FormStep2(FormStep1):
