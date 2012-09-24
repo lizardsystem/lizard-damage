@@ -23,7 +23,7 @@ def haformat(value):
     """
     if value == 0.0:
         return '0 ha'
-    return '%0.0f ha' % value
+    return '%0.1f ha' % value
 
 
 @register.filter
