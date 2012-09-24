@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6 (unreleased)
-----------------
+0.5.1 (2012-09-24)
+------------------
 
 - Coloring of result according to classes using colormap.
 
