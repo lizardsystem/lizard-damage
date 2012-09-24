@@ -9,7 +9,7 @@ def version():
     from pkginfo.installed import Installed
     import lizard_damage
     installed = Installed(lizard_damage)
-    if installed:
+    if installed.version:
         return 'Versie oktober 2012 (%s)' % (installed.version)
     else:
         return 'Versie oktober 2012'
