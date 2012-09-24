@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.4.4 (unreleased)
-------------------
+0.5 (2012-09-24)
+----------------
 
 - Fixed IE layout by adding property for .container.
 
