@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Slightly changed version, added version to disclaimer page.
 
 
 0.5.2 (2012-09-24)

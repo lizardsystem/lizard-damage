@@ -54,7 +54,7 @@ urlpatterns = patterns(
         name='lizard_damage_form'
     ),
     url(r'^disclaimer$',
-        TemplateView.as_view(template_name="lizard_damage/disclaimer.html"),
+        views.Disclaimer.as_view(template_name="lizard_damage/disclaimer.html"),
         name='lizard_damage_disclaimer'
     ),
     url(

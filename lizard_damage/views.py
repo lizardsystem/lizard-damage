@@ -360,3 +360,10 @@ class DamageEventKML(ViewContextMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')
+
+
+class Disclaimer(ViewContextMixin, TemplateView):
+    template_name = 'lizard_damage/disclaimer.html'
+
+    def version(self):
+        return tools.version()
