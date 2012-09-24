@@ -38,6 +38,40 @@ CALC_TYPES = {
     3: 'avg',
 }
 
+
+def get_colorizer(max_damage):
+    """ Return colormap and normalizer :suitable for rain. """
+    # Note the hardcoded area_per_pixel
+    area_per_pixel = 0.25
+    f = 1 / max_damage * area_per_pixel
+    
+    cdict = {
+        'red': (
+            (0., 0, 0),
+            (00.01 * f, 0.00, 0.33),
+            (00.50 * f, 0.33, 0.66),
+            (10.00 * f, 0.66, 1.00),
+            (1.0, 1.0, 1.0),
+        ),
+        'green': (
+            (0., 0, 0),
+            (1., 0, 0),
+        ),
+        'blue': (
+            (0., 0, 0),
+            (1., 0, 0),
+        ),
+    }
+
+    # Beware of the amount of quantization levels, it DOES matter
+    colormap = colors.LinearSegmentedColormap('damage', cdict, N=1024)
+    normalize = colors.Normalize(vmin=0, vmax=max_damage)
+
+    def colorize(data):
+        return colormap(normalize(data), bytes=True)
+
+    return colorize
+
 # {landuse-code: gridcode} mapping for roads
 ROAD_GRIDCODE = {22: 21, 23: 22}
 BUILDING_SOURCES = ('BAG', )
@@ -80,7 +114,7 @@ def calculate(use, depth, geo,
 
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
-
+        
     for code, dr in table.data.items():
         if code in BUILDING_SOURCES:
             repairtime = repairtime_buildings
@@ -115,6 +149,7 @@ def calculate(use, depth, geo,
             ) * np.ones(depth.shape)[index]
 
         result[index] = partial_result_direct + partial_result_indirect
+
 
         damage_area[code] = np.where(
             np.greater(result[index], 0), area_per_pixel, 0,
@@ -227,14 +262,10 @@ def write_image(name, values):
 
     Values is a 2d np array
     """
+    colorize = get_colorizer(max_damage=11)
     rgba = np.zeros((values.shape[0], values.shape[1], 4), dtype=np.uint8)
-    normalize = colors.LogNorm(vmin=0.001, vmax=100)
-    rgba = cm.jet(normalize(values), bytes=True)
-    rgba[:,:,3] = rgba[:,:,0]
-    #rgba[:,:,0] = values * 3
-    #rgba[:,:,1] = values * 0.5
-    #rgba[:,:,2] = values * 0.5
-    #rgba[:,:,3] = values * 3
+    rgba = colorize(values)
+    rgba[:,:,3] = np.where(rgba[:,:,0], 255 , 0)
     Image.fromarray(rgba).save(name, 'PNG')
 
 
@@ -326,7 +357,6 @@ def calc_damage_for_waterlevel(
                         geo=geo,
                     )
 
-        #print(result.sum())
         logger.debug("result sum: %f" % result.sum())
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
