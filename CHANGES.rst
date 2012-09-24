@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added STOWA logo to disclaimer page.
 
 
 0.5.1 (2012-09-24)
