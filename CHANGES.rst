@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.4.4 (unreleased)
 ------------------
 
+- Added extra help texts.
+
 - Renamed Schademodule to Schade Calculator.
 
 - Standard calculation form defaults to september & gemiddelde
