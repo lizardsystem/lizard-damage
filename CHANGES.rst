@@ -2,10 +2,27 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.4.4 (unreleased)
-------------------
+0.6 (unreleased)
+----------------
 
 - Nothing changed yet.
+
+
+0.5 (2012-09-24)
+----------------
+
+- Fixed IE layout by adding property for .container.
+
+- Added extra help texts.
+
+- Renamed Schademodule to Schade Calculator.
+
+- Standard calculation form defaults to september & gemiddelde
+schadebedragen.
+
+- Added disclaimer.
+
+- Changed version visualization.
 
 
 0.4.3 (2012-09-20)

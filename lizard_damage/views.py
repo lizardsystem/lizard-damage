@@ -249,7 +249,7 @@ def analyze_zip_file(zipfile):
     return '\n'.join(result)
 
 
-class Wizard(SessionWizardView):
+class Wizard(ViewContextMixin, SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     file_storage = temp_storage
 
@@ -291,6 +291,9 @@ class Wizard(SessionWizardView):
     #     else:
     #         form = super(Wizard, self).get_form(step, data, files)
     #     return form
+
+    def version(self):
+        return tools.version()
 
     def done(self, form_list, **kwargs):
         """

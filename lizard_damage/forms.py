@@ -57,7 +57,7 @@ class FormStep0(forms.Form):
     """
     Name and e-mail
     """
-    display_title = 'Lizard Schademodule'
+    display_title = 'Schade Calculator'
 
     name = forms.CharField(
         max_length=100,
@@ -105,24 +105,42 @@ class FormStep1(forms.Form):
         (12, 'december'),
         )
 
-    waterlevel = forms.FileField(label="Ascii bestand maximale waterstand", required=True)
-    damagetable = forms.FileField(label="Optioneel: eigen schadetabel", required=False)
-    floodtime = forms.FloatField(label="Duur overlast (uur)", help_text="")
+    waterlevel = forms.FileField(
+        label="Ascii bestand maximale waterstand", 
+        required=True,
+        help_text='Voor enkele schadecategorien wordt de schade bepaald door de duur van de wateroverlast. Bijv. de indirecte schade als gevolg van het niet kunnen gebruiken van een primaire weg. Indien u niets invult wordt in de berekeningen default uitgegaan van 12 uur.')
+
+    damagetable = forms.FileField(
+        label="Optioneel: eigen schadetabel", required=False,
+        help_text='Het is mogelijk om eigen schadebedragen te gebruiken. Download hiervoor de standaard schade tabel en verander deze naar behoefte.'
+        )
+    
+    floodtime = forms.FloatField(
+        label="Duur overlast (uur)", 
+        help_text="Hiermee wordt de periode bedoeld waarbij er daadwerkelijk water op straat, in huizen of op de akkers staat. Afhankelijk van het landgebruik en deze duur wordt meer of minder schade berekend.")
+    
     repairtime_roads = forms.ChoiceField(
-        label="Hersteltijd wegen", help_text="", required=True,
-        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen"))
+        label="Hersteltijd wegen", required=True,
+        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
+        help_text='Met hersteltijd wegen wordt de duur bedoeld dat wegen niet gebruikt kunnen worden. Voor deze duur wordt indirecte schade berekend als gevolg van de extra kosten die mensen maken voor het omrijden. Deze schade wordt enkel berekend voor primaire wegen (snelwegen e.d.) en secundaire wegen (regionale en lokale wegen) indien minimaal 100 m2 van een wegvak was geïnundeerd. De duur is gelijk aan de duur van de wateroverlast plus de tijd die nodig is om de schade herstellen. Nadat het water van de weg af is, kan een weg namelijk niet altijd meteen gebruikt worden doordat eerst slib en vuil verwijderd moet worden of de weg nog geblokkeerd is door bijvoorbeeld achtergebleven auto’s, de leidingen van noodpompen e.d. '
         )
+
     repairtime_buildings = forms.ChoiceField(
-        label="Hersteltijd bebouwing", help_text="", required=True,
-        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen"))
+        label="Hersteltijd bebouwing", required=True,
+        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
+        help_text='Met hersteltijd bebouwing wordt de duur bedoeld dat een gebouw zijn oorspronkelijke functie niet kan vervullen. Dit is gelijk aan de duur van de wateroverlast en de tijd om de schade te herstellen. Gedurende deze periode loopt een winkel bijvoorbeeld zijn omzet mis of moet een familie ondergebracht worden in een hotel.'
         )
+
     floodmonth = forms.ChoiceField(
         label="Wat is de maand van de gebeurtenis?",
-        choices=MONTH_CHOICES)
+        choices=MONTH_CHOICES, initial=9,
+        help_text='Voor de landgebruikscategorien als hooigras en landbouw is de schade afhankelijk van het tijdstip in het groeiseizoen. In de winter is er minder schade dan in de zomer. Indien u niets invult wordt default uitgegaan van september.')
+    
     calc_type = forms.ChoiceField(
         label="Gemiddelde, minimale of maximale schadebedragen en schadefuncties",
         choices=DamageScenario.CALC_TYPE_CHOICES,
-        initial=DamageScenario.CALC_TYPE_MAX)
+        initial=DamageScenario.CALC_TYPE_AVG,
+        help_text='Voer uw schadeberekening uit met voor Nederland gemiddelde, maximale of minimale schadebedragen en schadefuncties.')
 
 
 class FormStep2(FormStep1):

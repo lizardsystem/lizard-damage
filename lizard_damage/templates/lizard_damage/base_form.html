@@ -61,9 +61,6 @@
 {% endif %}
 <input class="btn btn-primary" type="submit" value="verder"/>
 </form>
-
-<div>
-</div>
 {% endblock %}
 
 {% block sidebar %}
@@ -103,4 +100,8 @@ Downloads
     <a href="{{ STATIC_URL }}schademodule/zip/example.zip">Voorbeeld zipfile voor batchbewerking.</a>
   </li>
 </ul>
+  <div>
+    {{ view.version }}
+  </div>
+
 {% endblock %}

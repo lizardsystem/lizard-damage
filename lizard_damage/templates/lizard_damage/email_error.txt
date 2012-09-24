@@ -1,7 +1,7 @@
 {# template for error #}
-  Beste Schade Module beheerder,
+  Beste Schade Calculator beheerder,
 
-    Het schademodule scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Graag herstellen.
+    Het schade calculator scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Graag herstellen.
 
 
   --

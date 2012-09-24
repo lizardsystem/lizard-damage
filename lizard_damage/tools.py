@@ -9,4 +9,4 @@ def version():
     from pkginfo.installed import Installed
     import lizard_damage
     installed = Installed(lizard_damage)
-    return 'versie %s' % (installed.version)
+    return 'Versie oktober 2012 (%s)' % (installed.version)

@@ -34,3 +34,8 @@ form label input[type=radio]{
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+.container {
+    padding-left: 50px;
+    padding-top: 10px;
+}
