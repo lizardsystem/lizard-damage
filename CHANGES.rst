@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.5 (unreleased)
+0.5.5 (2012-09-24)
 ------------------
 
 - Add one decimal to ha formatter
