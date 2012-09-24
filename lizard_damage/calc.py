@@ -240,6 +240,13 @@ def result_as_dict(name, damage, area, damage_table):
     return data structure of result which can be stored and looped
     """
     data = []
+    data.append({
+        'source': None,
+        'code': None,
+        'description': 'Totaal',
+        'area_ha': sum(area.values()) / 10000.,
+        'damage': sum(damage.values()),
+    })
     head = [{'display': 'bron', 'key': 'source'},
             {'display': 'code', 'key': 'code'},
             {'display': 'omschrijving', 'key': 'description'},
