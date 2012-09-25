@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Updated kml. It seems that google maps does not project items 100% accurately.
 
 
 0.5.6 (2012-09-25)

@@ -84,6 +84,12 @@ class AhnIndex(models.Model):
         x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
         x1, y1 = transform(rd_proj, wgs84_proj, e[2], e[3])
         print ('Converting RD %r to WGS84 %s' % (e, '%f %f %f %f' % (x0, y0, x1, y1)))
+        # we're using it for google maps and it does not project exactly on the correct spot.. try to fix it ugly
+        # add rotation = 0.9 too for the kml
+        x0 = x0 - 0.00012
+        y0 = y0 + 0.000057
+        x1 = x1 + 0.000154
+        y1 = y1 - 0.000051
         return (x0, y0, x1, y1)
 
 
@@ -310,7 +316,11 @@ class DamageEventResult(models.Model):
         return '%s - %s' % (self.damage_event, self.image)
 
     def rotation(self):
-        return 0.0
+        # somethings wrong with google maps projection, see also AhnIndex
+        # test show that for north = 51.797214 -> rotation = 0.9
+        # north = 52.835332 -> rotation = 0.3
+        fraction = (self.north - 51.797214) / (52.835332 - 51.797214)
+        return 0.9 - 0.6 * fraction
 
     """
      with open('/tmp/test', 'rb') as testfile:
