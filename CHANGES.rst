@@ -2,10 +2,17 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.5 (unreleased)
+0.5.6 (unreleased)
 ------------------
 
 - Changed unicode of DamageEvent.
+
+
+0.5.5 (2012-09-24)
+------------------
+
+- Add one decimal to ha formatter
+- Add total row at the top of the results table
 
 
 0.5.4 (2012-09-24)
