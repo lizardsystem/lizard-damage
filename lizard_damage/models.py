@@ -10,6 +10,8 @@ from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from lizard_map import coordinates
 from lizard_task.models import SecuredPeriodicTask
+from pyproj import transform
+from pyproj import Proj
 
 import datetime
 import os
@@ -18,6 +20,16 @@ import string
 import json
 
 # from django.utils.translation import ugettext_lazy as _
+
+RD = str("""
++proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs <>
+""")
+
+WGS84 = str('+proj=latlong +datum=WGS84')
+
+rd_proj = Proj(RD)
+wgs84_proj = Proj(WGS84)
+
 
 def friendly_filesize(size):
     if size > 1024*1024*1024*1024*1024:
@@ -67,8 +79,11 @@ class AhnIndex(models.Model):
     @property
     def extent_wgs84(self):
         e = self.the_geom.extent
-        x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
-        x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
+        #x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
+        #x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
+        x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
+        x1, y1 = transform(rd_proj, wgs84_proj, e[2], e[3])
+        print ('Converting RD %r to WGS84 %s' % (e, '%f %f %f %f' % (x0, y0, x1, y1)))
         return (x0, y0, x1, y1)
 
 
@@ -254,10 +269,10 @@ class DamageEvent(models.Model):
 
     def __unicode__(self):
         if self.name: return self.name
-        try:
-            return '%s' % (os.path.basename(self.waterlevel.path))
-        except:
-            return '(no waterlevel)'
+        dew = self.damageeventwaterlevel_set.all()
+        if dew:
+            return ', '.join([str(d) for d in dew])
+        return 'id: %d' % self.id
 
     @property
     def result_display(self):
@@ -313,3 +328,6 @@ class DamageEventWaterlevel(models.Model):
 
     class Meta:
         ordering = ('index', )
+
+    def __unicode__(self):
+        return os.path.basename(self.waterlevel.path)

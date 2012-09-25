@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Changed unicode of DamageEvent.
 
 
 0.5.4 (2012-09-24)
