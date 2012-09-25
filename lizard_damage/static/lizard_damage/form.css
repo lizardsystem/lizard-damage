@@ -13,7 +13,7 @@ form label input[type=radio]{
 }
 
 .help_tooltip {
-    width: 3em;
+    width: 1.5em;
     display: block;
     float: left;
     padding-left: 0px;

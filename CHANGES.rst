@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Updated tooltips.
 
 
 0.5.7 (2012-09-25)
