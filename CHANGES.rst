@@ -2,10 +2,16 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.10 (unreleased)
+0.5.11 (unreleased)
 -------------------
 
 - Nothing changed yet.
+
+
+0.5.10 (2012-09-26)
+-------------------
+
+- Update damagetable (indirect and direct damage were equal)
 
 
 0.5.9 (2012-09-25)

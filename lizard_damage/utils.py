@@ -105,7 +105,7 @@ class DamageWorksheet(object):
                 'code': code,
                 'description': description,
                 'direct_damage': direct_damage,
-                'indirect_damage': direct_damage,
+                'indirect_damage': indirect_damage,
                 'gamma_depth': gamma_depth,
                 'gamma_floodtime': gamma_floodtime,
                 'gamma_repairtime': gamma_repairtime,
