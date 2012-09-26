@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.11 (unreleased)
+0.5.11 (2012-09-26)
 -------------------
 
 - Added caching to ahn and landuse.
