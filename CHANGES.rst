@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Update damagetable (missing units)
 
 
 0.5.10 (2012-09-26)
