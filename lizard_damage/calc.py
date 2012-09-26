@@ -25,6 +25,7 @@ from lizard_damage import models
 from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,16 @@ CALC_TYPES = {
     2: 'max',
     3: 'avg',
 }
+
+
+def get_calc_data_cached(waterlevel_datasets, method, floodtime, ahn_name, logger):
+    #return raster.get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger)
+    #landuse, depth, geo, floodtime_px, ds_height 
+    def hash(waterlevel_datasets, floodtime, ahn_name):
+        return None
+    hash_code = hash(waterlevel_datasets, floodtime, ahn_name)
+    result = raster.get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger)
+    return result
 
 
 def get_colorizer(max_damage):
@@ -336,7 +347,7 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
+        landuse, depth, geo, floodtime_px, ds_height = get_calc_data_cached(
             waterlevel_datasets=waterlevel_datasets,
             method=settings.RASTER_SOURCE,
             floodtime=floodtime,
@@ -378,12 +389,28 @@ def calc_damage_for_waterlevel(
         zip_result.append(asc_result)
 
         # Generate image. First in .tif, then convert it to .png
-        image_result = {
-            'filename_png': tempfile.mktemp(),
-            'dstname': 'schade_%s_' + ahn_name + '.png',
-            'extent': ahn_index.extent_wgs84}  # %s is for the damage_event.slug
-        write_image(name=image_result['filename_png'], values=result)
-        img_result.append(image_result)
+        # Subdivide tiles
+        x_tiles = 4
+        y_tiles = 5
+        extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
+        tile_x_size = (extent[2] - extent[0]) / x_tiles
+        tile_y_size = (extent[3] - extent[1]) / y_tiles
+        result_tile_size_x = result.shape[1] / x_tiles
+        result_tile_size_y = result.shape[0] / y_tiles
+        print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
+        for tile_x in range(x_tiles):
+            for tile_y in range(y_tiles):
+                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size, 
+                    extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
+                image_result = {
+                    'filename_png': tempfile.mktemp(),
+                    'dstname': 'schade_%s_' + ahn_name + '.png',
+                    'extent': ahn_index.extent_wgs84(e=e)}  # %s is for the damage_event.slug
+                write_image(
+                    name=image_result['filename_png'], 
+                    values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
+                                (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
+                img_result.append(image_result)
 
         csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
             'delete_after': True}

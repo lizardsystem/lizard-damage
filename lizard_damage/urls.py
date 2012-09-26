@@ -71,6 +71,10 @@ urlpatterns = patterns(
         r'^thank_you/$',
         TemplateView.as_view(template_name="lizard_damage/thank_you.html"),
         name='lizard_damage_thank_you'
-        )
+        ),
+    url(r'^test$',
+        TemplateView.as_view(template_name="lizard_damage/openlayers.html"),
+        name='lizard_damage_test'
+    ),
 )
 urlpatterns += debugmode_urlpatterns()

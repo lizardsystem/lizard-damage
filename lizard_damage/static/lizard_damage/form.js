@@ -4,7 +4,8 @@
 
 // Format the form.
 $(document).ready(function () {
-  $('div#content').addClass('container')
+  $('div#content').addClass('container');
+  $('div.help_tooltip').tooltip();
   //$('form p').wrap('<div class="row" />')
   //$('form p input[type="text"]').wrap('<div class="span4" />')
   //$('form p label').wrap('<div class="span4 offset1" />')

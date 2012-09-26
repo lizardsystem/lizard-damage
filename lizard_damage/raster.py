@@ -286,13 +286,13 @@ def get_ds_for_tile(ahn_name, method='filesystem'):
 
 def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
 
+    logger.info('Reading datasets for %s' % ahn_name)
+
     ds_height, ds_landuse = get_ds_for_tile(
         ahn_name=ahn_name, method=method,
     )
     print (ds_height)
     geo = get_geo(ds_height)
-
-    logger.info('Reading datasets for %s' % ahn_name)
 
     height = to_masked_array(ds_height)
     if height.mask.any():

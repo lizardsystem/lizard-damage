@@ -2,10 +2,34 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.6 (unreleased)
+0.5.10 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
+0.5.9 (2012-09-25)
 ------------------
 
 - Nothing changed yet.
+
+
+0.5.8 (2012-09-25)
+------------------
+
+- Updated tooltips.
+
+
+0.5.7 (2012-09-25)
+------------------
+
+- Updated kml. It seems that google maps does not project items 100% accurately.
+
+
+0.5.6 (2012-09-25)
+------------------
+
+- Changed unicode of DamageEvent.
 
 
 0.5.5 (2012-09-24)

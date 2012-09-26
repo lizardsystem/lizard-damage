@@ -10,6 +10,8 @@ from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from lizard_map import coordinates
 from lizard_task.models import SecuredPeriodicTask
+from pyproj import transform
+from pyproj import Proj
 
 import datetime
 import os
@@ -18,6 +20,16 @@ import string
 import json
 
 # from django.utils.translation import ugettext_lazy as _
+
+RD = str("""
++proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs <>
+""")
+
+WGS84 = str('+proj=latlong +datum=WGS84')
+
+rd_proj = Proj(RD)
+wgs84_proj = Proj(WGS84)
+
 
 def friendly_filesize(size):
     if size > 1024*1024*1024*1024*1024:
@@ -64,11 +76,20 @@ class AhnIndex(models.Model):
     def __unicode__(self):
         return '%s %f %f %r' % (self.gid, self.x, self.y, self.extent_wgs84)
 
-    @property
-    def extent_wgs84(self):
-        e = self.the_geom.extent
-        x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
-        x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
+    def extent_wgs84(self, e=None):
+        if e is None:
+            e = self.the_geom.extent
+        #x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
+        #x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
+        x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
+        x1, y1 = transform(rd_proj, wgs84_proj, e[2], e[3])
+        print ('Converting RD %r to WGS84 %s' % (e, '%f %f %f %f' % (x0, y0, x1, y1)))
+        # we're using it for google maps and it does not project exactly on the correct spot.. try to fix it ugly
+        # add rotation = 0.9 too for the kml
+        #x0 = x0 - 0.00012
+        #y0 = y0 + 0.000057
+        #x1 = x1 + 0.000154
+        #y1 = y1 - 0.000051
         return (x0, y0, x1, y1)
 
 
@@ -254,10 +275,10 @@ class DamageEvent(models.Model):
 
     def __unicode__(self):
         if self.name: return self.name
-        try:
-            return '%s' % (os.path.basename(self.waterlevel.path))
-        except:
-            return '(no waterlevel)'
+        dew = self.damageeventwaterlevel_set.all()
+        if dew:
+            return ', '.join([str(d) for d in dew])
+        return 'id: %d' % self.id
 
     @property
     def result_display(self):
@@ -295,7 +316,12 @@ class DamageEventResult(models.Model):
         return '%s - %s' % (self.damage_event, self.image)
 
     def rotation(self):
-        return 0.0
+        # somethings wrong with google maps projection, see also AhnIndex
+        # test show that for north = 51.797214 -> rotation = 0.9
+        # north = 52.835332 -> rotation = 0.3
+        #fraction = (self.north - 51.797214) / (52.835332 - 51.797214)
+        #return 0.9 - 0.6 * fraction
+        return 0
 
     """
      with open('/tmp/test', 'rb') as testfile:
@@ -313,3 +339,6 @@ class DamageEventWaterlevel(models.Model):
 
     class Meta:
         ordering = ('index', )
+
+    def __unicode__(self):
+        return os.path.basename(self.waterlevel.path)
