@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Folder>
-    <name>Lizard Schademodule</name>
+    <name>STOWA Schade Calculator</name>
     <description>Resultaat {{ view.damage_event }} (beschikbaar tot {{ view.damage_event.scenario.expiration_date|date:"d-m-y" }})
     </description>
     {% for damage_event_result in view.damage_event.damageeventresult_set.all %}

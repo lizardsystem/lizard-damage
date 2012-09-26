@@ -1,7 +1,7 @@
 {# template for received notification txt#}
 L.S.,
 
-Het schade calculator scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
+Het STOWA Schade Calculator scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
 
 Resultaten "{{ damage_scenario.name }}": {{ ROOT_URL }}{% url lizard_damage_result slug=damage_scenario.slug %}
 

@@ -76,9 +76,9 @@ class AhnIndex(models.Model):
     def __unicode__(self):
         return '%s %f %f %r' % (self.gid, self.x, self.y, self.extent_wgs84)
 
-    @property
-    def extent_wgs84(self):
-        e = self.the_geom.extent
+    def extent_wgs84(self, e=None):
+        if e is None:
+            e = self.the_geom.extent
         #x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
         #x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
         x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
