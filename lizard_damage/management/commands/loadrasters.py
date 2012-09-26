@@ -26,12 +26,16 @@ logger = logging.getLogger(__name__)
 if os.path.exists(MASTER):
     os.remove(MASTER)
 
+SQL_TEMPLATE = (
+    'UPDATE {table} SET filename={filename}_old WHERE filename={filename};\n'
+    'UPDATE {table} SET filename={filename} WHERE filename={filename}_new;\n'
+    'DELETE FROM {table} WHERE filename={filename}_old;\n'
+)
 
 class Main(object):
     """
     find data/ahn_proc/ -maxdepth 2 -mindepth 2 -regex .*_[0-9][0-9]$ > somelist
     cat filelist | ~/code/schademodule/bin/django loadrasters data_lgn -z -s
-
     """
     def __init__(self, *args, **options):
         for k, v in options.iteritems():
@@ -94,6 +98,10 @@ class Main(object):
             os.remove(fifo_name)
         with open(MASTER, 'a') as master:
             master.write('\i %s\n' % fifo_name)
+            master.write(SQL_TEMPLATE.format(
+                table=self.table,
+                filename=os.path.basename(path),
+            ))
 
     def _pgsql2raster(self, action, path, destination):
         """ Return the subprocess that writes the sql to destination """
@@ -105,9 +113,9 @@ class Main(object):
         p1 = subprocess.Popen(raster2pgsql_command, stdout=subprocess.PIPE)
 
         sed_command = shlex.split(
-            '''sed "s/'');$/'%(name)s');/"''' %
-            dict(name=os.path.basename(path)),
-        )
+            '''sed "s/'{name}');$/'{name}_new');/"'''.format(
+            name=os.path.basename(path),
+        ))
         p2 = subprocess.Popen(sed_command, stdin=p1.stdout, stdout=destination)
         
         return p2
@@ -132,10 +140,10 @@ class Main(object):
                     self._save(action=PREPARE, path=path)
 
             if filename in existing_records:
-                logger.debug('%s already in %s, skipping.' %
+                logger.debug('%s already in %s' %
                     (filename, self.table),
                 )
-                continue
+                # continue
             self._save(action=APPEND, path=path, number=i)
 
 
