@@ -25,7 +25,6 @@ from lizard_damage import models
 from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
-from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +37,6 @@ CALC_TYPES = {
     2: 'max',
     3: 'avg',
 }
-
-
-def get_calc_data_cached(waterlevel_datasets, method, floodtime, ahn_name, logger):
-    #return raster.get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger)
-    #landuse, depth, geo, floodtime_px, ds_height 
-    def hash(waterlevel_datasets, floodtime, ahn_name):
-        return None
-    hash_code = hash(waterlevel_datasets, floodtime, ahn_name)
-    result = raster.get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger)
-    return result
 
 
 def get_colorizer(max_damage):
@@ -347,7 +336,7 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        landuse, depth, geo, floodtime_px, ds_height = get_calc_data_cached(
+        landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
             waterlevel_datasets=waterlevel_datasets,
             method=settings.RASTER_SOURCE,
             floodtime=floodtime,

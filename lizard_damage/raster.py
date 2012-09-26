@@ -18,6 +18,7 @@ from django.conf import settings
 
 from lizard_damage import models
 
+from django.core.cache import cache
 import logging
 import numpy
 import os
@@ -284,27 +285,40 @@ def get_ds_for_tile(ahn_name, method='filesystem'):
 
     return ds_ahn, ds_lgn
 
-def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
 
+def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, caching=True):
+    def hash_code(ahn_name):
+        """make hash for ahn tile"""
+        return ahn_name
     logger.info('Reading datasets for %s' % ahn_name)
 
     ds_height, ds_landuse = get_ds_for_tile(
         ahn_name=ahn_name, method=method,
-    )
-    print (ds_height)
-    geo = get_geo(ds_height)
+    )  # ds_height: part of result
+    cached = cache.get(hash_code(ahn_name))
+    if cached is not None and caching:
+        logger.info('data from cache')
+        geo, height, landuse = cached
+    else:
+        logger.info('landuse, etc...')
+        geo = get_geo(ds_height)  # part of result
 
-    height = to_masked_array(ds_height)
-    if height.mask.any():
-        logger.warn('%s nodata pixels in height tile %s',
-        height.mask.sum(), ahn_name,
-    )
-    
-    landuse = to_masked_array(ds_landuse)
-    if landuse.mask.any():
-        logger.warn('%s nodata pixels in landuse tile %s',
-        landuse.mask.sum(), ahn_name,
-    )
+        logger.info('height to masked array...')
+        height = to_masked_array(ds_height)
+        if height.mask.any():
+            logger.warn('%s nodata pixels in height tile %s',
+            height.mask.sum(), ahn_name,
+        )
+        
+        logger.info('landuse to masked array...')
+        landuse = to_masked_array(ds_landuse)  # part of result
+        if landuse.mask.any():
+            logger.warn('%s nodata pixels in landuse tile %s',
+            landuse.mask.sum(), ahn_name,
+        )
+
+        logger.info('caching data...')
+        cache.set(hash_code(ahn_name), (geo, height, landuse)) 
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
@@ -315,8 +329,8 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger):
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 
-    depth = depths.max(0)
-    floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
+    depth = depths.max(0)  # part of result
+    floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)  # part of result
     landuse.mask = depth.mask
 
     return landuse, depth, geo, floodtime_px, ds_height

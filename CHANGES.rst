@@ -2,10 +2,20 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.11 (unreleased)
+0.5.12 (unreleased)
 -------------------
 
 - Update damagetable (missing units)
+
+- base_form template.
+
+
+0.5.11 (2012-09-26)
+-------------------
+
+- Added caching to ahn and landuse.
+
+- Fixed some titles.
 
 
 0.5.10 (2012-09-26)
