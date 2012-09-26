@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '0.5.10'
+version = '0.5.11.dev0'
 
 long_description = '\n\n'.join([
     open('README.rst').read(),
