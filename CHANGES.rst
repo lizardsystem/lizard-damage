@@ -5,7 +5,9 @@ Changelog of lizard-damage
 0.5.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added caching to ahn and landuse.
+
+- Fixed some titles.
 
 
 0.5.10 (2012-09-26)
