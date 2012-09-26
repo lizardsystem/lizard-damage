@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- base_form template.
 
 
 0.5.11 (2012-09-26)
