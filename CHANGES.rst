@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.5.13 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add units to unit fixture for indirect damage
 
 
 0.5.12 (2012-09-26)

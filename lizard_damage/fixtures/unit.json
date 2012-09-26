@@ -1,50 +1,66 @@
 [
-    {
-        "pk": 1,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "/m2",
-            "factor": 1.0
-        }
-    },
-    {
-        "pk": 3,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "/dag",
-            "factor": 1.15740740740741e-05
-        }
-    },
-    {
-        "pk": 5,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "uur",
-            "factor": 3600.0
-        }
-    },
-    {
-        "pk": 6,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "dag",
-            "factor": 86400.0
-        }
-    },
-    {
-        "pk": 7,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "dagen",
-            "factor": 86400.0
-        }
-    },
-    {
-        "pk": 2,
-        "model": "lizard_damage.unit",
-        "fields": {
-            "name": "/ha",
-            "factor": 0.0001
-        }
+  {
+    "pk": 1,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "/m2",
+      "factor": 1.0
     }
+  },
+  {
+    "pk": 3,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "/dag",
+      "factor": 1.15740740740741e-05
+    }
+  },
+  {
+    "pk": 5,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "uur",
+      "factor": 3600.0
+    }
+  },
+  {
+    "pk": 6,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "dag",
+      "factor": 86400.0
+    }
+  },
+  {
+    "pk": 7,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "dagen",
+      "factor": 86400.0
+    }
+  },
+  {
+    "pk": 2,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "/ha",
+      "factor": 0.0001
+    }
+  },
+  {
+    "pk": 8,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "/m2/dag",
+      "factor": 1.0
+    }
+  },
+  {
+    "pk": 9,
+    "model": "lizard_damage.unit",
+    "fields": {
+      "name": "/wegvak/dag",
+      "factor": 1.0
+    }
+  }
 ]
