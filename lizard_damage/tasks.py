@@ -7,6 +7,7 @@ from django.template.loader import get_template
 
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEventResult
+from lizard_damage.models import RD
 from lizard_damage import calc
 from lizard_task.task import task_logging
 from lizard_task.models import SecuredPeriodicTask
@@ -20,6 +21,26 @@ import os
 import random
 import string
 import json
+import subprocess
+from osgeo import gdal
+from PIL import Image
+
+
+def extent_from_geotiff(filename):
+    ds = gdal.Open(filename)
+    width = ds.RasterXSize
+    height = ds.RasterYSize
+    gt = ds.GetGeoTransform()
+    minx = gt[0]
+    miny = gt[3] + width*gt[4] + height*gt[5] 
+    maxx = gt[0] + width*gt[1] + height*gt[2]
+    maxy = gt[3] 
+    return (minx, miny, maxx, maxy)
+
+
+def convert_tif_to_png(filename_tif, filename_png):
+    im = Image.open(filename_tif)
+    im.save(filename_png, 'PNG')
 
 
 def damage_scenario_to_task(damage_scenario, username="admin"):
@@ -172,17 +193,40 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                     damage_event_result.image.delete()
                     damage_event_result.delete()
             for img in result[1]:
+                # convert filename_png to geotiff,
+                #import pdb; pdb.set_trace()
+
+                logger.info('Warping png to tif... %s' % img['filename_png'])
+                command = 'gdalwarp %s %s -t_srs "+proj=latlong +datum=WGS84" -s_srs "%s"' % (
+                    img['filename_png'], img['filename_tif'], RD.strip())
+                logger.info(command)
+                # Warp png file, output is tif.
+                subprocess.call([
+                    'gdalwarp', img['filename_png'], img['filename_tif'], 
+                    '-t_srs', "+proj=latlong +datum=WGS84", '-s_srs', RD.strip()])
+
+                img['extent'] = extent_from_geotiff(img['filename_tif'])
+                # Convert it back to png
+                #subprocess.call([
+                #    'convert', img['filename_tif'], img['filename_png']]) 
+                convert_tif_to_png(img['filename_tif'], img['filename_png'])
+
+            #logger.info('Creating damage event results...')
+            #for img in result[1]:
                 damage_event_result = DamageEventResult(
                     damage_event=damage_event,
                     west=img['extent'][0],
                     south=img['extent'][1],
                     east=img['extent'][2],
                     north=img['extent'][3])
+                logger.info('Uploading %s...' % img['filename_png'])
                 with open(img['filename_png'], 'rb') as img_file:
                     damage_event_result.image.save(img['dstname'] % damage_event.slug,
                                                    File(img_file), save=True)
                 damage_event_result.save()
                 os.remove(img['filename_png'])
+                os.remove(img['filename_pgw'])
+                os.remove(img['filename_tif'])
         else:
             errors += 1
 

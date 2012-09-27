@@ -318,7 +318,7 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
         )
 
         logger.info('caching data...')
-        cache.set(hash_code(ahn_name), (geo, height, landuse)) 
+        cache.set(hash_code(ahn_name), (geo, height, landuse), 7*24*3600) 
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
