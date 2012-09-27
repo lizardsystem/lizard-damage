@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.5.14 (unreleased)
--------------------
+0.6 (2012-09-27)
+----------------
 
 - Added warping output files (implemented using gdalwarp).
 
