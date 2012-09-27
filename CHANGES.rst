@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.6.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added extra try/except.
 
 
 0.6.4 (2012-09-27)

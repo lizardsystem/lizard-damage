@@ -16,6 +16,7 @@ import collections
 
 
 import zipfile
+import traceback
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
@@ -370,13 +371,20 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
-            waterlevel_datasets=waterlevel_datasets,
-            method=settings.RASTER_SOURCE,
-            floodtime=floodtime,
-            ahn_name=ahn_name,
-            logger=logger,
-        )
+        try:
+            landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
+                waterlevel_datasets=waterlevel_datasets,
+                method=settings.RASTER_SOURCE,
+                floodtime=floodtime,
+                ahn_name=ahn_name,
+                logger=logger,
+            )
+        except:
+            # Log this error and all previous normal logs, instead of hard crashing
+            logger.error('Exception')
+            for exception_line in traceback.format_exc().split('\n'):
+                logger.error(exception_line)
+            return
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(

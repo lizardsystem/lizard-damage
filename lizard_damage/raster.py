@@ -263,6 +263,11 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
+def disk_free():
+    stat = os.statvfs('/')
+    return stat.f_bavail * stat.f_frsize
+
+
 def get_ds_for_tile(ahn_name, method='filesystem'):
     """
     Return datasets (waterlevel, height, landuse).
@@ -292,7 +297,6 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
         """make hash for ahn tile"""
         return ahn_name
     logger.info('Reading datasets for %s' % ahn_name)
-
     ds_height, ds_landuse = get_ds_for_tile(
         ahn_name=ahn_name, method=method,
     )  # ds_height: part of result
@@ -318,8 +322,12 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
             landuse.mask.sum(), ahn_name,
         )
 
-        logger.info('caching data...')
-        cache.set(hash_code(ahn_name), (geo, height, landuse), 7*24*3600) 
+        df = disk_free()
+        logger.info('caching data... (Disk free: %iGB)' % (df / 1024/1024/1024))
+        if df > 1024*1024*1024:
+            cache.set(hash_code(ahn_name), (geo, height, landuse), 7*24*3600)
+        else:
+            logger.warning('Less than 1 Gb free. Increase disk size for cache, or reduce cache time.')
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
