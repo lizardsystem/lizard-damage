@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.6.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Improved logging.
 
 
 0.6.3 (2012-09-27)
