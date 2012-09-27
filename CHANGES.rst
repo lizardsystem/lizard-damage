@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.6.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix too large indirect damage for the roads.
 
 
 0.6.5 (2012-09-27)

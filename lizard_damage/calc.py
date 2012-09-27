@@ -396,7 +396,6 @@ def calc_damage_for_waterlevel(
             repairtime_buildings=repairtime_buildings,
             logger=logger,
         )
-
         for code, roads_flooded in roads_flooded_for_tile.iteritems():
             for road, flooded_m2 in roads_flooded.iteritems():
                 if road in roads_flooded_global[code]:
@@ -490,9 +489,7 @@ def calc_damage_for_waterlevel(
         for road, info in roads_flooded.iteritems():
             if info['area'] > 50:
                 overall_damage[code] += (
-                    dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) /
-                    (3600 * 24) *  # Indirect damage is specified per day
-                    repairtime_roads *
+                    dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) *
                     dt.data[code].to_gamma_repairtime(repairtime_roads)
                 )
                 # Rasterize road on geo and shape (which? Include it!)
