@@ -137,6 +137,8 @@ def calculate(use, depth, geo,
         )
 
         if code in ROAD_GRIDCODE:
+            # Here only the roads involved in this ahn are recorded, indirect
+            # damage will be added to overall results.
             roads_flooded_for_tile[code] = get_roads_flooded_for_tile_and_code(
                 code=code, depth=depth, geo=geo,
             )
@@ -467,7 +469,6 @@ def calc_damage_for_waterlevel(
                 overall_damage[code] += (
                     dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) /
                     (3600 * 24) *  # Indirect damage is specified per day
-                    models.Roads.objects.get(pk=road).the_geom.area *
                     repairtime_roads *
                     dt.data[code].to_gamma_repairtime(repairtime_roads)
                 )
