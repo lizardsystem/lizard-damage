@@ -40,22 +40,23 @@ CALC_TYPES = {
 
 
 def get_colorizer(max_damage):
-    """ Return colormap and normalizer :suitable for rain. """
+    """ Return colormap and normalizer. """
     # Note the hardcoded area_per_pixel
     area_per_pixel = 0.25
     f = 1 / max_damage * area_per_pixel
-    
+   
     cdict = {
         'red': (
-            (0., 0, 0),
-            (00.01 * f, 0.00, 0.33),
-            (00.50 * f, 0.33, 0.66),
-            (10.00 * f, 0.66, 1.00),
-            (1.0, 1.0, 1.0),
+            (0.0,       0, 0),
+            (00.01 * f, 0, 1),
+            (1.0,       1, 1),
         ),
         'green': (
-            (0., 0, 0),
-            (1., 0, 0),
+            (0.,        0.00, 0.00),
+            (00.01 * f, 0.00, 1.00),
+            (00.50 * f, 1.00, 0.65),
+            (10.00 * f, 0.65, 0.00),
+            (1.,        0.00, 0.00),
         ),
         'blue': (
             (0., 0, 0),
@@ -270,9 +271,8 @@ def write_image(name, values):
     Values is a 2d np array
     """
     colorize = get_colorizer(max_damage=11)
-    rgba = np.zeros((values.shape[0], values.shape[1], 4), dtype=np.uint8)
     rgba = colorize(values)
-    rgba[:,:,3] = np.where(rgba[:,:,0], 255 , 0)
+    rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
     Image.fromarray(rgba).save(name, 'PNG')
 
 
