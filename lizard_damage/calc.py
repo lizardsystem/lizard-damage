@@ -276,6 +276,25 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
+def write_pgw(name, extent):
+    """write pgw file: 
+
+    0.5
+    0.000
+    0.000
+    0.5
+    <x ul corner>
+    <y ul corner>
+
+    extent is a 4-tuple
+    """
+    f = open(name, 'w')
+    f.write('0.5\n0.000\n0.000\n-0.5\n')
+    f.write('%f\n%f' % (min(extent[0], extent[2]), max(extent[1], extent[3])))
+    f.close()
+    return
+
+
 def calc_damage_for_waterlevel(
     repetition_time,
     ds_wl_filenames,
@@ -379,8 +398,8 @@ def calc_damage_for_waterlevel(
 
         # Generate image. First in .tif, then convert it to .png
         # Subdivide tiles
-        x_tiles = 4
-        y_tiles = 5
+        x_tiles = 1
+        y_tiles = 1
         extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
         tile_x_size = (extent[2] - extent[0]) / x_tiles
         tile_y_size = (extent[3] - extent[1]) / y_tiles
@@ -391,14 +410,21 @@ def calc_damage_for_waterlevel(
             for tile_y in range(y_tiles):
                 e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size, 
                     extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
+                # We are writing a png + pgw now, but in the task a tiff will be created and uploaded
+                base_filename = tempfile.mktemp()
                 image_result = {
-                    'filename_png': tempfile.mktemp(),
+                    'filename_tif': base_filename + '.tif',
+                    'filename_png': base_filename + '.png',
+                    'filename_pgw': base_filename + '.pgw',
                     'dstname': 'schade_%s_' + ahn_name + '.png',
                     'extent': ahn_index.extent_wgs84(e=e)}  # %s is for the damage_event.slug
                 write_image(
                     name=image_result['filename_png'], 
                     values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
                                 (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
+                write_pgw(
+                    name=image_result['filename_pgw'],
+                    extent=e)
                 img_result.append(image_result)
 
         csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
