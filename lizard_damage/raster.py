@@ -244,6 +244,7 @@ def import_dataset(filepath, driver):
     # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
     # In that case we get it from the database
     if (driver == 'PostGISRaster' and
+        dataset is not None and
         dataset.GetRasterBand(1).GetNoDataValue() == 0):
         nodatavalue = get_postgisraster_nodatavalue(
             'raster', table, filename,
