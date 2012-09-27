@@ -295,6 +295,18 @@ def write_pgw(name, extent):
     return
 
 
+def correct_ascfiles(input_list):
+    """
+    test ascfiles for known faulty behaviour and correct them if needed
+    """
+    for filename in input_list:
+        lines = open(filename).readlines()
+        # It seems that sobek will do this...
+        if lines[0][0:3] == '/* ':
+            logger.warning('Correcting file: %s' % filename)
+            open(filename, 'w').writelines(lines[1:])
+
+
 def calc_damage_for_waterlevel(
     repetition_time,
     ds_wl_filenames,
@@ -331,8 +343,11 @@ def calc_damage_for_waterlevel(
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
     waterlevel_ascfiles = ds_wl_filenames
+    correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
                            for waterlevel_ascfile in waterlevel_ascfiles]
+    logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
+    logger.info('waterlevel_datasets: %r' % waterlevel_datasets)
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
         if ds is None:
             logger.error('data source is not available,'
