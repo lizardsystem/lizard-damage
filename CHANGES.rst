@@ -2,10 +2,10 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.2 (unreleased)
+0.6.2 (2012-09-27)
 ------------------
 
-- Nothing changed yet.
+- Added .asc correcting code when sobek adds a line.
 
 
 0.6.1 (2012-09-27)
