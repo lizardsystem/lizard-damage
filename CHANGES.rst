@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.7 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Adjust colors and legend to yellow, red and orange.
 
 
 0.6 (2012-09-27)
