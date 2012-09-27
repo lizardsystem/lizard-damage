@@ -16,6 +16,7 @@ import collections
 
 
 import zipfile
+import traceback
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
@@ -297,6 +298,18 @@ def write_pgw(name, extent):
     return
 
 
+def correct_ascfiles(input_list):
+    """
+    test ascfiles for known faulty behaviour and correct them if needed
+    """
+    for filename in input_list:
+        lines = open(filename).readlines()
+        # It seems that sobek will do this...
+        if lines[0][0:3] == '/* ':
+            logger.warning('Correcting file: %s' % filename)
+            open(filename, 'w').writelines(lines[1:])
+
+
 def calc_damage_for_waterlevel(
     repetition_time,
     ds_wl_filenames,
@@ -333,8 +346,11 @@ def calc_damage_for_waterlevel(
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
     waterlevel_ascfiles = ds_wl_filenames
+    correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
                            for waterlevel_ascfile in waterlevel_ascfiles]
+    logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
+    logger.info('waterlevel_datasets: %r' % waterlevel_datasets)
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
         if ds is None:
             logger.error('data source is not available,'
@@ -357,13 +373,20 @@ def calc_damage_for_waterlevel(
         logger.info("calculating damage for tile %s..." % ahn_name)
 
         # Prepare data for calculation
-        landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
-            waterlevel_datasets=waterlevel_datasets,
-            method=settings.RASTER_SOURCE,
-            floodtime=floodtime,
-            ahn_name=ahn_name,
-            logger=logger,
-        )
+        try:
+            landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
+                waterlevel_datasets=waterlevel_datasets,
+                method=settings.RASTER_SOURCE,
+                floodtime=floodtime,
+                ahn_name=ahn_name,
+                logger=logger,
+            )
+        except:
+            # Log this error and all previous normal logs, instead of hard crashing
+            logger.error('Exception')
+            for exception_line in traceback.format_exc().split('\n'):
+                logger.error(exception_line)
+            return
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(

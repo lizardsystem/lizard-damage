@@ -2,10 +2,34 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.2 (unreleased)
+0.6.6 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+0.6.5 (2012-09-27)
+------------------
+
+- Added extra try/except.
+
+
+0.6.4 (2012-09-27)
+------------------
+
+- Improved logging.
+
+
+0.6.3 (2012-09-27)
+------------------
+
+- Made it more robust.
+
+
+0.6.2 (2012-09-27)
+------------------
+
+- Added .asc correcting code when sobek adds a line.
 
 
 0.6.1 (2012-09-27)
