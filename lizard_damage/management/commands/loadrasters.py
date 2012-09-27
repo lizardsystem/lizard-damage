@@ -26,12 +26,27 @@ logger = logging.getLogger(__name__)
 if os.path.exists(MASTER):
     os.remove(MASTER)
 
+SQL_TEMPLATE = (
+    "BEGIN;\n"
+    "UPDATE {table} SET filename='{filename}_old' "
+    "WHERE filename='{filename}';\n"
+    "UPDATE {table} SET filename='{filename}' "
+    "WHERE filename='{filename}_new';\n"
+    "DELETE FROM {table} WHERE filename='{filename}_old';\n"
+    "END;\n"
+)
 
 class Main(object):
     """
-    find data/ahn_proc/ -maxdepth 2 -mindepth 2 -regex .*_[0-9][0-9]$ > somelist
-    cat filelist | ~/code/schademodule/bin/django loadrasters data_lgn -z -s
+    find some_path/ -mindepth 3 -maxdepth 3 -name '*' | \
+    grep [0-9][0-9]$ > rlist
+    cat rlist | ~/code/schademodule/bin/django loadrasters data_lgn -z -s
 
+    TODO: The sed command currently replaces the filename by
+    bladr_new. This only works when using the master sql generated when
+    using the -z option...
+
+    Also, just juse the zipfile arcname instead of named pipe to create zips.
     """
     def __init__(self, *args, **options):
         for k, v in options.iteritems():
@@ -66,6 +81,7 @@ class Main(object):
         return psql_command
 
     def _to_database(self, action, path, number=None):
+        raise Exception('Do not use this, now. See above TODO')
         p2 = self._pgsql2raster(action, path, subprocess.PIPE)
         p3 = subprocess.Popen(self.psql_command, stdin=p2.stdout)
         p3.communicate()
@@ -93,7 +109,11 @@ class Main(object):
         finally:
             os.remove(fifo_name)
         with open(MASTER, 'a') as master:
-            master.write('\i %s\n' % fifo_name)
+            master.write('\i %s;\n' % fifo_name)
+            master.write(SQL_TEMPLATE.format(
+                table=self.table,
+                filename=os.path.basename(path),
+            ))
 
     def _pgsql2raster(self, action, path, destination):
         """ Return the subprocess that writes the sql to destination """
@@ -105,9 +125,9 @@ class Main(object):
         p1 = subprocess.Popen(raster2pgsql_command, stdout=subprocess.PIPE)
 
         sed_command = shlex.split(
-            '''sed "s/'');$/'%(name)s');/"''' %
-            dict(name=os.path.basename(path)),
-        )
+            '''sed "s/'{name}');$/'{name}_new');/"'''.format(
+            name=os.path.basename(path),
+        ))
         p2 = subprocess.Popen(sed_command, stdin=p1.stdout, stdout=destination)
         
         return p2
@@ -132,10 +152,10 @@ class Main(object):
                     self._save(action=PREPARE, path=path)
 
             if filename in existing_records:
-                logger.debug('%s already in %s, skipping.' %
+                logger.debug('%s already in %s' %
                     (filename, self.table),
                 )
-                continue
+                # continue
             self._save(action=APPEND, path=path, number=i)
 
 
