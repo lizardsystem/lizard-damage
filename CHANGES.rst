@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.7 (unreleased)
+0.6.7 (2012-10-01)
 ------------------
 
 - Reduced caching time to 1 day, will only cache when there is more than 2 GB 
