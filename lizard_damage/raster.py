@@ -324,10 +324,10 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
 
         df = disk_free()
         logger.info('caching data... (Disk free: %iGB)' % (df / 1024/1024/1024))
-        if df > 1024*1024*1024:
-            cache.set(hash_code(ahn_name), (geo, height, landuse), 7*24*3600)
+        if df > 2*1024*1024*1024:
+            cache.set(hash_code(ahn_name), (geo, height, landuse), 1*24*3600)
         else:
-            logger.warning('Less than 1 Gb free. Increase disk size for cache, or reduce cache time.')
+            logger.warning('Less than 2 GB free. Increase disk size for cache, or reduce cache time.')
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
