@@ -48,15 +48,13 @@ def friendly_filesize(size):
 
 class AhnIndex(models.Model):
     """
-    Generated with bin/django inspectdb after executing, with
-    DecimalFields replaced y FloatFields:
+    Sql for this table can be generated using:
+    
+    shp2pgsql -s 28992 ahn2_05_int_index public.data_index | sed\
+    s/geom/the_geom/g > index.sql
 
-    shp2pgsql -s 28992 data/index/ahn2_05_int_index_gevuld\
-    public.lizard_damage_ahnindex | sed s/geom/the_geom/g | psql schademodule\
-    --username buildout
-
-    When using postgis2, shp2pgsql must take care of the table creation
-    since django doesn't handle postgis2 very well currently.
+    Table definition can be obtained by executing this sql and using
+    bin/django inspectdb, and then replace DecimalFields by FloatFields
     """
     gid = models.IntegerField(primary_key=True)
     x = models.FloatField(null=True, blank=True)  # In RD
@@ -72,6 +70,9 @@ class AhnIndex(models.Model):
     ar = models.FloatField(null=True, blank=True)
     the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)  # All squares?
     objects = models.GeoManager()
+
+    class Meta:
+        db_table = 'data_index'
 
     def __unicode__(self):
         return '%s %f %f %r' % (self.gid, self.x, self.y, self.extent_wgs84)
