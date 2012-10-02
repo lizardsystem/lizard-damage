@@ -243,6 +243,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         logger.info("there were errors in scenario %d" % damage_scenario.id)
         logger.info("creating email task for error")
         subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % damage_scenario.name
+        send_email_to_task(damage_scenario.id, 'email_error', subject, username=username)
         send_email_to_task(damage_scenario.id, 'email_error', subject, username=username,
                            email='jack.ha@nelen-schuurmans.nl')
         logger.info("finished with errors")

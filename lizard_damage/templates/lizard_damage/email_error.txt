@@ -1,7 +1,7 @@
 {# template for error #}
-  Beste Schade Calculator beheerder,
+L.S.,
 
-    Het schade calculator scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Graag herstellen.
+    Het STOWA schade calculator scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Contacteer beheerder.
 
 
   --
