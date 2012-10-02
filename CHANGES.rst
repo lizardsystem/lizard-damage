@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.6.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Now sends email to creator and Jack in case of errors.
 
 
 0.6.9 (2012-10-02)
