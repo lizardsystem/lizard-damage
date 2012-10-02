@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.8 (unreleased)
+0.6.8 (2012-10-02)
 ------------------
 
 - Replace migrations by one initial migration, that excludes the models
