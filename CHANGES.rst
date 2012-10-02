@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.6.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Zip results after each tile -> else the harddisk will be flooded when 
+  calculating big scenarios.
 
 
 0.6.7 (2012-10-01)

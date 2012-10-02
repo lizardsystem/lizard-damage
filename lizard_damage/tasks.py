@@ -197,7 +197,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                 #import pdb; pdb.set_trace()
 
                 logger.info('Warping png to tif... %s' % img['filename_png'])
-                command = 'gdalwarp %s %s -t_srs "+proj=latlong +datum=WGS84" -s_srs "%s"' % (
+                command = 'gdalwarp %s %s -t_srs "+proj=latlong +datum=WGS83" -s_srs "%s"' % (
                     img['filename_png'], img['filename_tif'], RD.strip())
                 logger.info(command)
                 # Warp png file, output is tif.
@@ -227,6 +227,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                 os.remove(img['filename_png'])
                 os.remove(img['filename_pgw'])
                 os.remove(img['filename_tif'])
+            logger.info('Result has %d images' % len(result[1]))
         else:
             errors += 1
 

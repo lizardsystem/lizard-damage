@@ -310,6 +310,25 @@ def correct_ascfiles(input_list):
             open(filename, 'w').writelines(lines[1:])
 
 
+def add_to_zip(output_zipfile, zip_result, logger):
+    """
+    Now zip all files listed in zip_result
+
+    zip_result is a list with keys:
+    - filename: filename on disc
+    - arcname: target filename in archive
+    - delete_after: set this to remove file from file system after zipping
+    """
+    logger.info('zipping result into %s' % output_zipfile)
+    with zipfile.ZipFile(output_zipfile, 'a', zipfile.ZIP_DEFLATED) as myzip:
+        for file_in_zip in zip_result:
+            logger.info('zipping %s...' % file_in_zip['arcname'])
+            myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
+            if file_in_zip.get('delete_after', False):
+                logger.info('removing %r (%s in arc)' % (file_in_zip['filename'], file_in_zip['arcname']))
+                os.remove(file_in_zip['filename'])
+
+
 def calc_damage_for_waterlevel(
     repetition_time,
     ds_wl_filenames,
@@ -345,6 +364,7 @@ def calc_damage_for_waterlevel(
 
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
+    output_zipfile = tempfile.mktemp()
     waterlevel_ascfiles = ds_wl_filenames
     correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
@@ -429,7 +449,7 @@ def calc_damage_for_waterlevel(
         tile_y_size = (extent[3] - extent[1]) / y_tiles
         result_tile_size_x = result.shape[1] / x_tiles
         result_tile_size_y = result.shape[0] / y_tiles
-        print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
+        #print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
         for tile_x in range(x_tiles):
             for tile_y in range(y_tiles):
                 e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size, 
@@ -485,6 +505,9 @@ def calc_damage_for_waterlevel(
             else:
                 overall_area[k] = area[k]
 
+        add_to_zip(output_zipfile, zip_result, logger)
+        zip_result = []
+
     for code, roads_flooded in roads_flooded_global.iteritems():
         for road, info in roads_flooded.iteritems():
             if info['area'] > 50:
@@ -524,19 +547,9 @@ def calc_damage_for_waterlevel(
         )
     zip_result.append(csv_result)
 
-    # Now zip all files listed in zip_result
-    output_zipfile = tempfile.mktemp()
-    logger.info('zipping result into %s' % output_zipfile)
-    with zipfile.ZipFile(output_zipfile, 'w', zipfile.ZIP_DEFLATED) as myzip:
-        for file_in_zip in zip_result:
-            logger.info('writing %s' % file_in_zip['arcname'])
-            myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
+    add_to_zip(output_zipfile, zip_result, logger)
+    zip_result = []
 
     logger.info('zipfile: %s' % output_zipfile)
-    # Clean up
-    logger.info('Cleaning up tempdir')
-    for file_in_zip in zip_result:
-        if file_in_zip.get('delete_after', False):
-            os.remove(file_in_zip['filename'])
 
     return output_zipfile, img_result, result_table
