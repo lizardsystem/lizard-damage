@@ -344,3 +344,54 @@ class DamageEventWaterlevel(models.Model):
 
     def __unicode__(self):
         return os.path.basename(self.waterlevel.path)
+
+
+class BenefitScenario(models.Model):
+    """Baten berekening. 
+    
+    Results will be in result_zip and 
+    in BenefitScenarioResult.
+    """
+    name = models.CharField(max_length=64)
+    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
+    email = models.EmailField(max_length=128)
+
+    datetime_created = models.DateTimeField(auto_now=True)
+    expiration_date = models.DateTimeField()
+
+    zip_risk_a = models.FileField(upload_to='benefit/risk')
+    zip_risk_b = models.FileField(upload_to='benefit/risk')
+
+    zip_result = models.FileField(
+        upload_to='benefit/result', 
+        null=True, blank=True,
+        help_text='Will be filled when results are available')
+
+    def __unicode__(self):
+        return '%s %s' % (self.name, self.email)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = ''.join(random.sample(string.letters, 20))
+        if not self.expiration_date:
+            self.expiration_date = datetime.datetime.now() + datetime.timedelta(days=7)
+        return super(BenefitScenario, self).save(*args, **kwargs)
+
+
+class BenefitScenarioResult(models.Model):
+    """ Result of 1 tile of a Benefit Scenario
+
+    Used to create kml
+    """
+    benefit_scenario = models.ForeignKey(BenefitScenario)
+    image = models.FileField(upload_to='scenario/image')
+
+    north = models.FloatField()
+    south = models.FloatField()
+    east = models.FloatField()
+    west = models.FloatField()
+
+    def __unicode__(self):
+        return '%s - %s' % (self.benefit_scenario, self.image)
+
+

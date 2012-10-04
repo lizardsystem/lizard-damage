@@ -250,12 +250,18 @@ def analyze_zip_file(zipfile):
     return '\n'.join(result)
 
 
-def damage_scenario_from_type_6(all_form_data):
+def create_benefit_scenario(all_form_data):
     """batenkaart"""
-    return None  # damage_scenario
+    benefit_scenario = models.BenefitScenario(
+        name=all_form_data['name'],
+        email=all_form_data['email'],
+        zip_risk_a=all_form_data['zipfile_risk_before'],
+        zip_risk_b=all_form_data['zipfile_risk_after'],)
+    benefit_scenario.save()
+    return benefit_scenario
 
 
-def analyze_batenkaart_files(zipfile_before, zipfile_after):
+def analyze_benefit_files(zipfile_before, zipfile_after):
     result = ['start analyse']
     return '\n'.join(result)
 
@@ -271,7 +277,6 @@ class Wizard(ViewContextMixin, SessionWizardView):
         3: damage_scenario_from_zip_type,
         4: damage_scenario_from_zip_type,
         # 5: damage_scenario_from_zip_type,
-        6: damage_scenario_from_type_6,
     }
 
     def get_form_initial(self, step):
@@ -290,12 +295,10 @@ class Wizard(ViewContextMixin, SessionWizardView):
         # For batenkaart
         if step == '9':
             form_data = self.get_cleaned_data_for_step('7')
-            print 'ahahaaaaa'
-            print form_data
             try:
-                return {'zip_content': analyze_batenkaart_files(
-                    form_data['zipfile_risico_before'],
-                    form_data['zipfile_risico_after'])}
+                return {'zip_content': analyze_benefit_files(
+                    form_data['zipfile_risk_before'],
+                    form_data['zipfile_risk_after'])}
             except:
                 return {'zip_content': 'analyse gefaald, batenkaart bestanden zijn niet goed'}
         return super(Wizard, self).get_form_initial(step)
@@ -328,13 +331,16 @@ class Wizard(ViewContextMixin, SessionWizardView):
         #do_something_with_the_form_data(form_list)
 
         all_form_data = self.get_all_cleaned_data()
-        print all_form_data
 
         scenario_type = int(all_form_data['scenario_type'])
-        damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
-
-        # launch task
-        tasks.damage_scenario_to_task(damage_scenario, username="web")
+        if scenario_type in (0, 1, 2, 3, 4, 5):
+            damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
+            # launch task
+            tasks.damage_scenario_to_task(damage_scenario, username="web")
+        elif scenario_type == 6:
+            # baten taak
+            benefit_scenario = create_befenit_scenario(all_form_data)
+            tasks.benefit_scenario_to_task(benefit_scenario, username="web")
 
         # e-mail received: let's not do this. Feedback is given directly
         # subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
