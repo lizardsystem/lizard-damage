@@ -25,6 +25,11 @@
 {% block content %}
 <h3>{% firstof wizard.form.display_title '' %}</h3>
 <p>Stap {{ wizard.steps.step1 }} van {{ wizard.steps.count }}</p>
+
+{% if wizard.form.display_description %}
+<p>{{ wizard.form.display_description }}</p>
+{% endif %}
+
 {% if wizard.form.display_content %}
 {% autoescape off %}
 {{ wizard.form.display_content }}
@@ -46,6 +51,9 @@
     {#{ wizard.form.as_p }#}
     {% for field in wizard.form %}
       <div class="row">
+        {% if field.errors %} 
+        <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
         <div class="span4">
           <div class="help_tooltip{% if field.help_text %} ss_sprite ss_help{% endif %}" title="{{ field.help_text }}">&nbsp;</div>        
           {{ field.label_tag }}

@@ -57,6 +57,7 @@ DamageScenario types:
 4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
 5, 'Tijdserie aan kaarten met per tijdstip de '
    'waterstand van meerdere gebeurtenissen'),
+6, 'Batenkaart',
 """
 def damage_scenario_from_type_0(all_form_data):
     damage_scenario = DamageScenario(
@@ -249,6 +250,16 @@ def analyze_zip_file(zipfile):
     return '\n'.join(result)
 
 
+def damage_scenario_from_type_6(all_form_data):
+    """batenkaart"""
+    return None  # damage_scenario
+
+
+def analyze_batenkaart_files(zipfile_before, zipfile_after):
+    result = ['start analyse']
+    return '\n'.join(result)
+
+
 class Wizard(ViewContextMixin, SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     file_storage = temp_storage
@@ -260,10 +271,12 @@ class Wizard(ViewContextMixin, SessionWizardView):
         3: damage_scenario_from_zip_type,
         4: damage_scenario_from_zip_type,
         # 5: damage_scenario_from_zip_type,
+        6: damage_scenario_from_type_6,
     }
 
     def get_form_initial(self, step):
-        if step == '7':
+        # For batch processing
+        if step == '8':
             form_datas = {}
             for form_step in ('3', '4', '5'):
                 form_data = self.get_cleaned_data_for_step(form_step)
@@ -274,6 +287,17 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
             except:
                 return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
+        # For batenkaart
+        if step == '9':
+            form_data = self.get_cleaned_data_for_step('7')
+            print 'ahahaaaaa'
+            print form_data
+            try:
+                return {'zip_content': analyze_batenkaart_files(
+                    form_data['zipfile_risico_before'],
+                    form_data['zipfile_risico_after'])}
+            except:
+                return {'zip_content': 'analyse gefaald, batenkaart bestanden zijn niet goed'}
         return super(Wizard, self).get_form_initial(step)
 
     # def get_form(self, step=None, data=None, files=None):

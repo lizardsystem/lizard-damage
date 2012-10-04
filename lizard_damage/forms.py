@@ -74,14 +74,15 @@ class FormStep0(forms.Form):
         choices=SCENARIO_TYPES,
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
-    scenario_type.widget.renderer.actives = [True, True, True, True, True, False]
+    scenario_type.widget.renderer.actives = [True, True, True, True, True, False, True]
     scenario_type.widget.renderer.help_texts = [
         'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.',
         'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één herhalingstijd. Het gewenste formaat is ASCI met RD als coordinaten-stelsel. De afmetingen van de grid-cellen moeten ≥ 0.5 m en ≤ 25 m.', 
         'Kies deze optie indien u voor alle tijdstappen van een wateroverlast-gebeurtenis kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
         'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
         'Kies deze optie indien u voor meerdere herhalingstijden kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
-        'Kies deze optie indien u voor een tijdserie kaarten heeft met per tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m2.']
+        'Kies deze optie indien u voor een tijdserie kaarten heeft met per tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m2.',
+        'Kies deze optie indien u een batenkaart wilt maken op basis van risicokaarten']
 
 
 class FormStep1(forms.Form):
@@ -217,3 +218,14 @@ class FormZipResult(forms.Form):
 
     #     for i, question in extra:
     #         self.fields['custom_%s' % i] = forms.CharField(label=question)
+
+
+class FormBatenKaart(forms.Form):
+    """
+    """
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[6]
+    display_description = 'Voer risicokaarten in om een batenkaart te maken. Deze kaarten zijn te downloaden van resultaatpagina\'s.'
+
+    zipfile_risico_before = forms.FileField(label="Zipbestand risico voor", required=True)
+    zipfile_risico_after = forms.FileField(label="Zipbestand risico na", required=True)
+

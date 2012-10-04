@@ -12,6 +12,10 @@ form label input[type=radio]{
     margin-left: 1em;
 }
 
+.errorlist {
+    color: #ff0000;
+}
+
 .help_tooltip {
     width: 1.5em;
     display: block;

@@ -180,6 +180,7 @@ class DamageScenario(models.Model):
         (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
         (5, 'Tijdserie aan kaarten met per tijdstip de '
             'waterstand van meerdere gebeurtenissen'),
+        (6, 'Batenkaart maken met resultaten uit berekeningen'),
     )
     SCENARIO_TYPES_DICT = dict(SCENARIO_TYPES)
 
