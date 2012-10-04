@@ -13,6 +13,7 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
 
 from lizard_damage import tasks
+from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
 from lizard_damage.models import DamageEventWaterlevel
@@ -252,7 +253,7 @@ def analyze_zip_file(zipfile):
 
 def create_benefit_scenario(all_form_data):
     """batenkaart"""
-    benefit_scenario = models.BenefitScenario(
+    benefit_scenario = BenefitScenario(
         name=all_form_data['name'],
         email=all_form_data['email'],
         zip_risk_a=all_form_data['zipfile_risk_before'],
@@ -339,7 +340,7 @@ class Wizard(ViewContextMixin, SessionWizardView):
             tasks.damage_scenario_to_task(damage_scenario, username="web")
         elif scenario_type == 6:
             # baten taak
-            benefit_scenario = create_befenit_scenario(all_form_data)
+            benefit_scenario = create_benefit_scenario(all_form_data)
             tasks.benefit_scenario_to_task(benefit_scenario, username="web")
 
         # e-mail received: let's not do this. Feedback is given directly

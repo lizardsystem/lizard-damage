@@ -66,7 +66,7 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     """
     Send provided benefit scenario as task
     """
-    task_name = 'Calculate benefit scenario %d' % damage_scenario.id
+    task_name = 'Calculate benefit scenario %d' % benefit_scenario.id
     task_kwargs = '{"username": "%s", "taskname": "%s", "benefit_scenario_id": "%d"}' % (
         username, task_name, benefit_scenario.id)
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(

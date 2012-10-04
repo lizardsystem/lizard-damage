@@ -226,6 +226,6 @@ class FormBatenKaart(forms.Form):
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[6]
     display_description = 'Voer risicokaarten in om een batenkaart te maken. Deze kaarten zijn te downloaden van resultaatpagina\'s.'
 
-    zipfile_risico_before = forms.FileField(label="Zipbestand risico voor", required=True)
-    zipfile_risico_after = forms.FileField(label="Zipbestand risico na", required=True)
+    zipfile_risk_before = forms.FileField(label="Zipbestand risico voor", required=True)
+    zipfile_risk_after = forms.FileField(label="Zipbestand risico na", required=True)
 
