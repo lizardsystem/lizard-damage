@@ -67,6 +67,16 @@ urlpatterns = patterns(
         name='lizard_damage_result'
     ),
     url(
+        r'^benefit_result/(?P<slug>.*)/$',
+        views.BenefitScenarioResult.as_view(),
+        name='lizard_damage_benefit_result'
+    ),
+    url(
+        r'^benefit_result/(?P<slug>.*)/kml$',
+        views.BenefitScenarioKML.as_view(),
+        name='lizard_damage_benefit_kml'
+    ),
+    url(
         r'^event/(?P<slug>.*)/kml/$',
         views.DamageEventKML.as_view(),
         name='lizard_damage_event_kml'

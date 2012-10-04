@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Folder>
+    <name>STOWA Schade Calculator</name>
+    <description>Resultaat {{ view.benefit_scenario }} (beschikbaar tot {{ view.benefit_scenario.expiration_date|date:"d-m-y" }})
+    </description>
+    {% for benefit_scenario_result in view.benefit_scenario.benefitscenarioresult_set.all %}
+    <GroundOverlay>
+      <name>{{ benefit_scenario_result.image.name }}</name>
+      <description>{{ benefit_scenario_result.image.name }}</description>
+      <Icon>
+        <href>{{ view.root_url }}{{ benefit_scenario_result.image.url }}</href>
+      </Icon>
+      <LatLonBox>
+        <north>{{ benefit_scenario_result.north }}</north>
+        <south>{{ benefit_scenario_result.south }}</south>
+        <east>{{ benefit_scenario_result.east }}</east>
+        <west>{{ benefit_scenario_result.west }}</west>
+        <rotation>{{ benefit_scenario_result.rotation }}</rotation>
+      </LatLonBox>
+    </GroundOverlay>
+    {% endfor %}
+    <ScreenOverlay>
+      <name>Legenda</name>
+      <visibility>0</visibility>
+      <Icon>
+        <href>{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg</href>
+      </Icon>
+      <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
+      <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>
+      <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
+      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
+    </ScreenOverlay>
+  </Folder>
+</kml>

@@ -368,7 +368,7 @@ class BenefitScenario(models.Model):
         help_text='Will be filled when results are available')
 
     def __unicode__(self):
-        return '%s %s' % (self.name, self.email)
+        return '%s' % (self.name)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -376,6 +376,15 @@ class BenefitScenario(models.Model):
         if not self.expiration_date:
             self.expiration_date = datetime.datetime.now() + datetime.timedelta(days=7)
         return super(BenefitScenario, self).save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('lizard_damage_benefit_result', kwargs=dict(slug=self.slug))
+    
+    def result_display(self):
+        try:
+            return 'zipfile (%s)' % friendly_filesize(self.zip_result.size)
+        except:
+            return 'geen zipfile'
 
 
 class BenefitScenarioResult(models.Model):
@@ -393,5 +402,4 @@ class BenefitScenarioResult(models.Model):
 
     def __unicode__(self):
         return '%s - %s' % (self.benefit_scenario, self.image)
-
 

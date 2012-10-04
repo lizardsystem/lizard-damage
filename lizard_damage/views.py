@@ -355,7 +355,7 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/damage_scenario_result.html'
 
     def title(self):
-        return 'Schademodule resultatenpagina %s' % str(self.damage_scenario)
+        return 'STOWA Schade Calculator resultatenpagina %s' % str(self.damage_scenario)
 
     def version(self):
         return tools.version()
@@ -365,7 +365,7 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
         try:
             root_url = 'http://%s' % Site.objects.all()[0].domain
         except:
-            root_url = 'http://damage.lizard.net'
+            root_url = 'http://schade.lizard.net'
         return root_url
 
     @property
@@ -385,7 +385,49 @@ class DamageEventKML(ViewContextMixin, TemplateView):
         try:
             root_url = 'http://%s' % Site.objects.all()[0].domain
         except:
-            root_url = 'http://damage.lizard.net'
+            root_url = 'http://schade.lizard.net'
+        return root_url
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')
+
+
+class BenefitScenarioResult(ViewContextMixin, TemplateView):
+    template_name = 'lizard_damage/benefit_scenario_result.html'
+
+    def title(self):
+        return 'STOWA Schade Calculator resultatenpagina baten %s' % str(self.benefit_scenario)
+
+    def version(self):
+        return tools.version()
+
+    @property
+    def root_url(self):
+        try:
+            root_url = 'http://%s' % Site.objects.all()[0].domain
+        except:
+            root_url = 'http://schade.lizard.net'
+        return root_url
+
+    @property
+    def benefit_scenario(self):
+        return get_object_or_404(BenefitScenario, slug=self.kwargs['slug'])
+
+
+class BenefitScenarioKML(ViewContextMixin, TemplateView):
+    template_name = 'lizard_damage/benefit_scenario.kml'
+
+    @property
+    def benefit_scenario(self):
+        return get_object_or_404(BenefitScenario, slug=self.kwargs['slug'])
+
+    @property
+    def root_url(self):
+        try:
+            root_url = 'http://%s' % Site.objects.all()[0].domain
+        except:
+            root_url = 'http://schade.lizard.net'
         return root_url
 
     def get(self, request, *args, **kwargs):
