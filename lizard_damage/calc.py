@@ -105,6 +105,7 @@ def calculate(use, depth, geo,
     Input: land use, water depth, area_per_pixel, damage table, month
     of flooding, flood time and repair time.
     """
+    logger.info('Calculating damage')
     result = np.ma.zeros(depth.shape)
     result.mask = depth.mask
     roads_flooded_for_tile = {}
@@ -390,7 +391,7 @@ def calc_damage_for_waterlevel(
 
     for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
         ahn_name = ahn_index.bladnr
-        logger.info("calculating damage for tile %s..." % ahn_name)
+        logger.info("Preparing calculation for tile %s..." % ahn_name)
 
         # Prepare data for calculation
         try:
