@@ -5,7 +5,9 @@ Changelog of lizard-damage
 0.6.11 (unreleased)
 -------------------
 
-- Added forms for batenkaart.
+- Added BenefitScenario / BenefitScenarioResult models and migrations.
+
+- Added forms for benefit scenario.
 
 
 0.6.10 (2012-10-02)
