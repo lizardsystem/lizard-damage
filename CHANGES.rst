@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.6.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added forms for batenkaart.
 
 
 0.6.10 (2012-10-02)
