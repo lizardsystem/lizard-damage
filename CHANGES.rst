@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.7.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Bugfix.
 
 
 0.7.2 (2012-10-08)

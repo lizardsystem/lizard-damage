@@ -72,7 +72,7 @@ def send_email_to_task(damage_scenario_id, mail_template, subject, username='adm
     """
     Create a task for sending email
     """
-    task_name = 'Scenario (%05d) send mail' % (damage_scenario_id, mail_template)
+    task_name = 'Scenario (%05d) send mail %s' % (damage_scenario_id, mail_template)
     task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d", "mail_template": "%s", "subject": "%s", "email": "%s"}' % (task_name, damage_scenario_id, mail_template, subject, email)
     email_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
