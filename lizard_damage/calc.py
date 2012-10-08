@@ -40,6 +40,20 @@ CALC_TYPES = {
 }
 
 
+def mkstemp_and_close():
+    """
+    Make a tempfile and close it. It can be reopened later on.
+
+    Return filename.
+
+    Use this instead of tempfile.mktemp(), because there is a
+    racecondition going on there.
+    """
+    handle, filename = tempfile.mkstemp()
+    os.close(handle)
+    return filename
+
+
 def landuse_legend():
     result = []
     # defaults
@@ -446,7 +460,7 @@ def calc_damage_for_waterlevel(
 
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
-    output_zipfile = tempfile.mktemp()
+    output_zipfile = mkstemp_and_close()
     waterlevel_ascfiles = ds_wl_filenames
     correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
@@ -534,7 +548,7 @@ def calc_damage_for_waterlevel(
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
             arcname += '_T%.1f' % repetition_time
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc',
+        asc_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.asc',
             'delete_after': True}
         write_result(
             name=asc_result['filename'],
@@ -557,7 +571,7 @@ def calc_damage_for_waterlevel(
                 e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size,
                     extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
                 # We are writing a png + pgw now, but in the task a tiff will be created and uploaded
-                base_filename = tempfile.mktemp()
+                base_filename = mkstemp_and_close()
                 image_result = {
                     'filename_tif': base_filename + '.tif',
                     'filename_png': base_filename + '.png',
@@ -573,7 +587,7 @@ def calc_damage_for_waterlevel(
                     extent=e)
                 img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
+        csv_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.csv',
             'delete_after': True}
         meta = [
             ['schade module versie', tools.version()],
@@ -650,7 +664,7 @@ def calc_damage_for_waterlevel(
                 # Write png indirect roads, and remove it in tasks.py
 
 
-    csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv',
+    csv_result = {'filename': mkstemp_and_close(), 'arcname': 'schade_totaal.csv',
         'delete_after': True}
     meta = [
         ['schade module versie', tools.version()],

@@ -5,7 +5,9 @@ Changelog of lizard-damage
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Changed mktemp to use mkstemp. This prevents a racecondition bug
+  which is possibly the source of a vague tempfile deleting thing on
+  the task server.
 
 
 0.7 (2012-10-08)

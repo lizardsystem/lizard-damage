@@ -137,7 +137,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                 scenario_data['calc_type'] = {'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
             elif line[0] == 'scenario_damage_table':
                 if line[1]:
-                    zip_temp = tempfile.mktemp()
+                    zip_temp = tempfile.mkdtemp()
                     myzip.extract(line[1], zip_temp)  # extract to temp dir
                     damage_table = os.path.join(zip_temp, line[1])
             elif line[0] == 'event_name':
@@ -178,7 +178,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                     water_level_filenames = [line[1], ]
 
                 for index, water_level_filename in enumerate(water_level_filenames):
-                    water_level_tempdir = tempfile.mktemp()
+                    water_level_tempdir = tempfile.mkdtemp()
                     myzip.extract(water_level_filename, water_level_tempdir)
                     tempfilename = os.path.join(water_level_tempdir, water_level_filename)
                     with open(tempfilename) as water_level_tempfile:
