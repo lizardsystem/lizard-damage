@@ -314,7 +314,7 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
             logger.warn('%s nodata pixels in height tile %s',
             height.mask.sum(), ahn_name,
         )
-        
+
         logger.info('landuse to masked array...')
         landuse = to_masked_array(ds_landuse)  # part of result
         if landuse.mask.any():
@@ -342,7 +342,7 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
     floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)  # part of result
     landuse.mask = depth.mask
 
-    return landuse, depth, geo, floodtime_px, ds_height
+    return landuse, depth, geo, floodtime_px, ds_height, height
 
 
 def fill_dataset(ds, masked_array):
@@ -377,7 +377,7 @@ def to_masked_array(ds, mask=None):
 
 
 def get_mask(road, shape, geo):
-        """ 
+        """
         Return boolean array True where the road is. Shape is the
         numpy shape of the raster.
         """

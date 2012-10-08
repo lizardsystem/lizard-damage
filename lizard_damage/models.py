@@ -274,6 +274,12 @@ class DamageEvent(models.Model):
         upload_to='scenario/result',
         null=True, blank=True,
         help_text='Will be filled once the calculation has been done')
+    landuse_slugs = models.TextField(
+        null=True, blank=True,
+        help_text='comma separated landuse slugs for GeoImage')
+    height_slugs = models.TextField(
+        null=True, blank=True,
+        help_text='comma separated height slugs for GeoImage')
 
     def __unicode__(self):
         if self.name: return self.name
@@ -410,7 +416,6 @@ class GeoImage(models.Model):
 
     i.e. For use in kml files
     """
-    name = models.CharField(max_length=80)
     slug = models.SlugField()
     image = models.FileField(upload_to='geoimage')
 
@@ -420,4 +425,21 @@ class GeoImage(models.Model):
     west = models.FloatField()
 
     def __unicode__(self):
-        return self.name
+        return self.slug
+
+    @classmethod
+    def from_data_with_legend(self, slug, data, legend={}):
+        """
+        Create GeoImage from slug and data.
+
+        Data is numpy array.
+        """
+        pass
+
+    @classmethod
+    def from_data_with_min_max(self, slug, data, min_value, max_value):
+        """
+        Create GeoImage from slug and data.
+        """
+        pass
+

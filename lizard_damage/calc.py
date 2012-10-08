@@ -367,6 +367,8 @@ def calc_damage_for_waterlevel(
     """
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []
+    landuse_slugs = []  # slugs for landuse geo images
+    height_slugs = []  # slugs for height geo images
 
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
@@ -401,7 +403,7 @@ def calc_damage_for_waterlevel(
 
         # Prepare data for calculation
         try:
-            landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
+            landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
                 waterlevel_datasets=waterlevel_datasets,
                 method=settings.RASTER_SOURCE,
                 floodtime=floodtime,
