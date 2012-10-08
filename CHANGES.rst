@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.7.2 (unreleased)
+0.7.2 (2012-10-08)
 ------------------
 
 - Changed naming of tasks: prevent deleting wrong scenarios and
