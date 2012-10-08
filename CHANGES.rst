@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.11 (unreleased)
--------------------
+0.7 (2012-10-08)
+----------------
 
 - Added initial landuse and height maps.
 
