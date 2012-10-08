@@ -95,6 +95,7 @@ class BenefitScenarioAdmin(admin.ModelAdmin):
 
 admin.site.register(models.AhnIndex)
 admin.site.register(models.BenefitScenario, BenefitScenarioAdmin)
+admin.site.register(models.GeoImage)
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.DamageEvent, DamageEventAdmin)
 admin.site.register(models.DamageEventResult)

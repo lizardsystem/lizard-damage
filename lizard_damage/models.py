@@ -8,16 +8,23 @@ from __future__ import (
 )
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
+from django.core.files import File
 from lizard_map import coordinates
 from lizard_task.models import SecuredPeriodicTask
 from pyproj import transform
 from pyproj import Proj
+import matplotlib as mpl
+import numpy as np
 
 import datetime
 import os
 import random
 import string
 import json
+import tempfile
+import Image
+import subprocess
+from osgeo import gdal
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -29,6 +36,37 @@ WGS84 = str('+proj=latlong +datum=WGS84')
 
 rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
+
+
+def extent_from_geotiff(filename):
+    ds = gdal.Open(filename)
+    width = ds.RasterXSize
+    height = ds.RasterYSize
+    gt = ds.GetGeoTransform()
+    minx = gt[0]
+    miny = gt[3] + width*gt[4] + height*gt[5]
+    maxx = gt[0] + width*gt[1] + height*gt[2]
+    maxy = gt[3]
+    return (minx, miny, maxx, maxy)
+
+
+def write_pgw(name, extent):
+    """write pgw file:
+
+    0.5
+    0.000
+    0.000
+    0.5
+    <x ul corner>
+    <y ul corner>
+
+    extent is a 4-tuple
+    """
+    f = open(name, 'w')
+    f.write('0.5\n0.000\n0.000\n-0.5\n')
+    f.write('%f\n%f' % (min(extent[0], extent[2]), max(extent[1], extent[3])))
+    f.close()
+    return
 
 
 def friendly_filesize(size):
@@ -428,18 +466,92 @@ class GeoImage(models.Model):
         return self.slug
 
     @classmethod
-    def from_data_with_legend(self, slug, data, legend={}):
+    def from_data_with_legend(cls, slug, data, extent, legend):
         """
         Create GeoImage from slug and data.
 
         Data is numpy array.
         """
-        pass
+        tmp_base = tempfile.mktemp()
+        #print('tmp_base: %s' % tmp_base)
+        #print('step 1')
+        # Step 1: save png + pgw in RD
+
+        colormap = mpl.colors.ListedColormap(legend, 'indexed')
+        rgba = colormap(data, bytes=True)
+        #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
+        Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
+        write_pgw(tmp_base + '.pgw', extent)
+
+        return cls.from_rd_png(tmp_base, slug, extent)
+
 
     @classmethod
-    def from_data_with_min_max(self, slug, data, min_value, max_value):
+    def from_data_with_min_max(cls, slug, data, extent, min_value, max_value):
         """
         Create GeoImage from slug and data.
         """
-        pass
+        tmp_base = tempfile.mktemp()
+        #print('tmp_base: %s' % tmp_base)
+        #print('step 1')
+        # Step 1: save png + pgw in RD
 
+        cdict = {
+            'red': ((0.0, 0.0, 0.0),
+                    (1.0, 1.0, 1.0)),
+            'green': ((0.0, 0.0, 0.0),
+                    (1.0, 1.0, 1.0)),
+            'blue': ((0.0, 0.0, 0.0),
+                    (1.0, 1.0, 1.0)),
+            }
+        colormap = mpl.colors.LinearSegmentedColormap('something', cdict, N=1024)
+        normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
+        rgba = colormap(normalize(data), bytes=True)
+        #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
+        Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
+
+        write_pgw(tmp_base + '.pgw', extent)
+
+        return cls.from_rd_png(tmp_base, slug, extent)
+
+
+    @classmethod
+    def from_rd_png(cls, tmp_base, slug, extent):
+        """
+        Input: <tmp_base>.png
+        Output: geo_image object
+        """
+
+        # Step 2: warp using gdalwarp to lon/lat in .tif
+        #logger.info('Warping png to tif... %s' % img['filename_png'])
+        command = 'gdalwarp %s %s -t_srs "+proj=latlong +datum=WGS83" -s_srs "%s"' % (
+            tmp_base + '.png', tmp_base + '.tif', RD.strip())
+        #logger.info(command)
+        # Warp png file, output is tif.
+        subprocess.call([
+                'gdalwarp', tmp_base + '.png', tmp_base + '.tif',
+                '-t_srs', "+proj=latlong +datum=WGS84", '-s_srs', RD.strip()])
+
+        result_extent = extent_from_geotiff(tmp_base + '.tif')
+
+        # Step 3: convert .tif back to .png
+        im = Image.open(tmp_base + '.tif')
+        im.save(tmp_base + '_2.png', 'PNG')
+
+        # Step 4: put .png in GeoObject, with new extent
+        geo_image = cls(slug=slug)
+        geo_image.north = result_extent[3]
+        geo_image.south = result_extent[1]
+        geo_image.east = result_extent[2]
+        geo_image.west = result_extent[0]
+        with open(tmp_base + '_2.png', 'rb') as img_file:
+            geo_image.image.save(slug + '.png', File(img_file), save=True)
+        geo_image.save()
+
+        # Step 5: clean tempfiles.
+        os.remove(tmp_base + '.png')
+        os.remove(tmp_base + '.pgw')
+        os.remove(tmp_base + '.tif')
+        os.remove(tmp_base + '_2.png')
+
+        return geo_image

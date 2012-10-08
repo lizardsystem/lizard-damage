@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.6.11 (unreleased)
 -------------------
 
+- Added initial landuse and height maps.
+
 - Improved table layout.
 
 - Added BenefitScenario / BenefitScenarioResult models and migrations.

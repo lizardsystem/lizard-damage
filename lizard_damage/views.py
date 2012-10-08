@@ -17,6 +17,7 @@ from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
 from lizard_damage.models import DamageEventWaterlevel
+from lizard_damage.models import GeoImage
 from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 from lizard_damage import forms
@@ -376,9 +377,14 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
 class DamageEventKML(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/event_result.kml'
 
+    # @property
+    # def legend_url(self):
+    #     # Url to an image, optional
+
     @property
-    def damage_event(self):
-        return get_object_or_404(DamageEvent, slug=self.kwargs['slug'])
+    def events(self):
+        event = get_object_or_404(DamageEvent, slug=self.kwargs['slug'])
+        return event.damageeventresult_set.all()
 
     @property
     def root_url(self):
@@ -392,6 +398,13 @@ class DamageEventKML(ViewContextMixin, TemplateView):
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')
 
+
+class GeoImageKML(DamageEventKML):
+
+    @property
+    def events(self):
+        slugs = self.kwargs['slugs']
+        return [get_object_or_404(GeoImage, slug=slug) for slug in slugs.split(',')]
 
 class BenefitScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/benefit_scenario_result.html'

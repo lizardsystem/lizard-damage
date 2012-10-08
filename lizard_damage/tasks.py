@@ -10,6 +10,7 @@ from lizard_damage.models import BenefitScenarioResult
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEventResult
 from lizard_damage.models import RD
+from lizard_damage.models import extent_from_geotiff
 from lizard_damage import calc
 from lizard_task.task import task_logging
 from lizard_task.models import SecuredPeriodicTask
@@ -26,18 +27,6 @@ import json
 import subprocess
 from osgeo import gdal
 from PIL import Image
-
-
-def extent_from_geotiff(filename):
-    ds = gdal.Open(filename)
-    width = ds.RasterXSize
-    height = ds.RasterYSize
-    gt = ds.GetGeoTransform()
-    minx = gt[0]
-    miny = gt[3] + width*gt[4] + height*gt[5] 
-    maxx = gt[0] + width*gt[1] + height*gt[2]
-    maxy = gt[3] 
-    return (minx, miny, maxx, maxy)
 
 
 def convert_tif_to_png(filename_tif, filename_png):
@@ -203,6 +192,8 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
 
             # result[2] is the table in a data structure
             damage_event.table = json.dumps(result[2])
+            damage_event.landuse_slugs = ','.join(result[3])  # Store references to GeoImage objects
+            damage_event.height_slugs = ','.join(result[4])  # Store references to GeoImage objects
             damage_event.save()
 
             # result[1] is a list of png files to be uploaded to the django db.
@@ -221,13 +212,13 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
                 logger.info(command)
                 # Warp png file, output is tif.
                 subprocess.call([
-                    'gdalwarp', img['filename_png'], img['filename_tif'], 
+                    'gdalwarp', img['filename_png'], img['filename_tif'],
                     '-t_srs', "+proj=latlong +datum=WGS84", '-s_srs', RD.strip()])
 
                 img['extent'] = extent_from_geotiff(img['filename_tif'])
                 # Convert it back to png
                 #subprocess.call([
-                #    'convert', img['filename_tif'], img['filename_png']]) 
+                #    'convert', img['filename_tif'], img['filename_png']])
                 convert_tif_to_png(img['filename_tif'], img['filename_png'])
 
             #logger.info('Creating damage event results...')
@@ -277,7 +268,7 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     benefit_scenario = BenefitScenario.objects.get(pk=benefit_scenario_id)
     logger.info("scenario: %d, %s" % (benefit_scenario.id, str(benefit_scenario)))
 
-    # TODO: make zipfile to add to benefit_scenario.zip_result 
+    # TODO: make zipfile to add to benefit_scenario.zip_result
     # and add BenefitScenarioResult objects.
     logger.info("Not yet implemented")
 

@@ -52,7 +52,7 @@ urlpatterns = patterns(
                 '6': views.show_form_condition([5]),
                 '7': views.show_form_condition([6]),
                 '8': views.show_form_condition([2,3,4,5]),  # Check zipfile and show results
-                '9': views.show_form_condition([6]),  # Batenkaart files 
+                '9': views.show_form_condition([6]),  # Batenkaart files
                 }
             ),
         name='lizard_damage_form'
@@ -80,6 +80,11 @@ urlpatterns = patterns(
         r'^event/(?P<slug>.*)/kml/$',
         views.DamageEventKML.as_view(),
         name='lizard_damage_event_kml'
+    ),
+    url(
+        r'^geoimage/(?P<slugs>.*)/',
+        views.GeoImageKML.as_view(),
+        name='lizard_damage_geo_image_kml'
     ),
     url(
         r'^thank_you/$',
