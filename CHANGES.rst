@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.6.11 (unreleased)
 -------------------
 
+- Improved table layout.
+
 - Added BenefitScenario / BenefitScenarioResult models and migrations.
 
 - Added forms for benefit scenario.
@@ -19,7 +21,7 @@ Changelog of lizard-damage
 0.6.9 (2012-10-02)
 ------------------
 
-- Zip results after each tile -> else the harddisk will be flooded when 
+- Zip results after each tile -> else the harddisk will be flooded when
   calculating big scenarios.
 
 
@@ -35,7 +37,7 @@ Changelog of lizard-damage
 0.6.7 (2012-10-01)
 ------------------
 
-- Reduced caching time to 1 day, will only cache when there is more than 2 GB 
+- Reduced caching time to 1 day, will only cache when there is more than 2 GB
   free.
 
 
