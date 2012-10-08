@@ -38,7 +38,7 @@ def damage_scenario_to_task(damage_scenario, username="admin"):
     """
     Send provided damage scenario as task
     """
-    task_name = 'Calculate damage scenario %d' % damage_scenario.id
+    task_name = 'Scenario (%05d) calculate damage' % damage_scenario.id
     task_kwargs = '{"username": "%s", "taskname": "%s", "damage_scenario_id": "%d"}' % (
         username, task_name, damage_scenario.id)
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
@@ -55,7 +55,7 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     """
     Send provided benefit scenario as task
     """
-    task_name = 'Calculate benefit scenario %d' % benefit_scenario.id
+    task_name = 'Scenario (%05d) calculate benefit' % benefit_scenario.id
     task_kwargs = '{"username": "%s", "taskname": "%s", "benefit_scenario_id": "%d"}' % (
         username, task_name, benefit_scenario.id)
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
@@ -72,7 +72,7 @@ def send_email_to_task(damage_scenario_id, mail_template, subject, username='adm
     """
     Create a task for sending email
     """
-    task_name = 'Send %s mail for scenario %d' % (mail_template, damage_scenario_id)
+    task_name = 'Scenario (%05d) send mail' % (damage_scenario_id, mail_template)
     task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d", "mail_template": "%s", "subject": "%s", "email": "%s"}' % (task_name, damage_scenario_id, mail_template, subject, email)
     email_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={

@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.7.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Changed naming of tasks: prevent deleting wrong scenarios and
+  sorting is now better.
 
 
 0.7.1 (2012-10-08)
