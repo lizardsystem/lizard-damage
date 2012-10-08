@@ -49,7 +49,7 @@ def friendly_filesize(size):
 class AhnIndex(models.Model):
     """
     Sql for this table can be generated using:
-    
+
     shp2pgsql -s 28992 ahn2_05_int_index public.data_index | sed\
     s/geom/the_geom/g > index.sql
 
@@ -347,9 +347,9 @@ class DamageEventWaterlevel(models.Model):
 
 
 class BenefitScenario(models.Model):
-    """Baten berekening. 
-    
-    Results will be in result_zip and 
+    """Baten berekening.
+
+    Results will be in result_zip and
     in BenefitScenarioResult.
     """
     name = models.CharField(max_length=64)
@@ -363,7 +363,7 @@ class BenefitScenario(models.Model):
     zip_risk_b = models.FileField(upload_to='benefit/risk')
 
     zip_result = models.FileField(
-        upload_to='benefit/result', 
+        upload_to='benefit/result',
         null=True, blank=True,
         help_text='Will be filled when results are available')
 
@@ -379,7 +379,7 @@ class BenefitScenario(models.Model):
 
     def get_absolute_url(self):
         return reverse('lizard_damage_benefit_result', kwargs=dict(slug=self.slug))
-    
+
     def result_display(self):
         try:
             return 'zipfile (%s)' % friendly_filesize(self.zip_result.size)
@@ -403,3 +403,21 @@ class BenefitScenarioResult(models.Model):
     def __unicode__(self):
         return '%s - %s' % (self.benefit_scenario, self.image)
 
+
+class GeoImage(models.Model):
+    """
+    Generic geo referenced image
+
+    i.e. For use in kml files
+    """
+    name = models.CharField(max_length=80)
+    slug = models.SlugField()
+    image = models.FileField(upload_to='geoimage')
+
+    north = models.FloatField()
+    south = models.FloatField()
+    east = models.FloatField()
+    west = models.FloatField()
+
+    def __unicode__(self):
+        return self.name

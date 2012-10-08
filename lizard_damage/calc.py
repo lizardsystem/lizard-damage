@@ -39,13 +39,18 @@ CALC_TYPES = {
     3: 'avg',
 }
 
+landuse_to_rgb = {
+    None: '', # default
+    1: '#dddddd',
+}
+
 
 def get_colorizer(max_damage):
     """ Return colormap and normalizer. """
     # Note the hardcoded area_per_pixel
     area_per_pixel = 0.25
     f = 1 / max_damage * area_per_pixel
-   
+
     cdict = {
         'red': (
             (0.0,       0, 0),
@@ -117,7 +122,7 @@ def calculate(use, depth, geo,
 
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
-        
+
     for code, dr in table.data.items():
         if code in BUILDING_SOURCES:
             repairtime = repairtime_buildings
@@ -281,7 +286,7 @@ def write_image(name, values):
 
 
 def write_pgw(name, extent):
-    """write pgw file: 
+    """write pgw file:
 
     0.5
     0.000
@@ -389,7 +394,8 @@ def calc_damage_for_waterlevel(
     overall_damage = {}
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
 
-    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
+    ahn_indices = raster.get_ahn_indices(waterlevel_datasets[0])
+    for ahn_index in ahn_indices:
         ahn_name = ahn_index.bladnr
         logger.info("Preparing calculation for tile %s..." % ahn_name)
 
@@ -441,7 +447,7 @@ def calc_damage_for_waterlevel(
         )
         zip_result.append(asc_result)
 
-        # Generate image. First in .tif, then convert it to .png
+        # Generate image in .png
         # Subdivide tiles
         x_tiles = 1
         y_tiles = 1
@@ -453,7 +459,7 @@ def calc_damage_for_waterlevel(
         #print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
         for tile_x in range(x_tiles):
             for tile_y in range(y_tiles):
-                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size, 
+                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size,
                     extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
                 # We are writing a png + pgw now, but in the task a tiff will be created and uploaded
                 base_filename = tempfile.mktemp()
@@ -464,7 +470,7 @@ def calc_damage_for_waterlevel(
                     'dstname': 'schade_%s_' + ahn_name + '.png',
                     'extent': ahn_index.extent_wgs84(e=e)}  # %s is for the damage_event.slug
                 write_image(
-                    name=image_result['filename_png'], 
+                    name=image_result['filename_png'],
                     values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
                                 (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
                 write_pgw(
