@@ -36,7 +36,7 @@
 {% for event in view.damage_scenario.damageevent_set.all %}
 <h3>Gebeurtenis {{ event }}</h3>
 <div>
-<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;{% if event.result %}<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>{% else %}geen resultaat{% endif %}&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>&nbsp;<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_kml slugs=event.landuse_slugs %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_kml slugs=event.height_slugs %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>
+<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;{% if event.result %}<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>{% else %}geen resultaat{% endif %}&nbsp;<a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>&nbsp;<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_landuse_kml slugs=event.landuse_slugs %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_height_kml slugs=event.height_slugs %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>
 
 <dl>
   <dt>Waterstand</dt>

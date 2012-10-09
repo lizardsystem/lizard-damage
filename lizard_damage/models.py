@@ -214,11 +214,11 @@ class DamageScenario(models.Model):
         (0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
         (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
         (2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
-        (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.'),
-        (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden'),
+        (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen'),
+        (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden (voor risicokaart)'),
         (5, 'Tijdserie aan kaarten met per tijdstip de '
             'waterstand van meerdere gebeurtenissen'),
-        (6, 'Batenkaart maken met resultaten uit berekeningen'),
+        (6, 'Batenkaart maken met resultaten uit twee risicokaarten'),
     )
     SCENARIO_TYPES_DICT = dict(SCENARIO_TYPES)
 
@@ -318,6 +318,8 @@ class DamageEvent(models.Model):
     height_slugs = models.TextField(
         null=True, blank=True,
         help_text='comma separated height slugs for GeoImage')
+    min_height = models.FloatField(null=True, blank=True)
+    max_height = models.FloatField(null=True, blank=True)
 
     def __unicode__(self):
         if self.name: return self.name

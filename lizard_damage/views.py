@@ -4,13 +4,16 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from django.core.files import File
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 # from lizard_map.views import MapView
 from django.views.generic import TemplateView
+from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
+from django.conf import settings
 
 from lizard_damage import tasks
 from lizard_damage.models import BenefitScenario
@@ -22,11 +25,14 @@ from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 from lizard_damage import forms
 
+from zipfile import ZipFile
 import datetime
 import tempfile
 import os
 import re
-from zipfile import ZipFile
+import Image
+import ImageDraw
+import ImageFont
 
 temp_storage_location = tempfile.mkdtemp()
 temp_storage = FileSystemStorage(location=temp_storage_location)
@@ -70,7 +76,7 @@ def damage_scenario_from_type_0(all_form_data):
         damage_scenario.damagetable=all_form_data['damagetable']
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
+    repairtime_buildings = float(all_form_data['repairtime_buildings']) * 3600 * 24
     damage_event = damage_scenario.damageevent_set.create(
         floodtime=all_form_data['floodtime'] * 3600,
         repairtime_roads=repairtime_roads,
@@ -92,7 +98,7 @@ def damage_scenario_from_type_1(all_form_data):
         damage_scenario.damagetable=all_form_data['damagetable']
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(all_form_data['repairtime_roads']) * 3600 * 24
+    repairtime_buildings = float(all_form_data['repairtime_buildings']) * 3600 * 24
     damage_event = damage_scenario.damageevent_set.create(
         repetition_time=all_form_data['repetition_time'],  # Difference is here
         floodtime=all_form_data['floodtime'] * 3600,
@@ -380,6 +386,9 @@ class DamageEventKML(ViewContextMixin, TemplateView):
     # @property
     # def legend_url(self):
     #     # Url to an image, optional
+    @property
+    def legend_url(self):
+        return self.root_url + '/static_media/lizard_damage/legend.png'
 
     @property
     def events(self):
@@ -400,11 +409,58 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
 
 class GeoImageKML(DamageEventKML):
-
     @property
     def events(self):
         slugs = self.kwargs['slugs']
         return [get_object_or_404(GeoImage, slug=slug) for slug in slugs.split(',')]
+
+
+class GeoImageLandUseKML(GeoImageKML):
+    @property
+    def legend_url(self):
+        return self.root_url + '/static_media/lizard_damage/legend_landuse.png'
+
+
+class GeoImageHeightKML(GeoImageKML):
+    @property
+    def legend_url(self):
+        """Dirty way to get min/max"""
+        try:
+            #fn something like: height_i43bn2_09_-2230_3249
+            fn = self.kwargs['slugs'].split(',')[0]
+            fn_split = fn.split('_')
+            min_height = float(fn_split[-2]) / 1000
+            max_height = float(fn_split[-1]) / 1000
+        except:
+            min_height = 0.0
+            max_height = 1.0
+        return '%s%s?min_height=%.3f&max_height=%.3f' % (
+            self.root_url, reverse('lizard_damage_legend_height'),
+            min_height, max_height)
+
+
+class LegendHeight(View):
+    """Use pil to take an existing image and add some text on top.
+
+    Note that it uses the STATIC_ROOT folder, so you should run
+    "collectstatic" (which is standard on servers).
+    """
+    def get(self, request, *args, **kwargs):
+        f1 = float(request.GET.get('min_height', '0.0'))
+        f2 = float(request.GET.get('max_height', '1.0'))
+
+        image = Image.open(os.path.join(settings.STATIC_ROOT, "lizard_damage/legend_height.png"))
+        f = ImageFont.load_default()
+
+        draw = ImageDraw.Draw(image)
+        draw.text( (45, 15), " %.1f mNAP" % f2, font=f, fill=(90, 90, 90))
+        draw.text( (45, 65), " %.1f mNAP" % f1, font=f, fill=(90, 90, 90))
+
+        # serialize to HTTP response
+        response = HttpResponse(mimetype="image/png")
+        image.save(response, "PNG")
+        return response
+
 
 class BenefitScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/benefit_scenario_result.html'

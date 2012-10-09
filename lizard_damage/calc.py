@@ -82,11 +82,11 @@ def landuse_legend():
     result[24] = result[22]
 
     result[25] = '#007000'  # Bos/Natuur
-    result[26] = result[25]  # bebouwd gebied
+    result[26] = '#00bb00'  # bebouwd gebied
     result[27] = result[25]
     result[28] = result[25]
 
-    result[29] = '#00bb00'  # Begraafplaats, medium groen
+    result[29] = result[26]  # Begraafplaats, medium groen
     result[30] = '#33ff33'  # Gras
     result[31] = result[30]
 
@@ -103,7 +103,7 @@ def landuse_legend():
 
     result[46] = result[43]  # Overige akkerbouw
 
-    result[48] = result[42]  # Glastuinbouw
+    #result[48] = result[42]  # Braakliggend terrein tussen kassen Glastuinbouw
 
     result[49] = result[43]  # Boomgaard
 
@@ -115,7 +115,7 @@ def landuse_legend():
 
     result[56] = result[21]  # Water (LGN)
 
-    result[58] = result[25]  # Bebouwd gebied
+    #result[58] = result[25]  # Bebouwd gebied
 
     result[61] = result[22]  # Spoorwegen terrein
     result[62] = result[22]  # Primaire wegen

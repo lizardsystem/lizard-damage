@@ -5,7 +5,15 @@ Changelog of lizard-damage
 0.7.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Help texts now on the left.
+
+- Small help improvements.
+
+- Added 6 hour to hersteltijd wegen.
+
+- Bugfix hersteltijd bebouwing.
+
+- Added legends for land use and height.
 
 
 0.7.4 (2012-10-09)

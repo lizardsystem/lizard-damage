@@ -76,13 +76,13 @@ class FormStep0(forms.Form):
     )
     scenario_type.widget.renderer.actives = [True, True, True, True, True, False, True]
     scenario_type.widget.renderer.help_texts = [
-        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.',
-        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één herhalingstijd. Het gewenste formaat is ASCI met RD als coordinaten-stelsel. De afmetingen van de grid-cellen moeten ≥ 0.5 m en ≤ 25 m.', 
-        'Kies deze optie indien u voor alle tijdstappen van een wateroverlast-gebeurtenis kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
-        'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
-        'Kies deze optie indien u voor meerdere herhalingstijden kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m.', 
-        'Kies deze optie indien u voor een tijdserie kaarten heeft met per tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. De afmetingen van de gridcellen moeten ≥ 0.5 m en ≤ 25 m2.',
-        'Kies deze optie indien u een batenkaart wilt maken op basis van risicokaarten']
+        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste formaat is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie indien u één kaart heeft met de waterstand in meter t.o.v. NAP die hoort bij één herhalingstijd. Het gewenste formaat is ASCI met RD als coordinaten-stelsel.',
+        'Kies deze optie indien u voor alle tijdstappen van een wateroverlast-gebeurtenis kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie indien u voor meerdere herhalingstijden kaarten heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel. Bij deze methode wordt tevens automatisch een risicokaart gemaakt. Deze risicokaart is nodig voor het berekenen van baten van maatregelen.',
+        'Kies deze optie indien u voor een tijdserie kaarten heeft met per tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie indien u een batenkaart wilt maken op basis van risicokaarten.']
 
 
 class FormStep1(forms.Form):
@@ -107,23 +107,23 @@ class FormStep1(forms.Form):
         )
 
     waterlevel = forms.FileField(
-        label="Ascii bestand maximale waterstand", 
+        label="Ascii bestand maximale waterstand",
         required=True,
-        help_text='Voor enkele schadecategorien wordt de schade bepaald door de duur van de wateroverlast. Bijv. de indirecte schade als gevolg van het niet kunnen gebruiken van een primaire weg. Indien u niets invult wordt in de berekeningen default uitgegaan van 12 uur.')
+        help_text='Dit is het bestand met waterstanden in mNAP voor het gebied waarvoor u de berekening wilt uitvoeren.')
 
     damagetable = forms.FileField(
         label="Optioneel: eigen schadetabel", required=False,
         help_text='Het is mogelijk om eigen schadebedragen te gebruiken. Download hiervoor de standaard schade tabel en verander deze naar behoefte.'
         )
-    
+
     floodtime = forms.FloatField(
-        label="Duur overlast (uur)", 
+        label="Duur overlast (uur)",
         help_text="Hiermee wordt de periode bedoeld waarbij er daadwerkelijk water op straat, in huizen of op de akkers staat. Afhankelijk van het landgebruik en deze duur wordt meer of minder schade berekend.")
-    
+
     repairtime_roads = forms.ChoiceField(
         label="Hersteltijd wegen", required=True,
-        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
-        help_text='Met hersteltijd wegen wordt de duur bedoeld dat wegen niet gebruikt kunnen worden. Voor deze duur wordt indirecte schade berekend als gevolg van de extra kosten die mensen maken voor het omrijden. Deze schade wordt enkel berekend voor primaire wegen (snelwegen e.d.) en secundaire wegen (regionale en lokale wegen) indien minimaal 100 m2 van een wegvak was geïnundeerd. De duur is gelijk aan de duur van de wateroverlast plus de tijd die nodig is om de schade herstellen. Nadat het water van de weg af is, kan een weg namelijk niet altijd meteen gebruikt worden doordat eerst slib en vuil verwijderd moet worden of de weg nog geblokkeerd is door bijvoorbeeld achtergebleven auto’s, de leidingen van noodpompen e.d. '
+        choices=(("0.25", "6 uur"), ("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
+        help_text='Met hersteltijd wegen wordt de duur bedoeld dat wegen niet gebruikt kunnen worden. Voor deze duur wordt indirecte schade berekend als gevolg van de extra kosten die mensen maken voor het omrijden. Deze schade wordt enkel berekend voor primaire wegen (snelwegen e.d.) en secundaire wegen (regionale en lokale wegen) indien minimaal 100 m2 van een wegvak was geïnundeerd. De duur is gelijk aan de duur van de wateroverlast plus de tijd die nodig is om de schade herstellen. Nadat het water van de weg af is, kan een weg namelijk niet altijd meteen gebruikt worden doordat eerst slib en vuil verwijderd moet worden of de weg nog geblokkeerd is door bijvoorbeeld achtergebleven auto’s, de leidingen van noodpompen e.d.'
         )
 
     repairtime_buildings = forms.ChoiceField(
@@ -136,7 +136,7 @@ class FormStep1(forms.Form):
         label="Wat is de maand van de gebeurtenis?",
         choices=MONTH_CHOICES, initial=9,
         help_text='Voor de landgebruikscategorien als hooigras en landbouw is de schade afhankelijk van het tijdstip in het groeiseizoen. In de winter is er minder schade dan in de zomer. Indien u niets invult wordt default uitgegaan van september.')
-    
+
     calc_type = forms.ChoiceField(
         label="Gemiddelde, minimale of maximale schadebedragen en schadefuncties",
         choices=DamageScenario.CALC_TYPE_CHOICES,

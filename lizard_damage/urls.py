@@ -40,6 +40,10 @@ urlpatterns = patterns(
                 '1': {
                     'floodtime': 1,
                     'flooddate': 9,
+                    },
+                '2': {
+                    'floodtime': 1,
+                    'flooddate': 9,
                     }
                 },
             condition_dict={
@@ -85,6 +89,21 @@ urlpatterns = patterns(
         r'^geoimage/(?P<slugs>.*)/',
         views.GeoImageKML.as_view(),
         name='lizard_damage_geo_image_kml'
+    ),
+    url(
+        r'^geoimage_landuse/(?P<slugs>.*)/',
+        views.GeoImageLandUseKML.as_view(),
+        name='lizard_damage_geo_image_landuse_kml'
+    ),
+    url(
+        r'^geoimage_height/(?P<slugs>.*)/',
+        views.GeoImageHeightKML.as_view(),
+        name='lizard_damage_geo_image_height_kml'
+    ),
+    url(
+        r'^legend_height/',
+        views.LegendHeight.as_view(),
+        name='lizard_damage_legend_height'
     ),
     url(
         r'^thank_you/$',
