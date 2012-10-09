@@ -86,8 +86,8 @@ def landuse_legend():
     result[27] = result[25]
     result[28] = result[25]
 
-    result[29] = result[25]  # Begraafplaats
-    result[30] = '#00ee00'  # Gras
+    result[29] = '#00bb00'  # Begraafplaats, medium groen
+    result[30] = '#33ff33'  # Gras
     result[31] = result[30]
 
     result[32] = result[22]  #Spoorbaanlichaam
@@ -107,7 +107,7 @@ def landuse_legend():
 
     result[49] = result[43]  # Boomgaard
 
-    result[50] = result[42]  # Bloembollen
+    result[50] = result[43]  # Bloembollen
 
     result[52] = result[30]  # Gras overig
 
@@ -123,8 +123,9 @@ def landuse_legend():
     result[64] = result[22]
     result[65] = result[22]
 
-    result[66] = result[22]  # Sportterrein
-    result[67] = result[22]  # Volkstuinen
+    result[66] = result[29]  # Sportterrein
+    result[67] = result[29]  # Volkstuinen
+
     result[68] = result[22]  # Recreatief terrein
     result[69] = result[22]  # Glastuinbouwterrein
 
@@ -134,7 +135,7 @@ def landuse_legend():
     result[72] = result[21]  # Zee
     result[73] = result[21]  # Zoet water
 
-    result[98] = result[2]  # erf
+    #result[98] = result[2]  # erf
 
     #result[99] = result[2]  # Overig/Geen landgebruik
 
