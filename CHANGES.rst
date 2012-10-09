@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.7.4 (unreleased)
+0.7.4 (2012-10-09)
 ------------------
 
 - Changed colors of landuse.
