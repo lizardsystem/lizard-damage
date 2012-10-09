@@ -499,12 +499,15 @@ class GeoImage(models.Model):
         # Step 1: save png + pgw in RD
 
         cdict = {
-            'red': ((0.0, 0.0, 0.0),
-                    (1.0, 1.0, 1.0)),
-            'green': ((0.0, 0.0, 0.0),
-                    (1.0, 1.0, 1.0)),
-            'blue': ((0.0, 0.0, 0.0),
-                    (1.0, 1.0, 1.0)),
+            'red': ((0.0, 51./256, 51./256),
+                    (0.5, 237./256, 237./256),
+                    (1.0, 83./256, 83./256)),
+            'green': ((0.0, 114./256, 114./256),
+                      (0.5, 245./256, 245./256),
+                      (1.0, 83./256, 83./256)),
+            'blue': ((0.0, 54./256, 54./256),
+                     (0.5, 170./256, 170./256),
+                     (1.0, 83./256, 83./256)),
             }
         colormap = mpl.colors.LinearSegmentedColormap('something', cdict, N=1024)
         normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
