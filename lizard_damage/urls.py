@@ -29,13 +29,19 @@ urlpatterns = patterns(
              forms.FormStep4,
              forms.FormStep5,
              forms.FormStep6,
-             forms.FormZipResult, # '7'
+             forms.FormBatenKaart,  # '7'
+             forms.FormZipResult, # '8' for batch zip (single file)
+             forms.FormZipResult, # '9' for baten kaart (2 files)
              ],
             initial_dict={
                 '0': {
                     'name': 'Nieuw scenario',
                     },
                 '1': {
+                    'floodtime': 1,
+                    'flooddate': 9,
+                    },
+                '2': {
                     'floodtime': 1,
                     'flooddate': 9,
                     }
@@ -48,7 +54,9 @@ urlpatterns = patterns(
                 '4': views.show_form_condition([3]),
                 '5': views.show_form_condition([4]),
                 '6': views.show_form_condition([5]),
-                '7': views.show_form_condition([2,3,4,5]),  # Check zipfile and show results
+                '7': views.show_form_condition([6]),
+                '8': views.show_form_condition([2,3,4,5]),  # Check zipfile and show results
+                '9': views.show_form_condition([6]),  # Batenkaart files
                 }
             ),
         name='lizard_damage_form'
@@ -63,9 +71,39 @@ urlpatterns = patterns(
         name='lizard_damage_result'
     ),
     url(
+        r'^benefit_result/(?P<slug>.*)/$',
+        views.BenefitScenarioResult.as_view(),
+        name='lizard_damage_benefit_result'
+    ),
+    url(
+        r'^benefit_result/(?P<slug>.*)/kml$',
+        views.BenefitScenarioKML.as_view(),
+        name='lizard_damage_benefit_kml'
+    ),
+    url(
         r'^event/(?P<slug>.*)/kml/$',
         views.DamageEventKML.as_view(),
         name='lizard_damage_event_kml'
+    ),
+    url(
+        r'^geoimage/(?P<slugs>.*)/',
+        views.GeoImageKML.as_view(),
+        name='lizard_damage_geo_image_kml'
+    ),
+    url(
+        r'^geoimage_landuse/(?P<slugs>.*)/',
+        views.GeoImageLandUseKML.as_view(),
+        name='lizard_damage_geo_image_landuse_kml'
+    ),
+    url(
+        r'^geoimage_height/(?P<slugs>.*)/',
+        views.GeoImageHeightKML.as_view(),
+        name='lizard_damage_geo_image_height_kml'
+    ),
+    url(
+        r'^legend_height/',
+        views.LegendHeight.as_view(),
+        name='lizard_damage_legend_height'
     ),
     url(
         r'^thank_you/$',

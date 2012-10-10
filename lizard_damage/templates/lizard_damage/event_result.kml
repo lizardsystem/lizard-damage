@@ -4,7 +4,7 @@
     <name>STOWA Schade Calculator</name>
     <description>Resultaat {{ view.damage_event }} (beschikbaar tot {{ view.damage_event.scenario.expiration_date|date:"d-m-y" }})
     </description>
-    {% for damage_event_result in view.damage_event.damageeventresult_set.all %}
+    {% for damage_event_result in view.events %}
     <GroundOverlay>
       <name>{{ damage_event_result.image.name }}</name>
       <description>{{ damage_event_result.image.name }}</description>
@@ -24,7 +24,7 @@
       <name>Legenda</name>
       <visibility>0</visibility>
       <Icon>
-        <href>{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg</href>
+        <href>{% if view.legend_url %}{{ view.legend_url }}{% else %}{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg{% endif %}</href>
       </Icon>
       <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
       <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>

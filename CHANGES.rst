@@ -2,10 +2,69 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.6.11 (unreleased)
--------------------
+0.8.2 (unreleased)
+------------------
 
 - Nothing changed yet.
+
+
+0.8.1 (2012-10-10)
+------------------
+
+- Added dependency on Pillow, updated imports.
+
+
+0.8 (2012-10-09)
+----------------
+
+- Help texts now on the left.
+
+- Small help improvements.
+
+- Added 6 hour to hersteltijd wegen.
+
+- Bugfix hersteltijd bebouwing.
+
+- Added legends for land use and height.
+
+
+0.7.4 (2012-10-09)
+------------------
+
+- Changed colors of landuse.
+
+
+0.7.3 (2012-10-08)
+------------------
+
+- Bugfix.
+
+
+0.7.2 (2012-10-08)
+------------------
+
+- Changed naming of tasks: prevent deleting wrong scenarios and
+  sorting is now better.
+
+
+0.7.1 (2012-10-08)
+------------------
+
+- Changed mktemp to use mkstemp. This prevents a racecondition bug
+  which is possibly the source of a vague tempfile deleting thing on
+  the task server.
+
+
+0.7 (2012-10-08)
+----------------
+
+- Added initial landuse and height maps.
+
+- Improved table layout.
+
+- Added BenefitScenario / BenefitScenarioResult models and migrations.
+
+- Added forms for benefit scenario.
 
 
 0.6.10 (2012-10-02)
@@ -17,7 +76,7 @@ Changelog of lizard-damage
 0.6.9 (2012-10-02)
 ------------------
 
-- Zip results after each tile -> else the harddisk will be flooded when 
+- Zip results after each tile -> else the harddisk will be flooded when
   calculating big scenarios.
 
 
@@ -33,7 +92,7 @@ Changelog of lizard-damage
 0.6.7 (2012-10-01)
 ------------------
 
-- Reduced caching time to 1 day, will only cache when there is more than 2 GB 
+- Reduced caching time to 1 day, will only cache when there is more than 2 GB
   free.
 
 

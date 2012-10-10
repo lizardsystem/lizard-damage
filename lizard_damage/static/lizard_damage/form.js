@@ -5,7 +5,8 @@
 // Format the form.
 $(document).ready(function () {
   $('div#content').addClass('container');
-  $('div.help_tooltip').tooltip();
+  // Bootstrap tooltip, not to be confused with jQuery tools tooltip.
+    $('div.help_tooltip').tooltip({placement: 'left'});
   //$('form p').wrap('<div class="row" />')
   //$('form p input[type="text"]').wrap('<div class="span4" />')
   //$('form p label').wrap('<div class="span4 offset1" />')

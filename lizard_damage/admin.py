@@ -19,6 +19,10 @@ class DamageEventResultInline(admin.TabularInline):
     model = models.DamageEventResult
 
 
+class BenefitScenarioResultInline(admin.TabularInline):
+    model = models.BenefitScenarioResult
+
+
 class DamageEventAdmin(admin.ModelAdmin):
     list_display = ['__unicode__']
     actions = ['process']
@@ -84,7 +88,14 @@ class UnitAdmin(admin.ModelAdmin):
     list_display = ['name', 'factor']
 
 
+class BenefitScenarioAdmin(admin.ModelAdmin):
+    list_display = ['__unicode__', 'email', 'datetime_created']
+    inlines = [BenefitScenarioResultInline]
+
+
 admin.site.register(models.AhnIndex)
+admin.site.register(models.BenefitScenario, BenefitScenarioAdmin)
+admin.site.register(models.GeoImage)
 admin.site.register(models.Unit, UnitAdmin)
 admin.site.register(models.DamageEvent, DamageEventAdmin)
 admin.site.register(models.DamageEventResult)

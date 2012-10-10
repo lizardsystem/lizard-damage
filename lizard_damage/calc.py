@@ -11,7 +11,6 @@ import numpy as np
 import logging
 import os
 import tempfile
-import Image
 import collections
 
 
@@ -26,6 +25,7 @@ from lizard_damage import models
 from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +40,125 @@ CALC_TYPES = {
 }
 
 
+def mkstemp_and_close():
+    """
+    Make a tempfile and close it. It can be reopened later on.
+
+    Return filename.
+
+    Use this instead of tempfile.mktemp(), because there is a
+    racecondition going on there.
+    """
+    handle, filename = tempfile.mkstemp()
+    os.close(handle)
+    return filename
+
+
+def landuse_legend():
+    result = []
+    # defaults
+    for i in range(100):
+        result.append('#dddddd')
+
+    # specifics
+    result[2] = '#cc0000'  # Woonfunctie
+    result[3] = result[2]
+    result[4] = result[2]
+    result[5] = result[2]
+    result[6] = result[2]
+    result[7] = result[2]  # Kassen
+    result[8] = result[2]
+    result[9] = result[2]
+    result[10] = result[2]
+    result[11] = result[2]
+    result[12] = result[2]
+    result[13] = result[2]
+    result[14] = result[2]
+
+    result[21] = '#5555ee'  # Water
+
+    result[22] = '#888888'  # Primaire Wegen
+    result[23] = result[22]
+    result[24] = result[22]
+
+    result[25] = '#007000'  # Bos/Natuur
+    result[26] = '#00bb00'  # bebouwd gebied
+    result[27] = result[25]
+    result[28] = result[25]
+
+    result[29] = result[26]  # Begraafplaats, medium groen
+    result[30] = '#33ff33'  # Gras
+    result[31] = result[30]
+
+    result[32] = result[22]  #Spoorbaanlichaam
+
+    result[41] = result[30]
+
+    result[42] = '#ffff00'  # Mais
+
+    result[43] = '#db5800'  # Aardappelen
+    result[44] = result[43]
+
+    result[45] = result[42]  # Granen
+
+    result[46] = result[43]  # Overige akkerbouw
+
+    #result[48] = result[42]  # Braakliggend terrein tussen kassen Glastuinbouw
+
+    result[49] = result[43]  # Boomgaard
+
+    result[50] = result[43]  # Bloembollen
+
+    result[52] = result[30]  # Gras overig
+
+    result[53] = result[25]  # Bos/Natuur
+
+    result[56] = result[21]  # Water (LGN)
+
+    #result[58] = result[25]  # Bebouwd gebied
+
+    result[61] = result[22]  # Spoorwegen terrein
+    result[62] = result[22]  # Primaire wegen
+    result[63] = result[22]
+    result[64] = result[22]
+    result[65] = result[22]
+
+    result[66] = result[29]  # Sportterrein
+    result[67] = result[29]  # Volkstuinen
+
+    result[68] = result[22]  # Recreatief terrein
+    result[69] = result[22]  # Glastuinbouwterrein
+
+    result[70] = result[25]  # Bos/Natuur
+    result[71] = result[25]
+
+    result[72] = result[21]  # Zee
+    result[73] = result[21]  # Zoet water
+
+    #result[98] = result[2]  # erf
+
+    #result[99] = result[2]  # Overig/Geen landgebruik
+
+    return result
+
+
+def slug_for_landuse(ahn_name):
+    """Name as slug in GeoImage"""
+    return 'landuse_%s' % ahn_name
+
+
+def slug_for_height(ahn_name, min_value, max_value):
+    """Name as slug in GeoImage"""
+    return 'height_%s_%d_%d' % (
+        ahn_name, int(min_value*1000), int(max_value*1000))
+
+
 def get_colorizer(max_damage):
     """ Return colormap and normalizer. """
     # Note the hardcoded area_per_pixel
     area_per_pixel = 0.25
     f = 1 / max_damage * area_per_pixel
-   
+
     cdict = {
         'red': (
             (0.0,       0, 0),
@@ -117,7 +230,7 @@ def calculate(use, depth, geo,
 
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
-        
+
     for code, dr in table.data.items():
         if code in BUILDING_SOURCES:
             repairtime = repairtime_buildings
@@ -280,25 +393,6 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
-def write_pgw(name, extent):
-    """write pgw file: 
-
-    0.5
-    0.000
-    0.000
-    0.5
-    <x ul corner>
-    <y ul corner>
-
-    extent is a 4-tuple
-    """
-    f = open(name, 'w')
-    f.write('0.5\n0.000\n0.000\n-0.5\n')
-    f.write('%f\n%f' % (min(extent[0], extent[2]), max(extent[1], extent[3])))
-    f.close()
-    return
-
-
 def correct_ascfiles(input_list):
     """
     test ascfiles for known faulty behaviour and correct them if needed
@@ -362,10 +456,12 @@ def calc_damage_for_waterlevel(
     """
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []
+    landuse_slugs = []  # slugs for landuse geo images
+    height_slugs = []  # slugs for height geo images
 
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
-    output_zipfile = tempfile.mktemp()
+    output_zipfile = mkstemp_and_close()
     waterlevel_ascfiles = ds_wl_filenames
     correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
@@ -389,13 +485,17 @@ def calc_damage_for_waterlevel(
     overall_damage = {}
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
 
-    for ahn_index in raster.get_ahn_indices(waterlevel_datasets[0]):
+    min_height = None
+    max_height = None
+
+    ahn_indices = raster.get_ahn_indices(waterlevel_datasets[0])
+    for ahn_index in ahn_indices:
         ahn_name = ahn_index.bladnr
         logger.info("Preparing calculation for tile %s..." % ahn_name)
 
         # Prepare data for calculation
         try:
-            landuse, depth, geo, floodtime_px, ds_height = raster.get_calc_data(
+            landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
                 waterlevel_datasets=waterlevel_datasets,
                 method=settings.RASTER_SOURCE,
                 floodtime=floodtime,
@@ -408,6 +508,23 @@ def calc_damage_for_waterlevel(
             for exception_line in traceback.format_exc().split('\n'):
                 logger.error(exception_line)
             return
+
+        extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
+
+        # For height map
+        new_min_height = np.amin(height)
+        if min_height is None or new_min_height < min_height:
+            min_height = new_min_height
+        new_max_height = np.amax(height)
+        if max_height is None or new_max_height < max_height:
+            max_height = new_max_height
+
+        # For landuse map
+        landuse_slug = slug_for_landuse(ahn_name)
+        landuse_slugs.append(landuse_slug)  # part of result
+        if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
+            logger.info("Generating landuse GeoImage: %s" % landuse_slug)
+            models.GeoImage.from_data_with_legend(landuse_slug, landuse, extent, landuse_legend())
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(
@@ -432,7 +549,7 @@ def calc_damage_for_waterlevel(
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
             arcname += '_T%.1f' % repetition_time
-        asc_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.asc',
+        asc_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.asc',
             'delete_after': True}
         write_result(
             name=asc_result['filename'],
@@ -441,11 +558,10 @@ def calc_damage_for_waterlevel(
         )
         zip_result.append(asc_result)
 
-        # Generate image. First in .tif, then convert it to .png
+        # Generate image in .png
         # Subdivide tiles
         x_tiles = 1
         y_tiles = 1
-        extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
         tile_x_size = (extent[2] - extent[0]) / x_tiles
         tile_y_size = (extent[3] - extent[1]) / y_tiles
         result_tile_size_x = result.shape[1] / x_tiles
@@ -453,10 +569,10 @@ def calc_damage_for_waterlevel(
         #print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
         for tile_x in range(x_tiles):
             for tile_y in range(y_tiles):
-                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size, 
+                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size,
                     extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
                 # We are writing a png + pgw now, but in the task a tiff will be created and uploaded
-                base_filename = tempfile.mktemp()
+                base_filename = mkstemp_and_close()
                 image_result = {
                     'filename_tif': base_filename + '.tif',
                     'filename_png': base_filename + '.png',
@@ -464,15 +580,15 @@ def calc_damage_for_waterlevel(
                     'dstname': 'schade_%s_' + ahn_name + '.png',
                     'extent': ahn_index.extent_wgs84(e=e)}  # %s is for the damage_event.slug
                 write_image(
-                    name=image_result['filename_png'], 
+                    name=image_result['filename_png'],
                     values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
                                 (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
-                write_pgw(
+                models.write_pgw(
                     name=image_result['filename_pgw'],
                     extent=e)
                 img_result.append(image_result)
 
-        csv_result = {'filename': tempfile.mktemp(), 'arcname': arcname + '.csv',
+        csv_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.csv',
             'delete_after': True}
         meta = [
             ['schade module versie', tools.version()],
@@ -509,6 +625,35 @@ def calc_damage_for_waterlevel(
         add_to_zip(output_zipfile, zip_result, logger)
         zip_result = []
 
+    logger.info('Generating height tiles... height min=%f, height=%f',
+                min_height, max_height)
+    for ahn_index in ahn_indices:
+        ahn_name = ahn_index.bladnr
+        height_slug = slug_for_height(ahn_name, min_height, max_height)
+        height_slugs.append(height_slug)  # part of result
+        if models.GeoImage.objects.filter(slug=height_slug).count() == 0:
+            # Copied from above
+            try:
+                landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
+                    waterlevel_datasets=waterlevel_datasets,
+                    method=settings.RASTER_SOURCE,
+                    floodtime=floodtime,
+                    ahn_name=ahn_name,
+                    logger=logger,
+                )
+            except:
+                # Log this error and all previous normal logs, instead of hard crashing
+                logger.error('Exception')
+                for exception_line in traceback.format_exc().split('\n'):
+                    logger.error(exception_line)
+                return
+
+            extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
+            # Actually create tile
+            logger.info("Generating height GeoImage: %s" % height_slug)
+            models.GeoImage.from_data_with_min_max(
+                height_slug, height, extent, min_height, max_height)
+
     for code, roads_flooded in roads_flooded_global.iteritems():
         for road, info in roads_flooded.iteritems():
             if info['area'] > 100:
@@ -520,7 +665,7 @@ def calc_damage_for_waterlevel(
                 # Write png indirect roads, and remove it in tasks.py
 
 
-    csv_result = {'filename': tempfile.mktemp(), 'arcname': 'schade_totaal.csv',
+    csv_result = {'filename': mkstemp_and_close(), 'arcname': 'schade_totaal.csv',
         'delete_after': True}
     meta = [
         ['schade module versie', tools.version()],
@@ -553,4 +698,4 @@ def calc_damage_for_waterlevel(
 
     logger.info('zipfile: %s' % output_zipfile)
 
-    return output_zipfile, img_result, result_table
+    return output_zipfile, img_result, result_table, landuse_slugs, height_slugs

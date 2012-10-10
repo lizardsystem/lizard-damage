@@ -1,0 +1,40 @@
+{% extends 'lizard_ui/lizardbase.html' %}
+{% load formatting %}
+
+{% block sidebar %}
+<div>
+  Info baten scenario
+ <dl>
+    <dt>Naam</dt>
+    <dd>{{ view.benefit_scenario.name }}</dd>
+
+    <dt>Aangemaakt op</dt>
+    <dd>{{ view.benefit_scenario.datetime_created }}</dd>
+
+  </dl>
+  <div>
+    <a href="{% url lizard_damage_form %}">Ga naar beginscherm</a>
+  </div>
+  <div>
+    {{ view.version }}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="textual-content">
+<h2>Resultaten berekening {{ view.benefit_scenario }}</h2>
+
+<div>
+<a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_benefit_kml slug=view.benefit_scenario.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;{% if view.benefit_scenario.zip_result %}<a href="{{ view.benefit_scenario.zip_result.url }}" alt="{{ benefit_scenario.result_display }}">downloaden</a>&nbsp;{% else %}(geen resultaat)&nbsp;{% endif %}<a href="{% url lizard_damage_benefit_kml slug=view.benefit_scenario.slug %}">kml</a>
+
+<dl>
+  <dt>Risico kaart voor</dt>
+  <dd>{{ view.benefit_scenario.zip_risk_a }}</dd>
+
+  <dt>Risico kaart na</dt>
+  <dd>{{ view.benefit_scenario.zip_risk_b }}</dd>
+</dl>
+</div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '0.6.11.dev0'
+version = '0.8.2.dev0'
 
 long_description = '\n\n'.join([
     open('README.rst').read(),
@@ -15,6 +15,7 @@ install_requires = [
     'lizard-ui >= 4.0b5',
     'lizard-task',
     'openpyxl',
+    'Pillow',
     ],
 
 tests_require = [
