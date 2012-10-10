@@ -511,7 +511,7 @@ def calc_damage_for_waterlevel(
 
     for code, roads_flooded in roads_flooded_global.iteritems():
         for road, info in roads_flooded.iteritems():
-            if info['area'] > 50:
+            if info['area'] > 100:
                 overall_damage[code] += (
                     dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) *
                     dt.data[code].to_gamma_repairtime(repairtime_roads)
