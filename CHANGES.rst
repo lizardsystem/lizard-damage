@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added reference to scenario id in thank you screen.
 
 
 0.8.9 (2012-10-10)

@@ -111,7 +111,7 @@ urlpatterns = patterns(
     ),
     url(
         r'^thank_you/$',
-        TemplateView.as_view(template_name="lizard_damage/thank_you.html"),
+        views.ThankYou.as_view(),
         name='lizard_damage_thank_you'
         ),
     url(r'^test$',

@@ -345,17 +345,20 @@ class Wizard(ViewContextMixin, SessionWizardView):
             damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
+            return HttpResponseRedirect(reverse('lizard_damage_thank_you') +
+                                        '?damage_scenario_id=%d' % damage_scenario.id)
         elif scenario_type == 6:
             # baten taak
             benefit_scenario = create_benefit_scenario(all_form_data)
             tasks.benefit_scenario_to_task(benefit_scenario, username="web")
+            return HttpResponseRedirect(reverse('lizard_damage_thank_you') +
+                                        '?benefit_scenario_id=%d' % benefit_scenario.id)
 
         # e-mail received: let's not do this. Feedback is given directly
         # subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
         # tasks.send_email_to_task(
         #     damage_scenario.id, 'email_received', subject, username='web')
 
-        return HttpResponseRedirect(reverse('lizard_damage_thank_you'))
 
 
 class DamageScenarioResult(ViewContextMixin, TemplateView):
@@ -509,3 +512,20 @@ class Disclaimer(ViewContextMixin, TemplateView):
 
     def version(self):
         return tools.version()
+
+
+class ThankYou(ViewContextMixin, TemplateView):
+    template_name="lizard_damage/thank_you.html"
+
+    @property
+    def message(self):
+        message = ''
+        damage_scenario_id = self.request.GET.get('damage_scenario_id', None)
+        if damage_scenario_id is not None:
+            message += 'Uw referentie is scenario id s%s' % damage_scenario_id
+
+        benefit_scenario_id = self.request.GET.get('benefit_scenario_id', None)
+        if benefit_scenario_id is not None:
+            message += 'Uw referentie is scenario id b%s' % benefit_scenario_id
+
+        return message

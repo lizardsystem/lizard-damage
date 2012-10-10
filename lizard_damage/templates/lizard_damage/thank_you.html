@@ -3,10 +3,13 @@
 {% block content %}
 <h2>Nieuw scenario aangemaakt</h2>
 <p>
-Hartelijk dank voor het gebruik van de STOWA Schade Calculator. 
+Hartelijk dank voor het gebruik van de STOWA Schade Calculator.
 </p>
 <p>
 Een nieuw scenario is aangemaakt. U ontvangt een e-mail wanneer de resultaten beschikbaar zijn. Dit venster kan worden afgesloten.
+</p>
+<p>
+{{ view.message }}
 </p>
 
 <a href="{% url lizard_damage_form %}">Klik hier om terug te keren naar het beginscherm</a>
