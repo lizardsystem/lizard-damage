@@ -7,6 +7,8 @@ Changelog of lizard-damage
 
 - Fixed clean_up script.
 
+- Fix factor 3600*24 in indirect damage calculation.
+
 
 0.8.6 (2012-10-10)
 ------------------
