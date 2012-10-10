@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.2 (unreleased)
+0.8.2 (2012-10-10)
 ------------------
 
 - Added option "0 uur" for hersteltijd wegen, added defaults.
