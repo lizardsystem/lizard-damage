@@ -22,7 +22,7 @@
     {% endfor %}
     <ScreenOverlay>
       <name>Legenda</name>
-      <visibility>0</visibility>
+      <visibility>1</visibility>
       <Icon>
         <href>{% if view.legend_url %}{{ view.legend_url }}{% else %}{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg{% endif %}</href>
       </Icon>

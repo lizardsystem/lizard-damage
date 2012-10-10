@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Changed kml legend visibility to 1.
 
 
 0.8.1 (2012-10-10)
