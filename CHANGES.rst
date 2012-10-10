@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.8.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Changed height legend (which is dynamically created) so it looks
+  like a static file.
 
 
 0.8.4 (2012-10-10)

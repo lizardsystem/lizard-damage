@@ -429,14 +429,13 @@ class GeoImageHeightKML(GeoImageKML):
             #fn something like: height_i43bn2_09_-2230_3249
             fn = self.kwargs['slugs'].split(',')[0]
             fn_split = fn.split('_')
-            min_height = float(fn_split[-2]) / 1000
-            max_height = float(fn_split[-1]) / 1000
+            min_height = fn_split[-2]
+            max_height = fn_split[-1]
         except:
-            min_height = 0.0
-            max_height = 1.0
-        return '%s%s?min_height=%.3f&max_height=%.3f' % (
-            self.root_url, reverse('lizard_damage_legend_height'),
-            min_height, max_height)
+            min_height = 0
+            max_height = 1000
+        return self.root_url + reverse('lizard_damage_legend_height', kwargs={
+                'min_height': min_height, 'max_height': max_height})
 
 
 class LegendHeight(View):
@@ -446,8 +445,8 @@ class LegendHeight(View):
     "collectstatic" (which is standard on servers).
     """
     def get(self, request, *args, **kwargs):
-        f1 = float(request.GET.get('min_height', '0.0'))
-        f2 = float(request.GET.get('max_height', '1.0'))
+        f1 = float(kwargs.get('min_height', '0')) / 1000
+        f2 = float(kwargs.get('max_height', '1000')) / 1000
 
         image = Image.open(os.path.join(settings.STATIC_ROOT, "lizard_damage/legend_height.png"))
         f = ImageFont.load_default()
