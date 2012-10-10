@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Landuse images now have the whole tile extent.
 
 
 0.8.5 (2012-10-10)
