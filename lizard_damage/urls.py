@@ -105,7 +105,7 @@ urlpatterns = patterns(
         name='lizard_damage_geo_image_height_kml'
     ),
     url(
-        r'^legend_height/',
+        r'^legend_height.png$',
         views.LegendHeight.as_view(),
         name='lizard_damage_legend_height'
     ),
