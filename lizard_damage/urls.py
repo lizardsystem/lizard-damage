@@ -40,10 +40,14 @@ urlpatterns = patterns(
                 '1': {
                     'floodtime': 1,
                     'flooddate': 9,
+                    'repairtime_roads': "0.25",
+                    'repairtime_buildings': "1",
                     },
                 '2': {
                     'floodtime': 1,
                     'flooddate': 9,
+                    'repairtime_roads': "0.25",
+                    'repairtime_buildings': "1",
                     }
                 },
             condition_dict={

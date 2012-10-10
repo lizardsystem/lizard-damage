@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.8.2 (unreleased)
 ------------------
 
+- Added option "0 uur" for hersteltijd wegen, added defaults.
+
 - Updated (default) damage table.
 
 - Damage table: Changed standaard_inundatieperiode to
