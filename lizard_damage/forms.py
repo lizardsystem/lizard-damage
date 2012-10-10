@@ -122,13 +122,13 @@ class FormStep1(forms.Form):
 
     repairtime_roads = forms.ChoiceField(
         label="Hersteltijd wegen", required=True,
-        choices=(("0.25", "6 uur"), ("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
+        choices=(("0.0", "0 uur"), ("0.25", "6 uur"), ("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
         help_text='Met hersteltijd wegen wordt de duur bedoeld dat wegen niet gebruikt kunnen worden. Voor deze duur wordt indirecte schade berekend als gevolg van de extra kosten die mensen maken voor het omrijden. Deze schade wordt enkel berekend voor primaire wegen (snelwegen e.d.) en secundaire wegen (regionale en lokale wegen) indien minimaal 100 m2 van een wegvak was geïnundeerd. De duur is gelijk aan de duur van de wateroverlast plus de tijd die nodig is om de schade herstellen. Nadat het water van de weg af is, kan een weg namelijk niet altijd meteen gebruikt worden doordat eerst slib en vuil verwijderd moet worden of de weg nog geblokkeerd is door bijvoorbeeld achtergebleven auto’s, de leidingen van noodpompen e.d.'
         )
 
     repairtime_buildings = forms.ChoiceField(
         label="Hersteltijd bebouwing", required=True,
-        choices=(("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
+        choices=(("0.0", "0 uur"), ("0.25", "6 uur"), ("1", "1 dag"), ("2", "2 dagen"), ("5", "5 dagen"), ("10", "10 dagen")),
         help_text='Met hersteltijd bebouwing wordt de duur bedoeld dat een gebouw zijn oorspronkelijke functie niet kan vervullen. Dit is gelijk aan de duur van de wateroverlast en de tijd om de schade te herstellen. Gedurende deze periode loopt een winkel bijvoorbeeld zijn omzet mis of moet een familie ondergebracht worden in een hotel.'
         )
 

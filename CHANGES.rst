@@ -2,8 +2,48 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.2 (unreleased)
+0.8.7 (unreleased)
 ------------------
+
+- Nothing changed yet.
+
+
+0.8.6 (2012-10-10)
+------------------
+
+- Landuse images now have the whole tile extent.
+
+
+0.8.5 (2012-10-10)
+------------------
+
+- Changed height legend (which is dynamically created) so it looks
+  like a static file.
+
+
+0.8.4 (2012-10-10)
+------------------
+
+- Experiment with height legend.
+
+
+0.8.3 (2012-10-10)
+------------------
+
+- Fixed damage table.
+
+
+0.8.2 (2012-10-10)
+------------------
+
+- Added option "0 uur" for hersteltijd wegen, added defaults.
+
+- Updated (default) damage table.
+
+- Damage table: Changed standaard_inundatieperiode to
+  standaard_inundatieduur.
+
+- Changed kml legend visibility to 1.
 
 - Change threshold for indirect road damage.
 

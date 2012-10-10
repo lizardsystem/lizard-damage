@@ -40,10 +40,14 @@ urlpatterns = patterns(
                 '1': {
                     'floodtime': 1,
                     'flooddate': 9,
+                    'repairtime_roads': "0.25",
+                    'repairtime_buildings': "1",
                     },
                 '2': {
                     'floodtime': 1,
                     'flooddate': 9,
+                    'repairtime_roads': "0.25",
+                    'repairtime_buildings': "1",
                     }
                 },
             condition_dict={
@@ -101,7 +105,7 @@ urlpatterns = patterns(
         name='lizard_damage_geo_image_height_kml'
     ),
     url(
-        r'^legend_height/',
+        r'^legend_height_(?P<min_height>.*)_(?P<max_height>.*).png$',
         views.LegendHeight.as_view(),
         name='lizard_damage_legend_height'
     ),

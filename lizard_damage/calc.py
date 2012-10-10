@@ -523,7 +523,7 @@ def calc_damage_for_waterlevel(
         landuse_slugs.append(landuse_slug)  # part of result
         if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
             logger.info("Generating landuse GeoImage: %s" % landuse_slug)
-            models.GeoImage.from_data_with_legend(landuse_slug, landuse, extent, landuse_legend())
+            models.GeoImage.from_data_with_legend(landuse_slug, landuse.data, extent, landuse_legend())
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(
