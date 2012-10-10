@@ -22,7 +22,7 @@ CFG_HEADER_SECTION = 'algemeen'
 CFG_HEADER_FLOODTIME = 'inundatieduur'
 CFG_HEADER_REPAIRTIME = 'herstelperiode'
 CFG_HEADER_DEPTH = 'inundatiediepte'
-CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieperiode'
+CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieduur'
 CFG_HEADER_DEFAULT_REPAIRTIME = 'standaard_herstelperiode'
 CFG_HEADER_DEFAULT_MONTH = 'standaard_maand'
 

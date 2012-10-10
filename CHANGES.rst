@@ -5,7 +5,14 @@ Changelog of lizard-damage
 0.8.2 (unreleased)
 ------------------
 
+- Updated (default) damage table.
+
+- Damage table: Changed standaard_inundatieperiode to
+  standaard_inundatieduur.
+
 - Changed kml legend visibility to 1.
+
+- Change threshold for indirect road damage.
 
 
 0.8.1 (2012-10-10)
