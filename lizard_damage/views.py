@@ -30,9 +30,9 @@ import datetime
 import tempfile
 import os
 import re
-import Image
-import ImageDraw
-import ImageFont
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 
 temp_storage_location = tempfile.mkdtemp()
 temp_storage = FileSystemStorage(location=temp_storage_location)

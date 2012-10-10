@@ -11,7 +11,6 @@ import numpy as np
 import logging
 import os
 import tempfile
-import Image
 import collections
 
 
@@ -26,6 +25,7 @@ from lizard_damage import models
 from osgeo import gdal
 from matplotlib import cm
 from matplotlib import colors
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 

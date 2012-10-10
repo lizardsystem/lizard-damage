@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added dependency on Pillow, updated imports.
 
 
 0.8 (2012-10-09)
