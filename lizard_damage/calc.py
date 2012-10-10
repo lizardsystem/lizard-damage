@@ -262,8 +262,7 @@ def calculate(use, depth, geo,
             partial_result_indirect = (
                 area_per_pixel *
                 dr.to_gamma_repairtime(repairtime) *
-                dr.to_indirect_damage(CALC_TYPES[calc_type]) /
-                (3600 * 24)  # Indirect damage is specified per day
+                dr.to_indirect_damage(CALC_TYPES[calc_type])
             ) * np.ones(depth.shape)[index]
 
         result[index] = partial_result_direct + partial_result_indirect
