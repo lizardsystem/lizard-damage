@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Do not crash when multiple GeoImage objects have the same slug.
 
 
 0.8.7 (2012-10-10)

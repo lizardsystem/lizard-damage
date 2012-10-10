@@ -412,7 +412,8 @@ class GeoImageKML(DamageEventKML):
     @property
     def events(self):
         slugs = self.kwargs['slugs']
-        return [get_object_or_404(GeoImage, slug=slug) for slug in slugs.split(',')]
+        # When multiple GeoImages have the same slug, just take first
+        return [GeoImage.objects.filter(slug=slug)[0] for slug in slugs.split(',')]
 
 
 class GeoImageLandUseKML(GeoImageKML):
