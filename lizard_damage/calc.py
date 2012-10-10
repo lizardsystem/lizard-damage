@@ -521,6 +521,8 @@ def calc_damage_for_waterlevel(
         # For landuse map
         landuse_slug = slug_for_landuse(ahn_name)
         landuse_slugs.append(landuse_slug)  # part of result
+        # note: multiple objects with the same slug can exist if they
+        # enter this function at the same time
         if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
             logger.info("Generating landuse GeoImage: %s" % landuse_slug)
             models.GeoImage.from_data_with_legend(landuse_slug, landuse.data, extent, landuse_legend())
