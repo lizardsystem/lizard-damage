@@ -2,10 +2,16 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.9 (unreleased)
-------------------
+0.8.10 (unreleased)
+-------------------
 
 - Nothing changed yet.
+
+
+0.8.9 (2012-10-10)
+------------------
+
+- Add equals to limit for indirect road damage.
 
 
 0.8.8 (2012-10-10)
