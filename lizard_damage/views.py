@@ -33,10 +33,13 @@ import re
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+import logging
 
 temp_storage_location = tempfile.mkdtemp()
 temp_storage = FileSystemStorage(location=temp_storage_location)
 
+
+logger = logging.getLogger(__name__)
 # from lizard_damage import models
 
 
@@ -130,7 +133,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
             scenario_data['email'] = scenario_email
         damage_table = None
         for line in index_data:
-            print '%r' % line[0]
+            #print '%r' % line[0]
             if line[0] == 'scenario_name':
                 if not scenario_data['name']:
                     scenario_data['name'] = line[1]
@@ -148,11 +151,11 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                     damage_table = os.path.join(zip_temp, line[1])
             elif line[0] == 'event_name':
                 # Header for second part: create damage_scenario object
-                print 'Create a damage scenario using %r' % scenario_data
+                logger.info('Create a damage scenario using %r' % scenario_data)
                 damage_scenario = DamageScenario(**scenario_data)
                 damage_scenario.save()
                 if damage_table:
-                    print 'adding damage table...'
+                    logger.info('adding damage table...')
                     with open(damage_table) as damage_table_file:
                         damage_scenario.damagetable.save(
                             os.path.basename(damage_table),
@@ -296,14 +299,19 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 if form_data:
                     form_datas.update(form_data)
             # return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+            zipfile = form_datas['zipfile']
+            logger.info('zipfile: %r' % zipfile.name)
+            logger.info('temp storage location: %r' % temp_storage_location)
             try:
-                return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
+                return {'zip_content': analyze_zip_file(zipfile)}
             except:
                 return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
         # For batenkaart
         if step == '9':
             form_data = self.get_cleaned_data_for_step('7')
             try:
+                #logger.info('zipfile_risk_before: %r' % form_datas['zipfile_risk_before'])
+                #logger.info('zipfile_risk_after: %r' % form_datas['zipfile_risk_after'])
                 return {'zip_content': analyze_benefit_files(
                     form_data['zipfile_risk_before'],
                     form_data['zipfile_risk_after'])}

@@ -41,7 +41,7 @@ class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
         """
         midList = []
         for x, wid in enumerate(self):
-            print(wid)
+            #print(wid)
             if self.actives[x] == False:
                 wid.attrs['disabled'] = True
             if self.help_texts[x]:

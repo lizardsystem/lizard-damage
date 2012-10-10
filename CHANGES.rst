@@ -5,6 +5,8 @@ Changelog of lizard-damage
 0.8.10 (unreleased)
 -------------------
 
+- Updated logging for views.
+
 - Added reference to scenario id in thank you screen.
 
 
