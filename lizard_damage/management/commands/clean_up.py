@@ -42,8 +42,8 @@ class Command(BaseCommand):
                     damage_event_result.delete()
                 if damage_event.result:
                     damage_event.result.delete()
-                if damage_event.waterlevel:
-                    damage_event.waterlevel.delete()
+                # if damage_event.waterlevel:
+                #     damage_event.waterlevel.delete()
                 damage_event.delete()
             damage_scenario.delete()
 
