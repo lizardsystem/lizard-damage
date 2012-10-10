@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.7 (unreleased)
+0.8.7 (2012-10-10)
 ------------------
 
 - Fixed clean_up script.
