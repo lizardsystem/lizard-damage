@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.3 (unreleased)
+0.8.3 (2012-10-10)
 ------------------
 
 - Fixed damage table.
