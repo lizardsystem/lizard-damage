@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.8.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Hopefully fixed upload error by specifying the django upload temp
+  dir statically.
 
 
 0.8.11 (2012-10-11)

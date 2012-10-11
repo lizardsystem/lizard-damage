@@ -35,7 +35,9 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import logging
 
-temp_storage_location = tempfile.mkdtemp()
+# Do not generate directoryname, because for each worker the directory
+# will be different and that loads to errors.
+temp_storage_location = '/tmp/django_uploads' # tempfile.mkdtemp()
 temp_storage = FileSystemStorage(location=temp_storage_location)
 
 
