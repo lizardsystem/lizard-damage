@@ -299,10 +299,16 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 if form_data:
                     form_datas.update(form_data)
             # return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
-            zipfile = form_datas['zipfile']
-            logger.info('zipfile: %r' % zipfile.name)
-            logger.info('temp storage location: %r' % temp_storage_location)
+            #print form_datas
             try:
+                zipfile = form_datas['zipfile']
+                #logger.info('%r' % str(dir(zipfile)))
+                #logger.info('%s' % str(dir(zipfile.file)))
+                #logger.info('zipfile.file %s' % zipfile.file)
+                logger.info('zipfile.file.name %s' % zipfile.file.name)
+                print 'zipfile.file.name %s' % zipfile.file.name
+                #logger.info('zipfile: %r' % zipfile.name)
+                #logger.info('temp storage location: %r' % temp_storage_location)
                 return {'zip_content': analyze_zip_file(zipfile)}
             except:
                 return {'zip_content': 'analyse gefaald, zipfile is niet goed'}

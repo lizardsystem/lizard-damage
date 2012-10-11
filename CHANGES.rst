@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added logging for eventually fixing upload error.
 
 
 0.8.10 (2012-10-10)
