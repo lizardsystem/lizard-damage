@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.10 (unreleased)
------------------
+0.9.1 (2012-10-11)
+------------------
 
 - Fixed management command clean up to remove tasks too.
 
