@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     damage_scenario.id, str(damage_scenario)))
 
             SecuredPeriodicTask.objects.filter(
-                name__contains='scenario (%05d)' % damage_scenario.id).delete()
+                name__contains='Scenario (%05d)' % damage_scenario.id).delete()
 
             for damage_event in damage_scenario.damageevent_set.all():
                 for damage_event_result in damage_event.damageeventresult_set.all():
