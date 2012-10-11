@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.8.12 (unreleased)
+0.8.12 (2012-10-11)
 -------------------
 
 - Hopefully fixed upload error by specifying the django upload temp
