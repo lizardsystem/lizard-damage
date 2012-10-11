@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.8.13 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Now deleting temporary upload zip files after adding them to the db.
 
 
 0.8.12 (2012-10-11)

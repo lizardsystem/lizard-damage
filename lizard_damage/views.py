@@ -213,6 +213,15 @@ def damage_scenario_from_zip_type(all_form_data):
         zipfile, scenario_name=scenario_name,
         scenario_email=scenario_email)
 
+    # And delete the zipfile
+    try:
+        logger.info('Deleting temp zipfile %s' % (zipfile.file.name))
+        os.remove(zipfile.file.name)
+    except:
+        logger.error(
+            'Error deleting temp zipfile %s (but what the heck...)' % (
+                zipfile.file.name))
+
     return damage_scenario
 
 
