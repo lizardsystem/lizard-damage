@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Updated damage table for download.
 
 
 0.9.1 (2012-10-11)
