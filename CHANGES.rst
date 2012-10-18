@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.9.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Make get_road_mask accept multiple roads.
+- Skip processing of landuse codes when they are not present in landuse array.
 
 
 0.9.2 (2012-10-16)

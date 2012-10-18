@@ -376,7 +376,7 @@ def to_masked_array(ds, mask=None):
     return result
 
 
-def get_mask(road, shape, geo):
+def get_mask(roads, shape, geo):
         """
         Return boolean array True where the road is. Shape is the
         numpy shape of the raster.
@@ -388,9 +388,10 @@ def get_mask(road, shape, geo):
         ds_ogr = ogr.GetDriverByName(b'Memory').CreateDataSource('')
         layer = ds_ogr.CreateLayer(b'', sr)
         layerdefinition = layer.GetLayerDefn()
-        feature = ogr.Feature(layerdefinition)
-        feature.SetGeometry(ogr.CreateGeometryFromWkb(str(road.the_geom.wkb)))
-        layer.CreateFeature(feature)
+        for road in roads:
+            feature = ogr.Feature(layerdefinition)
+            feature.SetGeometry(ogr.CreateGeometryFromWkb(str(road.the_geom.wkb)))
+            layer.CreateFeature(feature)
 
         # Prepare in-memory copy of ds_gdal
         ds_road = gdal.GetDriverByName(b'mem').Create(

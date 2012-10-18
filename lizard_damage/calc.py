@@ -198,7 +198,7 @@ def get_roads_flooded_for_tile_and_code(code, depth, geo):
     roads_flooded_for_tile_and_code = {}
     roads = raster.get_roads(ROAD_GRIDCODE[code], geo, depth.shape)
     for road in roads:
-        mask = raster.get_mask(road, depth.shape, geo)
+        mask = raster.get_mask([road], depth.shape, geo)
         flooded_m2 = (mask * area_per_pixel * np.greater(depth, 0)).sum()
         if flooded_m2:
             roads_flooded_for_tile_and_code[road.pk] = flooded_m2
@@ -231,7 +231,14 @@ def calculate(use, depth, geo,
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
 
+    
+    codes_in_use = np.unique(use.compressed())
     for code, dr in table.data.items():
+        if not code in codes_in_use:
+            damage_area[code] = 0
+            damage[code] = 0
+            continue
+        
         if code in BUILDING_SOURCES:
             repairtime = repairtime_buildings
         else:
