@@ -389,7 +389,7 @@ def result_as_dict(name, damage, area, damage_table):
 
 def write_image(name, values):
     """
-    Create jpg image from values.
+    Create png image from values.
 
     Values is a 2d np array
     """
@@ -490,6 +490,7 @@ def calc_damage_for_waterlevel(
     overall_area = {}
     overall_damage = {}
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
+    result_images = []  # Images to be modified for indirect road damage.
 
     min_height = None
     max_height = None
@@ -591,6 +592,10 @@ def calc_damage_for_waterlevel(
                     name=image_result['filename_png'],
                     values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
                                 (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
+                result_images.append({
+                    'extent': e,
+                    'path': image_result['filename_png'],
+                })
                 models.write_pgw(
                     name=image_result['filename_pgw'],
                     extent=e)
@@ -662,16 +667,57 @@ def calc_damage_for_waterlevel(
             models.GeoImage.from_data_with_min_max(
                 height_slug, height, extent, min_height, max_height)
 
+    # Only after all tiles have been processed, calculate overall indirect
+    # Road damage. This is not visible in the per-tile-damagetable.
+    roads_flooded_over_threshold = []
     for code, roads_flooded in roads_flooded_global.iteritems():
         for road, info in roads_flooded.iteritems():
             if info['area'] >= 100:
+                roads_flooded_over_threshold.append(road)
                 overall_damage[code] += (
                     dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) *
                     dt.data[code].to_gamma_repairtime(repairtime_roads)
                 )
-                # Rasterize road on geo and shape (which? Include it!)
-                # Write png indirect roads, and remove it in tasks.py
 
+    def add_roads_to_image(roads, image_path, extent):
+
+        # Get old image that needs indirect road damage visualized
+        image = Image.open(result_image['path'])
+
+        # Rasterize all roads that have indirect damage
+        size = image.size
+        geotransform = [
+            extent[0],
+            (extent[2] - extent[0]) / size[0],
+            0,
+            extent[3],
+            0,
+            (extent[1] - extent[3]) / size[1],
+        ]
+        roadgrid = raster.get_mask(
+            roads=road_objects,
+            shape=image.size[::-1],
+            geo=(b'', geotransform),
+        )
+
+        # Paste it into the old image and overwrite the image file
+        rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
+            roadgrid.shape[0], roadgrid.shape[1], 1
+        )
+        
+        image_roads = Image.fromarray(rgba)
+        image.paste(image_roads, None, image_roads)
+        image.save(result_image['path'])
+
+    road_objects = models.Roads.objects.filter(
+        pk__in=roads_flooded_over_threshold,
+    )
+    for result_image in result_images:
+        add_roads_to_image(
+            roads=road_objects,
+            image_path=result_image['path'],
+            extent=result_image['extent'],
+        )
 
     csv_result = {'filename': mkstemp_and_close(), 'arcname': 'schade_totaal.csv',
         'delete_after': True}
