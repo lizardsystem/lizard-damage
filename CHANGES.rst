@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.9.3 (unreleased)
 ------------------
 
-- Make get_road_mask accept multiple roads.
+- Add indirect damage for roads to image.
+
 - Skip processing of landuse codes when they are not present in landuse array.
 
 
