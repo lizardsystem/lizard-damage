@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.3 (unreleased)
+0.9.3 (2012-10-22)
 ------------------
 
 - Add indirect damage for roads to image.
