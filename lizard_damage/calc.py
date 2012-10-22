@@ -701,7 +701,7 @@ def calc_damage_for_waterlevel(
         )
 
         # Paste it into the old image and overwrite the image file
-        rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
+        rgba = np.uint8([[[0, 0, 0, 255]]]) * roadgrid.reshape(
             roadgrid.shape[0], roadgrid.shape[1], 1
         )
         

@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Make indirectly damaged roads darker.
 
 
 0.9.3 (2012-10-22)
