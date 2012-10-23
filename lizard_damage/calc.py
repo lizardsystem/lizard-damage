@@ -188,7 +188,7 @@ def get_colorizer(max_damage):
     return colorize
 
 # {landuse-code: gridcode} mapping for roads
-ROAD_GRIDCODE = {22: 21, 23: 22}
+ROAD_GRIDCODE = {20: 20, 22: 21, 23: 22}
 BUILDING_SOURCES = ('BAG', )
 
 
@@ -701,12 +701,13 @@ def calc_damage_for_waterlevel(
         )
 
         # Paste it into the old image and overwrite the image file
-        rgba = np.uint8([[[0, 0, 0, 255]]]) * roadgrid.reshape(
+        rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
             roadgrid.shape[0], roadgrid.shape[1], 1
         )
         
-        image_roads = Image.fromarray(rgba)
-        image.paste(image_roads, None, image_roads)
+        image_roads_rgb = Image.fromarray(rgba[:, :, 0:3])
+        image_roads_mask = Image.fromarray(rgba[:, :, 3])
+        image.paste(image_roads_rgb, None, image_roads_mask)
         image.save(result_image['path'])
 
     road_objects = models.Roads.objects.filter(
