@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add code for tracks to special treatment list.
 
 
 0.9.4 (2012-10-22)
