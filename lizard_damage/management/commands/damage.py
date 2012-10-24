@@ -30,10 +30,12 @@ class Command(BaseCommand):
         ) for i in range(5)]
         ds_wl_filenames = [
             #os.path.join(settings.DATA_ROOT, 'waterlevel', 'utrechtq.asc'),
-            os.path.join(settings.DATA_ROOT, 'waterlevel', 'i37_en2_09_delfgauw.asc'),
+            #os.path.join(settings.DATA_ROOT, 'waterlevel', 'i37_en2_09_delfgauw.asc'),
             #os.path.join(settings.DATA_ROOT, 'waterlevel', 'goudswaard.asc'),
             #os.path.join(settings.DATA_ROOT, 'waterlevel', '1_ha_gras.asc'),
             #os.path.join(settings.DATA_ROOT, 'waterlevel', 'ws1.asc'),
+            os.path.join(settings.DATA_ROOT, 'waterlevel', 'overwaard_gorinchem_5.asc'),
+
         ]
         calc.calc_damage_for_waterlevel(
             repetition_time=None,
