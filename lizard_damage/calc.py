@@ -188,7 +188,7 @@ def get_colorizer(max_damage):
     return colorize
 
 # {landuse-code: gridcode} mapping for roads
-ROAD_GRIDCODE = {20: 20, 22: 21, 23: 22}
+ROAD_GRIDCODE = {32: 20, 22: 21, 23: 22}
 BUILDING_SOURCES = ('BAG', )
 
 
