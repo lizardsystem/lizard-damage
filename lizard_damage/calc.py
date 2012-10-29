@@ -270,7 +270,7 @@ def calculate(use, depth, geo,
                 area_per_pixel *
                 dr.to_gamma_repairtime(repairtime) *
                 dr.to_indirect_damage(CALC_TYPES[calc_type])
-            ) * np.ones(depth.shape)[index]
+            ) * np.greater(depth[index], 0)  # True evaluates to 1
 
         result[index] = partial_result_direct + partial_result_indirect
 

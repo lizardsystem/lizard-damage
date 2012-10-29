@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixes indirect damage being calculated regardless of inundation.
 
 
 0.9.6 (2012-10-24)
