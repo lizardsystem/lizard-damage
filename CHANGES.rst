@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Bugfix if depth is only mask.
 
 
 0.9.8 (2012-10-31)
