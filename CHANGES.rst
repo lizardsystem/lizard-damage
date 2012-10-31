@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.8 (unreleased)
+0.9.8 (2012-10-31)
 ------------------
 
 - Added depth map in result.
