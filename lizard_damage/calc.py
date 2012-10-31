@@ -744,10 +744,10 @@ def calc_damage_for_waterlevel(
                 else:
                     logger.info("Skipped depth GeoImage because of masked only")
 
-    if (min_height is not None) and 
-       (max_height is not None) and
-       (min_depth is not None) and
-       (max_depth is not None):
+    if ((min_height is not None) and 
+        (max_height is not None) and
+        (min_depth is not None) and
+        (max_depth is not None)):
         generate_height_tiles()
 
     # Only after all tiles have been processed, calculate overall indirect
