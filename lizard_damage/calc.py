@@ -677,6 +677,7 @@ def calc_damage_for_waterlevel(
         height_slug = slug_for_height(ahn_name, min_height, max_height)
         height_slugs.append(height_slug)  # part of result
         depth_slug = slug_for_depth(ahn_name, min_depth, max_depth)
+        depth_slugs.append(depth_slug)  # part of result
 
         geo_image_height_count = models.GeoImage.objects.filter(slug=height_slug).count()
         geo_image_depth_count = models.GeoImage.objects.filter(slug=depth_slug).count()
@@ -713,9 +714,9 @@ def calc_damage_for_waterlevel(
                 models.GeoImage.from_data_with_min_max(
                     depth_slug, depth, extent, min_depth, max_depth,
                     cdict=cdict_water_depth)
-                depth_slugs.append(depth_slug)  # part of result
             except:
                 logger.info("Skipped depth generating GeoImage because it failed (masked only?)")
+                depth_slugs.pop()
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
