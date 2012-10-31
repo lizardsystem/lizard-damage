@@ -13,7 +13,6 @@ import os
 import tempfile
 import collections
 
-
 import zipfile
 import traceback
 from django.conf import settings
@@ -487,8 +486,8 @@ def calc_damage_for_waterlevel(
         dt = table.DamageTable.read_cfg(cfg)
     zip_result.append({'filename': dt_path, 'arcname': 'dt.cfg'})
 
-    overall_area = {}
-    overall_damage = {}
+    overall_area = collections.defaultdict(float)
+    overall_damage = collections.defaultdict(float)
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
     result_images = []  # Images to be modified for indirect road damage.
 
@@ -502,13 +501,20 @@ def calc_damage_for_waterlevel(
 
         # Prepare data for calculation
         try:
-            landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
+            alldata = raster.get_calc_data(
                 waterlevel_datasets=waterlevel_datasets,
                 method=settings.RASTER_SOURCE,
                 floodtime=floodtime,
                 ahn_name=ahn_name,
                 logger=logger,
             )
+            if alldata is None:
+                logger.warning(
+                    'Skipping damage calculation for {}'.format(ahn_name),
+                )
+                continue
+
+            landuse, depth, geo, floodtime_px, ds_height, height = alldata
         except:
             # Log this error and all previous normal logs, instead of hard crashing
             logger.error('Exception')
@@ -638,34 +644,53 @@ def calc_damage_for_waterlevel(
         add_to_zip(output_zipfile, zip_result, logger)
         zip_result = []
 
-    logger.info('Generating height tiles... height min=%f, height=%f',
-                min_height, max_height)
-    for ahn_index in ahn_indices:
-        ahn_name = ahn_index.bladnr
-        height_slug = slug_for_height(ahn_name, min_height, max_height)
-        height_slugs.append(height_slug)  # part of result
-        if models.GeoImage.objects.filter(slug=height_slug).count() == 0:
-            # Copied from above
-            try:
-                landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
-                    waterlevel_datasets=waterlevel_datasets,
-                    method=settings.RASTER_SOURCE,
-                    floodtime=floodtime,
-                    ahn_name=ahn_name,
-                    logger=logger,
-                )
-            except:
-                # Log this error and all previous normal logs, instead of hard crashing
-                logger.error('Exception')
-                for exception_line in traceback.format_exc().split('\n'):
-                    logger.error(exception_line)
-                return
 
-            extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
-            # Actually create tile
-            logger.info("Generating height GeoImage: %s" % height_slug)
-            models.GeoImage.from_data_with_min_max(
-                height_slug, height, extent, min_height, max_height)
+    def generate_height_tiles():
+        """
+        This is in a subroutine because it
+        must be possible to not use it. 
+        """
+        logger.info(
+            'Generating height tiles... height min=%f, height=%f',
+            min_height, max_height,
+        )
+        for ahn_index in ahn_indices:
+            ahn_name = ahn_index.bladnr
+            height_slug = slug_for_height(ahn_name, min_height, max_height)
+            height_slugs.append(height_slug)  # part of result
+            if models.GeoImage.objects.filter(slug=height_slug).count() == 0:
+                # Copied from above
+                try:
+                    alldata = raster.get_calc_data(
+                        waterlevel_datasets=waterlevel_datasets,
+                        method=settings.RASTER_SOURCE,
+                        floodtime=floodtime,
+                        ahn_name=ahn_name,
+                        logger=logger,
+                    )
+                    if alldata is None:
+                        logger.warning(
+                            'Skipping height tiles generation for {}'
+                            .format(ahn_name),
+                        )
+                        continue
+                except:
+                    # Log this error and all previous normal logs,
+                    # instead of hard crashing
+                    logger.error('Exception')
+                    for exception_line in traceback.format_exc().split('\n'):
+                        logger.error(exception_line)
+                    return
+
+                # 1000x1250 meters = 2000x2500 pixels
+                extent = ahn_index.the_geom.extent
+                # Actually create tile
+                logger.info("Generating height GeoImage: %s" % height_slug)
+                models.GeoImage.from_data_with_min_max(
+                    height_slug, height, extent, min_height, max_height)
+    if (min_height is not None) and (max_height is not None):
+        generate_height_tiles()
+
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
@@ -680,6 +705,7 @@ def calc_damage_for_waterlevel(
                 )
 
     def add_roads_to_image(roads, image_path, extent):
+        """ This function could be moved to top level. """
 
         # Get old image that needs indirect road damage visualized
         image = Image.open(result_image['path'])

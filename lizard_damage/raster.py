@@ -268,7 +268,7 @@ def disk_free():
     return stat.f_bavail * stat.f_frsize
 
 
-def get_ds_for_tile(ahn_name, method='filesystem'):
+def get_ds_for_tile(ahn_name, method='filesystem', logger=None):
     """
     Return datasets (waterlevel, height, landuse).
 
@@ -289,6 +289,11 @@ def get_ds_for_tile(ahn_name, method='filesystem'):
     ds_ahn = import_dataset(ds_ahn_filename, driver)
     ds_lgn = import_dataset(ds_lgn_filename, driver)
 
+    if ds_lgn is None:
+        logger.warning('No landuse data for {}'.format(ahn_name))
+    if ds_ahn is None:
+        logger.warning('No height data for {}'.format(ahn_name))
+
     return ds_ahn, ds_lgn
 
 
@@ -298,8 +303,11 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
         return ahn_name
     logger.info('Reading datasets for %s' % ahn_name)
     ds_height, ds_landuse = get_ds_for_tile(
-        ahn_name=ahn_name, method=method,
+        ahn_name=ahn_name, method=method, logger=logger,
     )  # ds_height: part of result
+    if ds_height is None or ds_landuse is None:
+        return None
+
     cached = cache.get(hash_code(ahn_name))
     if cached is not None and caching:
         logger.info('data from cache')
