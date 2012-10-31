@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.13 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Put more inside try-except
 
 
 0.9.12 (2012-10-31)

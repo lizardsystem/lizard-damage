@@ -690,17 +690,18 @@ def calc_damage_for_waterlevel(
             ahn_name = ahn_index.bladnr
             height_slug = slug_for_height(ahn_name, min_height, max_height)
             height_slugs.append(height_slug)  # part of result
+            geo_image_depth_count = -1
             try:
                 depth_slug = slug_for_depth(ahn_name, min_depth, max_depth)
                 depth_slugs.append(depth_slug)  # part of result
+                geo_image_depth_count = models.GeoImage.objects.filter(
+                    slug=depth_slug,
+                ).count()
             except:
                 logger.warning('GeoImage for depth failed because of fully masked')
 
             geo_image_height_count = models.GeoImage.objects.filter(
                 slug=height_slug,
-            ).count()
-            geo_image_depth_count = models.GeoImage.objects.filter(
-                slug=depth_slug,
             ).count()
             if (geo_image_height_count == 0 or geo_image_depth_count == 0):
                 # Copied from above
