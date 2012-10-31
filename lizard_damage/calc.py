@@ -709,13 +709,13 @@ def calc_damage_for_waterlevel(
             extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
             # Actually create tile
             logger.info("Generating depth GeoImage: %s" % depth_slug)
-            if isinstance(min_depth, float) and isinstance(max_depth, float):
+            try:
                 models.GeoImage.from_data_with_min_max(
                     depth_slug, depth, extent, min_depth, max_depth,
                     cdict=cdict_water_depth)
                 depth_slugs.append(depth_slug)  # part of result
-            else:
-                logger.info("Skipped depth GeoImage because of masked only")
+            except:
+                logger.info("Skipped depth generating GeoImage because it failed (masked only?)")
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
