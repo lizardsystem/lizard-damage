@@ -194,6 +194,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
             damage_event.table = json.dumps(result[2])
             damage_event.landuse_slugs = ','.join(result[3])  # Store references to GeoImage objects
             damage_event.height_slugs = ','.join(result[4])  # Store references to GeoImage objects
+            damage_event.depth_slugs = ','.join(result[5])  # Store references to GeoImage objects
             damage_event.save()
 
             # result[1] is a list of png files to be uploaded to the django db.

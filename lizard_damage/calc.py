@@ -153,6 +153,15 @@ def slug_for_height(ahn_name, min_value, max_value):
         ahn_name, int(min_value*1000), int(max_value*1000))
 
 
+def slug_for_depth(ahn_name, min_value, max_value):
+    """Name as slug in GeoImage
+
+    min_value and max_values are depths
+    """
+    return 'depth_%s_%d_%d' % (
+        ahn_name, int(min_value*1000), int(max_value*1000))
+
+
 def get_colorizer(max_damage):
     """ Return colormap and normalizer. """
     # Note the hardcoded area_per_pixel
@@ -231,14 +240,14 @@ def calculate(use, depth, geo,
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
 
-    
+
     codes_in_use = np.unique(use.compressed())
     for code, dr in table.data.items():
         if not code in codes_in_use:
             damage_area[code] = 0
             damage[code] = 0
             continue
-        
+
         if code in BUILDING_SOURCES:
             repairtime = repairtime_buildings
         else:
@@ -460,10 +469,23 @@ def calc_damage_for_waterlevel(
     - schade_totaal.csv (see write_table)
 
     """
+    cdict_water_depth = {
+        'red': ((0.0, 170./256, 170./256),
+                (0.5, 65./256, 65./256),
+                (1.0, 4./256, 4./256)),
+        'green': ((0.0, 200./256, 200./256),
+                  (0.5, 120./256, 120./256),
+                  (1.0, 65./256, 65./256)),
+        'blue': ((0.0, 255./256, 255./256),
+                 (0.5, 221./256, 221./256),
+                 (1.0, 176./256, 176./256)),
+        }
+
     zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
     img_result = []
     landuse_slugs = []  # slugs for landuse geo images
     height_slugs = []  # slugs for height geo images
+    depth_slugs = []  # slugs for depth geo images
 
     logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
@@ -494,6 +516,8 @@ def calc_damage_for_waterlevel(
 
     min_height = None
     max_height = None
+    min_depth = None
+    max_depth = None
 
     ahn_indices = raster.get_ahn_indices(waterlevel_datasets[0])
     for ahn_index in ahn_indices:
@@ -525,6 +549,14 @@ def calc_damage_for_waterlevel(
         new_max_height = np.amax(height)
         if max_height is None or new_max_height < max_height:
             max_height = new_max_height
+
+        # For depth map
+        new_min_depth = np.amin(depth)
+        if min_depth is None or new_min_depth < min_depth:
+            min_depth = new_min_depth
+        new_max_depth = np.amax(depth)
+        if max_depth is None or new_max_depth < max_depth:
+            max_depth = new_max_depth
 
         # For landuse map
         landuse_slug = slug_for_landuse(ahn_name)
@@ -638,13 +670,19 @@ def calc_damage_for_waterlevel(
         add_to_zip(output_zipfile, zip_result, logger)
         zip_result = []
 
-    logger.info('Generating height tiles... height min=%f, height=%f',
-                min_height, max_height)
+    logger.info('Generating height and depth tiles... height min max=%f, %f, depth min max=%f, %f',
+                min_height, max_height, min_depth, max_depth)
     for ahn_index in ahn_indices:
         ahn_name = ahn_index.bladnr
         height_slug = slug_for_height(ahn_name, min_height, max_height)
         height_slugs.append(height_slug)  # part of result
-        if models.GeoImage.objects.filter(slug=height_slug).count() == 0:
+        depth_slug = slug_for_depth(ahn_name, min_depth, max_depth)
+        depth_slugs.append(depth_slug)  # part of result
+
+        geo_image_height_count = models.GeoImage.objects.filter(slug=height_slug).count()
+        geo_image_depth_count = models.GeoImage.objects.filter(slug=depth_slug).count()
+        if (geo_image_height_count == 0 or
+            geo_image_depth_count == 0):
             # Copied from above
             try:
                 landuse, depth, geo, floodtime_px, ds_height, height = raster.get_calc_data(
@@ -661,11 +699,20 @@ def calc_damage_for_waterlevel(
                     logger.error(exception_line)
                 return
 
+        if geo_image_height_count == 0:
             extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
             # Actually create tile
             logger.info("Generating height GeoImage: %s" % height_slug)
             models.GeoImage.from_data_with_min_max(
                 height_slug, height, extent, min_height, max_height)
+
+        if geo_image_depth_count == 0:
+            extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
+            # Actually create tile
+            logger.info("Generating depth GeoImage: %s" % depth_slug)
+            models.GeoImage.from_data_with_min_max(
+                depth_slug, depth, extent, min_depth, max_depth,
+                cdict=cdict_water_depth)
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
@@ -704,7 +751,7 @@ def calc_damage_for_waterlevel(
         rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
             roadgrid.shape[0], roadgrid.shape[1], 1
         )
-        
+
         image_roads_rgb = Image.fromarray(rgba[:, :, 0:3])
         image_roads_mask = Image.fromarray(rgba[:, :, 3])
         image.paste(image_roads_rgb, None, image_roads_mask)
@@ -753,4 +800,4 @@ def calc_damage_for_waterlevel(
 
     logger.info('zipfile: %s' % output_zipfile)
 
-    return output_zipfile, img_result, result_table, landuse_slugs, height_slugs
+    return output_zipfile, img_result, result_table, landuse_slugs, height_slugs, depth_slugs

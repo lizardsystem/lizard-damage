@@ -444,6 +444,12 @@ class GeoImageKML(DamageEventKML):
         return [GeoImage.objects.filter(slug=slug)[0] for slug in slugs.split(',')]
 
 
+class GeoImageNoLegendKML(GeoImageKML):
+    @property
+    def legend_url(self):
+        return ''
+
+
 class GeoImageLandUseKML(GeoImageKML):
     @property
     def legend_url(self):

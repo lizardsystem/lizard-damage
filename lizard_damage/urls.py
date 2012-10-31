@@ -95,6 +95,11 @@ urlpatterns = patterns(
         name='lizard_damage_geo_image_kml'
     ),
     url(
+        r'^geoimage_nolegend/(?P<slugs>.*)/',
+        views.GeoImageNoLegendKML.as_view(),
+        name='lizard_damage_geo_image_no_legend_kml'
+    ),
+    url(
         r'^geoimage_landuse/(?P<slugs>.*)/',
         views.GeoImageLandUseKML.as_view(),
         name='lizard_damage_geo_image_landuse_kml'

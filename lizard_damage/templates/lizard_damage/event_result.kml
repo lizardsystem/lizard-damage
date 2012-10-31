@@ -20,16 +20,18 @@
       </LatLonBox>
     </GroundOverlay>
     {% endfor %}
+    {% if view.legend_url %}
     <ScreenOverlay>
       <name>Legenda</name>
       <visibility>1</visibility>
       <Icon>
-        <href>{% if view.legend_url %}{{ view.legend_url }}{% else %}{{ view.root_url }}{{ STATIC_URL }}lizard_damage/legend.jpg{% endif %}</href>
+        <href>{{ view.legend_url }}</href>
       </Icon>
       <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
       <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>
       <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
       <size x="0" y="0" xunits="fraction" yunits="fraction"/>
     </ScreenOverlay>
+    {% endif %}
   </Folder>
 </kml>
