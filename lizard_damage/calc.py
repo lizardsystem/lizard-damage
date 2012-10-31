@@ -676,8 +676,6 @@ def calc_damage_for_waterlevel(
         add_to_zip(output_zipfile, zip_result, logger)
         zip_result = []
 
-<<<<<<< HEAD
-
     def generate_height_tiles():
         """
         This is in a subroutine because it
@@ -726,29 +724,31 @@ def calc_damage_for_waterlevel(
                         logger.error(exception_line)
                     return
 
+            if geo_image_height_count == 0:
                 # 1000x1250 meters = 2000x2500 pixels
                 extent = ahn_index.the_geom.extent
                 # Actually create tile
                 logger.info("Generating height GeoImage: %s" % height_slug)
                 models.GeoImage.from_data_with_min_max(
                     height_slug, height, extent, min_height, max_height)
+            if geo_image_depth_count == 0:
+                # 1000x1250 meters = 2000x2500 pixels
+                extent = ahn_index.the_geom.extent
+                # Actually create tile
+                logger.info("Generating depth GeoImage: %s" % depth_slug)
+                if isinstance(min_depth, float) and isinstance(max_depth, float):
+                    models.GeoImage.from_data_with_min_max(
+                        depth_slug, depth, extent, min_depth, max_depth,
+                        cdict=cdict_water_depth)
+                    depth_slugs.append(depth_slug)  # part of result
+                else:
+                    logger.info("Skipped depth GeoImage because of masked only")
 
     if (min_height is not None) and 
-       (max_height is not None)
+       (max_height is not None) and
+       (min_depth is not None) and
+       (max_depth is not None):
         generate_height_tiles()
-        if geo_image_height_count == 0:
-            extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
-            # Actually create tile
-            logger.info("Generating height GeoImage: %s" % height_slug)
-            models.GeoImage.from_data_with_min_max(
-                height_slug, height, extent, min_height, max_height)
-        if geo_image_depth_count == 0:
-            extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
-            # Actually create tile
-            logger.info("Generating depth GeoImage: %s" % depth_slug)
-            models.GeoImage.from_data_with_min_max(
-                depth_slug, depth, extent, min_depth, max_depth,
-                cdict=cdict_water_depth)
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
