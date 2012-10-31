@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.9 (unreleased)
+0.9.9 (2012-10-31)
 ------------------
 
 - Bugfix if depth is only mask.
