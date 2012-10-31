@@ -318,6 +318,9 @@ class DamageEvent(models.Model):
     height_slugs = models.TextField(
         null=True, blank=True,
         help_text='comma separated height slugs for GeoImage')
+    depth_slugs = models.TextField(
+        null=True, blank=True,
+        help_text='comma separated depth slugs for GeoImage')
     min_height = models.FloatField(null=True, blank=True)
     max_height = models.FloatField(null=True, blank=True)
 
@@ -489,7 +492,7 @@ class GeoImage(models.Model):
 
 
     @classmethod
-    def from_data_with_min_max(cls, slug, data, extent, min_value, max_value):
+    def from_data_with_min_max(cls, slug, data, extent, min_value, max_value, cdict=None):
         """
         Create GeoImage from slug and data.
         """
@@ -497,18 +500,18 @@ class GeoImage(models.Model):
         #print('tmp_base: %s' % tmp_base)
         #print('step 1')
         # Step 1: save png + pgw in RD
-
-        cdict = {
-            'red': ((0.0, 51./256, 51./256),
-                    (0.5, 237./256, 237./256),
-                    (1.0, 83./256, 83./256)),
-            'green': ((0.0, 114./256, 114./256),
-                      (0.5, 245./256, 245./256),
-                      (1.0, 83./256, 83./256)),
-            'blue': ((0.0, 54./256, 54./256),
-                     (0.5, 170./256, 170./256),
-                     (1.0, 83./256, 83./256)),
-            }
+        if cdict is None:
+            cdict = {
+                'red': ((0.0, 51./256, 51./256),
+                        (0.5, 237./256, 237./256),
+                        (1.0, 83./256, 83./256)),
+                'green': ((0.0, 114./256, 114./256),
+                          (0.5, 245./256, 245./256),
+                          (1.0, 83./256, 83./256)),
+                'blue': ((0.0, 54./256, 54./256),
+                         (0.5, 170./256, 170./256),
+                         (1.0, 83./256, 83./256)),
+                }
         colormap = mpl.colors.LinearSegmentedColormap('something', cdict, N=1024)
         normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
         rgba = colormap(normalize(data), bytes=True)
