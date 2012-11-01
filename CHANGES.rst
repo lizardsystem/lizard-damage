@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.16 (unreleased)
+0.9.16 (2012-11-01)
 -------------------
 
 - Improvement in KML view: now all tiles are necessarily there.
