@@ -679,7 +679,7 @@ def calc_damage_for_waterlevel(
     def generate_height_tiles():
         """
         This is in a subroutine because it
-        must be possible to not use it. 
+        must be possible to not use it.
         """
         logger.info('Generating height and depth tiles...')
         logger.debug(
@@ -741,15 +741,15 @@ def calc_damage_for_waterlevel(
                 extent = ahn_index.the_geom.extent
                 # Actually create tile
                 logger.info("Generating depth GeoImage: %s" % depth_slug)
-                if isinstance(min_depth, float) and isinstance(max_depth, float):
+                try: #if isinstance(min_depth, float) and isinstance(max_depth, float):
                     models.GeoImage.from_data_with_min_max(
                         depth_slug, depth, extent, min_depth, max_depth,
                         cdict=cdict_water_depth)
                     depth_slugs.append(depth_slug)  # part of result
-                else:
-                    logger.info("Skipped depth GeoImage because of masked only")
+                except:
+                    logger.info("Skipped depth GeoImage because of masked only or unknown error")
 
-    if ((min_height is not None) and 
+    if ((min_height is not None) and
         (max_height is not None) and
         (min_depth is not None) and
         (max_depth is not None)):
