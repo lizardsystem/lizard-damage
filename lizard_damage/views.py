@@ -441,7 +441,8 @@ class GeoImageKML(DamageEventKML):
     def events(self):
         slugs = self.kwargs['slugs']
         # When multiple GeoImages have the same slug, just take first
-        return [GeoImage.objects.filter(slug=slug)[0] for slug in slugs.split(',')]
+        return GeoImage.objects.filter(slug__in=slugs.split(','))
+        #return [GeoImage.objects.filter(slug=slug)[0] for slug in slugs.split(',')]
 
 
 class GeoImageNoLegendKML(GeoImageKML):

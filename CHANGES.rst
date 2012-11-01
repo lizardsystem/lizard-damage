@@ -5,13 +5,13 @@ Changelog of lizard-damage
 0.9.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Improvement in KML view: now all tiles are necessarily there.
 
 
 0.9.15 (2012-11-01)
 -------------------
 
-- Test why depth maps are not always created.
+- Test why depth maps are not always ucreated.
 
 
 0.9.14 (2012-11-01)
