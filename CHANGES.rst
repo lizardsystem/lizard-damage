@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.15 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Test why depth maps are not always created.
 
 
 0.9.14 (2012-11-01)

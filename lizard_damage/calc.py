@@ -515,8 +515,8 @@ def calc_damage_for_waterlevel(
 
     min_height = None
     max_height = None
-    min_depth = None
-    max_depth = None
+    min_depth = 0.0  # Set defaults for testing... depth is always >= 0
+    max_depth = 0.1
 
     ahn_indices = raster.get_ahn_indices(waterlevel_datasets[0])
     for ahn_index in ahn_indices:
