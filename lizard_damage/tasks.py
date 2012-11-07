@@ -242,6 +242,10 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
         else:
             errors += 1
 
+    # Calculate risk maps
+    if damage_scenario.scenario_type == 4:
+        risk.create_risk_map(damage_scenario=damage_scenario, logger=logger)
+
     damage_scenario.status = damage_scenario.SCENARIO_STATUS_DONE
     damage_scenario.save()
 

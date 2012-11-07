@@ -11,12 +11,14 @@ from django.core.urlresolvers import reverse
 from django.core.files import File
 from lizard_map import coordinates
 from lizard_task.models import SecuredPeriodicTask
+from lizard_damage import utils
 from pyproj import transform
 from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
 
 import datetime
+import zipfile
 import os
 import random
 import string
@@ -24,6 +26,8 @@ import json
 import tempfile
 import Image
 import subprocess
+import re
+
 from osgeo import gdal
 
 # from django.utils.translation import ugettext_lazy as _
@@ -344,6 +348,41 @@ class DamageEvent(models.Model):
     @property
     def parsed_table(self):
         return json.loads(self.table)
+
+    def get_filenames(self, pattern=None):
+        """ 
+        Return list of filenames in the result zip file.
+
+        If a pattern is supplied, only returns files matching pattern.
+        """
+        with zipfile.ZipFile(self.result) as archive:
+            filenames = [info.filename for info in archive.filelist]
+
+        if pattern is None:
+            return filenames
+        else:
+            return [filename 
+                    for filename in filenames 
+                    if re.match(pattern, filename)]
+
+    def get_data(self, filename):
+        """
+        Return numpy masked array corresponding to damage result.
+
+        The file named filename is extracted from the result to a
+        temporary directory and read via gdal. Filename must be the name
+        of a gdal readable dataset inside the result zip file.
+        """
+        with zipfile.ZipFile(self.result) as archive:
+            tempdir = tempfile.mkdtemp()
+            archive.extract(filename, tempdir)
+            filepath = os.path.join(tempdir, filename)
+            dataset = gdal.Open(filepath)
+            data = utils.ds2ma(dataset)
+            dataset = None  # Should closes the file
+            os.remove(filepath)
+            os.rmdir(tempdir)
+            return data
 
 
 class DamageEventResult(models.Model):
