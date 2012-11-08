@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.18 (unreleased)
+0.9.18 (2012-11-08)
 -------------------
 
 - Fix missing import and circular import.
