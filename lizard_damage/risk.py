@@ -9,7 +9,6 @@ from __future__ import division
 from django.template.defaultfilters import slugify
 from django.core.files import File
 
-from lizard_damage import tasks
 from lizard_damage import models
 
 from osgeo import gdal

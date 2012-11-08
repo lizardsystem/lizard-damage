@@ -12,6 +12,7 @@ from lizard_damage.models import DamageEventResult
 from lizard_damage.models import RD
 from lizard_damage.models import extent_from_geotiff
 from lizard_damage import calc
+from lizard_damage import risk
 from lizard_task.task import task_logging
 from lizard_task.models import SecuredPeriodicTask
 
