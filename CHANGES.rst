@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add risk calculation and downloadable risk asc file on result page.
 
 
 0.9.16 (2012-11-01)

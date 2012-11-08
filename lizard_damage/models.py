@@ -434,6 +434,24 @@ class DamageEventWaterlevel(models.Model):
         return os.path.basename(self.waterlevel.path)
 
 
+class RiskResult(models.Model):
+    """
+    Ascii file with risk map belonging to a type 4 scenario.
+    """
+    zip_risk = models.FileField(
+        upload_to='scenario/result',
+    )
+    scenario = models.ForeignKey(DamageScenario)
+    
+    def __unicode__(self):
+        return os.path.basename(self.zip_risk.path)
+    
+    @property
+    def result_display(self):
+        """display name of result"""
+        return 'zipfile (%s)' % friendly_filesize(self.zip_risk.size)
+
+
 class BenefitScenario(models.Model):
     """Baten berekening.
 

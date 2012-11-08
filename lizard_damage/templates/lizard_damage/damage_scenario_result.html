@@ -32,6 +32,11 @@
 {% block content %}
 <div class="textual-content">
 <h2>Resultaten berekening {{ view.damage_scenario }}</h2>
+{% for riskresult in view.damage_scenario.riskresult_set.all %}
+<a href="{{ riskresult.zip_risk.url }}" alt="{{ riskresult.result_display }}">
+Risicokaart downloaden
+</a>
+{% endfor %}
 
 {% for event in view.damage_scenario.damageevent_set.all %}
 <h3>Gebeurtenis {{ event }}</h3>
