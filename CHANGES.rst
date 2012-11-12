@@ -6,6 +6,7 @@ Changelog of lizard-damage
 -------------------
 
 - Make depth transparent if it is zero or less
+- Make depth link always visible, even when not logged in.
 
 
 0.9.18 (2012-11-08)
