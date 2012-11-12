@@ -492,6 +492,37 @@ class BenefitScenario(models.Model):
         except:
             return 'geen zipfile'
 
+    def get_data_before(self, filename):
+        return self._get_data(filename, 'before')
+
+    def get_data_after(self, filename):
+        return self._get_data(filename, 'after')
+    
+    def _get_data(self, filename, when):
+        """
+        Return numpy masked array corresponding to damage result.
+
+        The file named filename is extracted from the result to a
+        temporary directory and read via gdal. Filename must be the name
+        of a gdal readable dataset inside the result zip file.
+        """
+        fieldmap = {
+            'before': self.zip_risk_a,
+            'after': self.zip_risk_b,
+        }
+        field = fieldmap[when]
+
+        with zipfile.ZipFile(field) as archive:
+            tempdir = tempfile.mkdtemp()
+            archive.extract(filename, tempdir)
+            filepath = os.path.join(tempdir, filename)
+            dataset = gdal.Open(filepath)
+            data = utils.ds2ma(dataset)
+            dataset = None  # Should closes the file
+            os.remove(filepath)
+            os.rmdir(tempdir)
+            return data
+
 
 class BenefitScenarioResult(models.Model):
     """ Result of 1 tile of a Benefit Scenario

@@ -276,8 +276,30 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     benefit_scenario = BenefitScenario.objects.get(pk=benefit_scenario_id)
     logger.info("scenario: %d, %s" % (benefit_scenario.id, str(benefit_scenario)))
 
-    # TODO: make zipfile to add to benefit_scenario.zip_result
-    # and add BenefitScenarioResult objects.
-    logger.info("Not yet implemented")
+    errors = 0
+    try:
+        risk.create_benefit_map(
+            benefit_scenario=benefit_scenario, logger=logger,
+        )
+    except:
+        logger.error('Error creating benefit map.')
+        for exception_line in traceback.format_exc().split('\n'):
+            logger.error(exception_line)
+        errors += 1
 
-    return 'failure'
+    # add BenefitScenarioResult objects for display on the map.
+    
+    if errors == 0:
+        logger.info("creating email task for scenario %d" % benefit_scenario.id)
+        subject = 'STOWA Schade Calculator: Resultaten beschikbaar voor scenario %s ' % benefit_scenario.name
+        send_email_to_task(benefit_scenario.id, 'email_ready', subject, username=username)
+        logger.info("finished")
+    else:
+        logger.info("there were errors in scenario %d" % benefit_scenario.id)
+        logger.info("creating email task for error")
+        subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % benefit_scenario.name
+        send_email_to_task(benefit_scenario.id, 'email_error', subject, username=username)
+        send_email_to_task(benefit_scenario.id, 'email_error', subject, username=username,
+                           email='olivier.hoes@nelen-schuurmans.nl')
+        logger.info("finished with errors")
+        return 'failure'

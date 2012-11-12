@@ -32,6 +32,10 @@ PATTERN = re.compile(
     'schade_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])_T(.*)\.asc$'
 )
 
+RISK_PATTERN = re.compile(
+    'risk_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])\.asc$'
+)
+
 
 def _index_and_filenames(event):
     """
@@ -91,7 +95,7 @@ def iter_risk_and_damage(jobs):
 def create_risk_map(damage_scenario, logger):
     """
     """
-    logger.debug('Calculating risk maps for {}'.format(damage_scenario))
+    logger.info('Calculating risk maps for {}'.format(damage_scenario))
     logger.debug('removing earlier risk results.')
     riskresults = damage_scenario.riskresult_set.all()
     for riskresult in riskresults:
@@ -113,6 +117,7 @@ def create_risk_map(damage_scenario, logger):
             jobdict[index].append(dict(event=event, filename=filename))
 
     for index, jobs in jobdict.items():
+        
         logger.debug('calculating risk for {} ({} rasters)'.format(index, len(jobs)))
         risk = calculate_risk(iter_risk_and_damage(jobs))
         
@@ -143,4 +148,65 @@ def create_risk_map(damage_scenario, logger):
     riskresult.save()
     shutil.rmtree(tempdir)
 
+def create_benefit_map(benefit_scenario, logger):
+    logger.info('Calculating benefit map for {}'.format(benefit_scenario))
 
+    # Delete earlier results
+    logger.debug('removing earlier benefit results.')
+    try:
+        benefit_scenario.zip_result.delete()
+    except OSError:
+        pass  # No file associated with field
+    benefit_scenario.zip_result = None
+
+    # Create tempdir
+    tempdir = tempfile.mkdtemp()
+    zipbenefitpath = os.path.join(
+        tempdir, 
+        'risk_' + slugify(benefit_scenario.name) + '.zip',
+    )
+
+    # Get the names of the zipfiles from the first zip
+    with zipfile.ZipFile(benefit_scenario.zip_risk_a) as archive:
+        jobs = []
+        for info in archive.filelist:
+            match = re.match(RISK_PATTERN, info.filename)
+            if match:
+                jobs.append((match.group(1), match.string))
+
+    for index, filename in jobs:
+        logger.debug(
+            'calculating benefit for {}'.format(index, len(jobs))
+        )
+        before = benefit_scenario.get_data_before(filename)
+        after = benefit_scenario.get_data_after(filename)
+        benefit = (after - before) / 0.055
+        
+        # Create dataset
+        logger.debug('Writing to zipfile.')
+        dataset = gdal.GetDriverByName(b'mem').Create(
+            b'', benefit.shape[1], benefit.shape[0], 1, gdalconst.GDT_Float64,
+        )
+        band = dataset.GetRasterBand(1)
+        band.SetNoDataValue(float(benefit.fill_value))
+        band.WriteArray(benefit.filled())
+
+        # Write to asc and add to zip
+        ascpath = os.path.join(tempdir, str('benefit_' + index + '.asc'))
+        gdal.GetDriverByName(b'aaigrid').CreateCopy(ascpath, dataset)
+        with zipfile.ZipFile(
+            zipbenefitpath, 'a', zipfile.ZIP_DEFLATED,
+        ) as archive:
+            archive.write(ascpath, os.path.basename(ascpath))
+        os.remove(ascpath)
+
+    logger.debug('Adding zip to result dir')
+    with open(zipbenefitpath, 'rb') as zipbenefitfile:
+        benefit_scenario.zip_result.save(
+            os.path.basename(zipbenefitpath),
+            File(zipbenefitfile),
+        )
+    benefit_scenario.save()
+
+    shutil.rmtree(tempdir)
+    
