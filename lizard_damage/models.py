@@ -573,6 +573,9 @@ class GeoImage(models.Model):
         normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
         rgba = colormap(normalize(data), bytes=True)
         #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
+        if 'depth' in slug:
+            # Make transparent where depth is zero or less
+            rgba[:,:,3] = np.where(np.greater(data, 0), 255, 0)
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
 
         write_pgw(tmp_base + '.pgw', extent)

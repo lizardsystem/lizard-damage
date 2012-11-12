@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Make depth transparent if it is zero or less
 
 
 0.9.18 (2012-11-08)
