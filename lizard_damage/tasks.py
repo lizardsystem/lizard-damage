@@ -69,12 +69,22 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     calc_damage_task.send_task(username=username)
 
 
-def send_email_to_task(damage_scenario_id, mail_template, subject, username='admin', email=""):
+def send_email_to_task(scenario_id, mail_template, subject, username='admin', email="", scenario_type='damage'):
     """
     Create a task for sending email
     """
-    task_name = 'Scenario (%05d) send mail %s' % (damage_scenario_id, mail_template)
-    task_kwargs = '{"username": "admin", "taskname": "%s", "damage_scenario_id": "%d", "mail_template": "%s", "subject": "%s", "email": "%s"}' % (task_name, damage_scenario_id, mail_template, subject, email)
+    task_name = 'Scenario (%05d) send mail %s' % (scenario_id, mail_template)
+    task_kwargs = (
+        '{'
+        '"username": "admin", '
+        '"taskname": "%s", '
+        '"scenario_id": "%d", '
+        '"mail_template": "%s", '
+        '"subject": "%s", '
+        '"email": "%s", '
+        '"scenario_type": "%s"'
+        '}'
+    ) % (task_name, scenario_id, mail_template, subject, email, scenario_type)
     email_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
             'kwargs': task_kwargs,
@@ -88,12 +98,15 @@ def send_email_to_task(damage_scenario_id, mail_template, subject, username='adm
 
 @task
 @task_logging
-def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
-               mail_template='email_received', subject='Onderwerp', email=''):
+def send_email(scenario_id, username=None, taskname=None, loglevel=20,
+               mail_template='email_received', subject='Onderwerp', email='',
+               scenario_type='damage'):
     logger = logging.getLogger(taskname)
     # Do your thing
     logger.info("send_mail: %s" % mail_template)
-    damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
+    scenario = dict(
+        damage=DamageScenario, benefit=BenefitScenario,
+    )[scenario_type].objects.get(pk=scenario_id)
 
     #subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
     try:
@@ -101,26 +114,26 @@ def send_email(damage_scenario_id, username=None, taskname=None, loglevel=20,
     except:
         root_url = 'http://damage.lizard.net'
         logger.error('Error fetching Site... defaulting to damage.lizard.net')
-    context = Context({"damage_scenario": damage_scenario, 'ROOT_URL': root_url})
+    context = Context({"damage_scenario": scenario, 'ROOT_URL': root_url})
     template_text = get_template("lizard_damage/%s.txt" % mail_template)
     template_html = get_template("lizard_damage/%s.html" % mail_template)
 
     from_email = 'no-reply@nelen-schuurmans.nl'
     if not email:
         # Default
-        to = damage_scenario.email
+        to = scenario.email
     else:
         # In case of user provided email (errors)
         to = email
 
-    logger.info("scenario: %s" % damage_scenario)
+    logger.info("scenario: %s" % scenario)
     logger.info("sending e-mail to: %s" % to)
     msg = EmailMultiAlternatives(subject, template_text.render(context), from_email, [to])
     msg.attach_alternative(template_html.render(context), 'text/html')
     msg.send()
 
-    damage_scenario.status = damage_scenario.SCENARIO_STATUS_SENT
-    damage_scenario.save()
+    scenario.status = scenario.SCENARIO_STATUS_SENT
+    scenario.save()
 
     logger.info("e-mail has been successfully sent")
 
@@ -292,14 +305,24 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     if errors == 0:
         logger.info("creating email task for scenario %d" % benefit_scenario.id)
         subject = 'STOWA Schade Calculator: Resultaten beschikbaar voor scenario %s ' % benefit_scenario.name
-        send_email_to_task(benefit_scenario.id, 'email_ready', subject, username=username)
+        send_email_to_task(
+            benefit_scenario.id, 'email_ready_benefit', subject, username=username,
+            scenario_type='benefit',
+        )
         logger.info("finished")
     else:
         logger.info("there were errors in scenario %d" % benefit_scenario.id)
         logger.info("creating email task for error")
-        subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % benefit_scenario.name
-        send_email_to_task(benefit_scenario.id, 'email_error', subject, username=username)
-        send_email_to_task(benefit_scenario.id, 'email_error', subject, username=username,
-                           email='olivier.hoes@nelen-schuurmans.nl')
+        subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % (
+            benefit_scenario.name,
+        )
+        send_email_to_task(
+            benefit_scenario.id, 'email_error', subject, username=username,
+            scenario_type='benefit',
+        )
+        #send_email_to_task(
+            #benefit_scenario.id, 'email_error', subject, username=username,
+            #email='olivier.hoes@nelen-schuurmans.nl', scenario_type='benefit',
+        #)
         logger.info("finished with errors")
         return 'failure'

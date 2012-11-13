@@ -175,13 +175,13 @@ class Unit(models.Model):
     def from_si(self, value):
         return value / self.factor
 
-SCENARIO_STATUS_CHOICES = (
-    (1, 'Ontvangen'),
-    (2, 'Bezig'),
-    (3, 'Gereed'),
-    (4, 'Verzonden'),
-    (5, 'Opgeschoond'),
-)
+#SCENARIO_STATUS_CHOICES = (
+    #(1, 'Ontvangen'),
+    #(2, 'Bezig'),
+    #(3, 'Gereed'),
+    #(4, 'Verzonden'),
+    #(5, 'Opgeschoond'),
+#)
 
 
 class DamageScenario(models.Model):
@@ -458,6 +458,23 @@ class BenefitScenario(models.Model):
     Results will be in result_zip and
     in BenefitScenarioResult.
     """
+
+    SCENARIO_STATUS_RECEIVED = 1
+    SCENARIO_STATUS_INPROGRESS = 2
+    SCENARIO_STATUS_DONE = 3
+    SCENARIO_STATUS_SENT = 4
+    SCENARIO_STATUS_CLEANED = 5
+
+    SCENARIO_STATUS_CHOICES = (
+        (SCENARIO_STATUS_RECEIVED, 'Ontvangen'),
+        (SCENARIO_STATUS_INPROGRESS, 'Bezig'),
+        (SCENARIO_STATUS_DONE, 'Gereed'),
+        (SCENARIO_STATUS_SENT, 'Verzonden'),
+        (SCENARIO_STATUS_CLEANED, 'Opgeschoond'),
+    )
+
+    SCENARIO_STATUS_DICT = dict(SCENARIO_STATUS_CHOICES)
+
     name = models.CharField(max_length=64)
     slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
@@ -472,6 +489,11 @@ class BenefitScenario(models.Model):
         upload_to='benefit/result',
         null=True, blank=True,
         help_text='Will be filled when results are available')
+    
+    status = models.IntegerField(
+        choices=SCENARIO_STATUS_CHOICES,
+        default=SCENARIO_STATUS_RECEIVED,
+    )
 
     def __unicode__(self):
         return '%s' % (self.name)
