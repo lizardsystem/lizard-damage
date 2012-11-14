@@ -163,7 +163,7 @@ def create_benefit_map(benefit_scenario, logger):
     tempdir = tempfile.mkdtemp()
     zipbenefitpath = os.path.join(
         tempdir, 
-        'risk_' + slugify(benefit_scenario.name) + '.zip',
+        'benefit_' + slugify(benefit_scenario.name) + '.zip',
     )
 
     # Get the names of the zipfiles from the first zip
