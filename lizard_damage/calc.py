@@ -247,7 +247,7 @@ def calculate(use, depth, geo,
             damage[code] = 0
             continue
 
-        if code in BUILDING_SOURCES:
+        if dr.source in BUILDING_SOURCES:
             repairtime = repairtime_buildings
         else:
             repairtime = default_repairtime
