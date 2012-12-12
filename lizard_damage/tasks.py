@@ -24,6 +24,7 @@ import logging
 import os
 import random
 import string
+import traceback
 import json
 import subprocess
 from osgeo import gdal
@@ -295,9 +296,7 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
             benefit_scenario=benefit_scenario, logger=logger,
         )
     except:
-        logger.error('Error creating benefit map.')
-        for exception_line in traceback.format_exc().split('\n'):
-            logger.error(exception_line)
+        logger.exception('Error creating benefit map.')
         errors += 1
 
     # add BenefitScenarioResult objects for display on the map.
