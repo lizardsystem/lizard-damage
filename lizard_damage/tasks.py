@@ -296,7 +296,10 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
             benefit_scenario=benefit_scenario, logger=logger,
         )
     except:
-        logger.exception('Error creating benefit map.')
+        # For some reason logger.exception does not reach task logging.
+        logger.error('Error creating benefit map.')
+        for exception_line in traceback.format_exc().split('\n'):
+            logger.error(exception_line)
         errors += 1
 
     # add BenefitScenarioResult objects for display on the map.
