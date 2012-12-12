@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.21 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Updated help files with new name "WaterSchadeSchatter".
 
 
 0.9.20 (2012-11-19)
