@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.22 (unreleased)
+0.9.22 (2012-12-12)
 -------------------
 
 - Put traceback code back in place.
