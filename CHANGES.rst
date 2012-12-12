@@ -7,6 +7,8 @@ Changelog of lizard-damage
 
 - Updated help files with new name "WaterSchadeSchatter".
 
+- Add missing import traceback, but use logger.exception.
+
 
 0.9.20 (2012-11-19)
 -------------------
