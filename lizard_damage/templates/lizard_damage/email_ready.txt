@@ -1,11 +1,11 @@
 {# template for received notification txt#}
 L.S.,
 
-Het STOWA Schade Calculator scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
+Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
 
 Resultaten "{{ damage_scenario.name }}": {{ ROOT_URL }}{% url lizard_damage_result slug=damage_scenario.slug %}
 
 --
-schade.lizard.net
+waterschadeschatter.nl
 
 Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

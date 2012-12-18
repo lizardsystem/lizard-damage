@@ -57,7 +57,7 @@ class FormStep0(forms.Form):
     """
     Name and e-mail
     """
-    display_title = 'Schade Calculator'
+    display_title = 'WaterSchadeSchatter'
 
     name = forms.CharField(
         max_length=100,

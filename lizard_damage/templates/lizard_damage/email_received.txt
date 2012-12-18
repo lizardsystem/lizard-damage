@@ -1,10 +1,10 @@
 {# template for received notification in txt #}
 L.S.,
 
-Het schade calculator scenario "{{ damage_scenario.name }}" is in goede
+Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" is in goede
 orde ontvangen. Als de berekening klaar is krijgt U een nieuw bericht.
 
 --
-schade.lizard.net
+waterschadeschatter.nl
 
 Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

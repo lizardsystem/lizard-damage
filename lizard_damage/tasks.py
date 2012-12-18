@@ -268,13 +268,13 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
 
     if errors == 0:
         logger.info("creating email task for scenario %d" % damage_scenario.id)
-        subject = 'STOWA Schade Calculator: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
+        subject = 'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
         send_email_to_task(damage_scenario.id, 'email_ready', subject, username=username)
         logger.info("finished")
     else:
         logger.info("there were errors in scenario %d" % damage_scenario.id)
         logger.info("creating email task for error")
-        subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % damage_scenario.name
+        subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % damage_scenario.name
         send_email_to_task(damage_scenario.id, 'email_error', subject, username=username)
         send_email_to_task(damage_scenario.id, 'email_error', subject, username=username,
                            email='olivier.hoes@nelen-schuurmans.nl')
@@ -306,7 +306,7 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     
     if errors == 0:
         logger.info("creating email task for scenario %d" % benefit_scenario.id)
-        subject = 'STOWA Schade Calculator: Resultaten beschikbaar voor scenario %s ' % benefit_scenario.name
+        subject = 'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s ' % benefit_scenario.name
         send_email_to_task(
             benefit_scenario.id, 'email_ready_benefit', subject, username=username,
             scenario_type='benefit',
@@ -315,7 +315,7 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     else:
         logger.info("there were errors in scenario %d" % benefit_scenario.id)
         logger.info("creating email task for error")
-        subject = 'STOWA Schade Calculator: scenario %s heeft fouten' % (
+        subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % (
             benefit_scenario.name,
         )
         send_email_to_task(

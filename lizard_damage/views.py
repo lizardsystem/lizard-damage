@@ -390,7 +390,7 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/damage_scenario_result.html'
 
     def title(self):
-        return 'STOWA Schade Calculator resultatenpagina %s' % str(self.damage_scenario)
+        return 'WaterSchadeSchatter resultatenpagina %s' % str(self.damage_scenario)
 
     def version(self):
         return tools.version()
@@ -400,7 +400,7 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
         try:
             root_url = 'http://%s' % Site.objects.all()[0].domain
         except:
-            root_url = 'http://schade.lizard.net'
+            root_url = 'http://waterschadeschatter.nl'
         return root_url
 
     @property
@@ -501,7 +501,7 @@ class BenefitScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/benefit_scenario_result.html'
 
     def title(self):
-        return 'STOWA Schade Calculator resultatenpagina baten %s' % str(self.benefit_scenario)
+        return 'WaterSchadeSchatter resultatenpagina baten %s' % str(self.benefit_scenario)
 
     def version(self):
         return tools.version()
@@ -511,7 +511,7 @@ class BenefitScenarioResult(ViewContextMixin, TemplateView):
         try:
             root_url = 'http://%s' % Site.objects.all()[0].domain
         except:
-            root_url = 'http://schade.lizard.net'
+            root_url = 'http://waterschadeschatter.nl'
         return root_url
 
     @property

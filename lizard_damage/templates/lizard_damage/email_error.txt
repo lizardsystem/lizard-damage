@@ -1,10 +1,10 @@
 {# template for error #}
 L.S.,
 
-    Het STOWA schade calculator scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Contacteer beheerder.
+    Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Contacteer beheerder.
 
 
   --
-  schade.lizard.net
+  waterschadeschatter.nl
 
   Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

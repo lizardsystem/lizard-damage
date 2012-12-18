@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Folder>
-    <name>STOWA Schade Calculator</name>
+    <name>WaterSchadeSchatter</name>
     <description>Resultaat {{ view.benefit_scenario }} (beschikbaar tot {{ view.benefit_scenario.expiration_date|date:"d-m-y" }})
     </description>
     {% for benefit_scenario_result in view.benefit_scenario.benefitscenarioresult_set.all %}
