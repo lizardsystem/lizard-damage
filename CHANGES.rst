@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.23 (unreleased)
+0.9.23 (2012-12-18)
 -------------------
 
 - Renamed to WaterSchadeSchatter.
