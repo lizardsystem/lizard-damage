@@ -153,10 +153,8 @@ def create_benefit_map(benefit_scenario, logger):
 
     # Delete earlier results
     logger.debug('removing earlier benefit results.')
-    try:
+    if benefit_scenario.zip_result:
         benefit_scenario.zip_result.delete()
-    except OSError:
-        pass  # No file associated with field
     benefit_scenario.zip_result = None
 
     # Create tempdir
