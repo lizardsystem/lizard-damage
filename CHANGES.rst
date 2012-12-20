@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.24 (unreleased)
+0.9.24 (2012-12-20)
 -------------------
 
 - Use bool check instead of try except when cleaning up benefit results.
