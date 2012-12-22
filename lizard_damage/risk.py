@@ -55,12 +55,15 @@ def calculate_risk(iterable):
     """ 
     Return risk.
 
-    Iterable consists of {'damage':damage, 'time': time} elements.
+    Iterable consists of {'geotransform':geotransform, 
+                          'damage':damage,
+                          'time': time} elements.
 
         >>> damage = [1000,500,200,100,10,2]
         >>> time = [250,100,50,25,10,5]
-        >>> iterable = [dict(damage=d, time=t) for d, t in zip(damage, time)]
-        >>> calculate_risk(iterable)
+        >>> iterable = [dict(damage=d, time=t, geotransform=None)
+        ...             for d, t in zip(damage, time)]
+        >>> calculate_risk(iterable)['risk']
         18.9
 
     """
@@ -77,17 +80,22 @@ def calculate_risk(iterable):
             )
         previous_time = current_time
         previous_damage = current_damage
-    return risk
+
+    # Note the geotransform from the last element is returned.
+    return dict(geotransform=element['geotransform'], risk=risk)
 
 
 def iter_risk_and_damage(jobs):
-    """ 
+    """
+    generator of dicts with data for each job.
     """
     for element in jobs:
         event = element['event']
         filename = element['filename']
+        geotransform, damage = event.get_data(filename)
         yield dict(
-            damage=event.get_data(filename),
+            geotransform=geotransform,
+            damage=damage,
             time=event.repetition_time,
         )
 
@@ -119,13 +127,17 @@ def create_risk_map(damage_scenario, logger):
     for index, jobs in jobdict.items():
         
         logger.debug('calculating risk for {} ({} rasters)'.format(index, len(jobs)))
-        risk = calculate_risk(iter_risk_and_damage(jobs))
+        
+        calc_dict = calculate_risk(iter_risk_and_damage(jobs))
+        risk = calc_dict['risk']
+        geotransform = calc_dict['geotransform']
         
         # Create dataset
         logger.debug('Writing to zipfile.')
         dataset = gdal.GetDriverByName(b'mem').Create(
             b'', risk.shape[1], risk.shape[0], 1, gdalconst.GDT_Float64,
         )
+        dataset.SetGeoTransform(geotransform)
         band = dataset.GetRasterBand(1)
         band.SetNoDataValue(float(risk.fill_value))
         band.WriteArray(risk.filled())
@@ -178,13 +190,14 @@ def create_benefit_map(benefit_scenario, logger):
         )
         before = benefit_scenario.get_data_before(filename)
         after = benefit_scenario.get_data_after(filename)
-        benefit = (after - before) / 0.055
+        benefit = (before['data'] - after['data']) / 0.055
         
         # Create dataset
         logger.debug('Writing to zipfile.')
         dataset = gdal.GetDriverByName(b'mem').Create(
             b'', benefit.shape[1], benefit.shape[0], 1, gdalconst.GDT_Float64,
         )
+        dataset.SetGeoTransform(after['geotransform'])
         band = dataset.GetRasterBand(1)
         band.SetNoDataValue(float(benefit.fill_value))
         band.WriteArray(benefit.filled())

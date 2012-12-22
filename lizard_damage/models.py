@@ -367,7 +367,7 @@ class DamageEvent(models.Model):
 
     def get_data(self, filename):
         """
-        Return numpy masked array corresponding to damage result.
+        Return geotransform, numpy masked array corresponding to damage result.
 
         The file named filename is extracted from the result to a
         temporary directory and read via gdal. Filename must be the name
@@ -379,10 +379,11 @@ class DamageEvent(models.Model):
             filepath = os.path.join(tempdir, filename)
             dataset = gdal.Open(filepath)
             data = utils.ds2ma(dataset)
+            geotransform = dataset.GetGeoTransform()
             dataset = None  # Should closes the file
             os.remove(filepath)
             os.rmdir(tempdir)
-            return data
+            return geotransform, data
 
 
 class DamageEventResult(models.Model):
@@ -539,11 +540,12 @@ class BenefitScenario(models.Model):
             archive.extract(filename, tempdir)
             filepath = os.path.join(tempdir, filename)
             dataset = gdal.Open(filepath)
+            geotransform = dataset.GetGeoTransform()
             data = utils.ds2ma(dataset)
             dataset = None  # Should closes the file
             os.remove(filepath)
             os.rmdir(tempdir)
-            return data
+            return dict(data=data, geotransform=geotransform)
 
 
 class BenefitScenarioResult(models.Model):

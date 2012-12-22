@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.9.25 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Remove not working links from benefit template
+- Add geotransforms to risk and benefit calculations
 
 
 0.9.24 (2012-12-20)
