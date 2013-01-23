@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.26 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Removed defaults from damagetable and cfg reader and writer.
 
 
 0.9.25 (2012-12-22)
