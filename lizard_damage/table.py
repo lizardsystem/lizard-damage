@@ -22,9 +22,9 @@ CFG_HEADER_SECTION = 'algemeen'
 CFG_HEADER_FLOODTIME = 'inundatieduur'
 CFG_HEADER_REPAIRTIME = 'herstelperiode'
 CFG_HEADER_DEPTH = 'inundatiediepte'
-CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieduur'
-CFG_HEADER_DEFAULT_REPAIRTIME = 'standaard_herstelperiode'
-CFG_HEADER_DEFAULT_MONTH = 'standaard_maand'
+#CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieduur'
+#CFG_HEADER_DEFAULT_REPAIRTIME = 'standaard_herstelperiode'
+#CFG_HEADER_DEFAULT_MONTH = 'standaard_maand'
 
 CFG_ROW_SOURCE = 'bron'
 CFG_ROW_DESCRIPTION = 'omschrijving'
@@ -55,8 +55,8 @@ class Damage(object):
 class DamageHeader(object):
     """ Store header ranges, added from table importer."""
     def __init__(self, units, depth, floodtime, repairtime,
-                 default_floodtime='1 dag',
-                 default_repairtime='5 dagen', default_month=9):
+                 default_floodtime='12 uur',
+                 default_repairtime='1 dag', default_month=9):
         self._units = units
         self.depth = depth
 
@@ -202,15 +202,15 @@ class DamageTable(object):
         c.set(CFG_HEADER_SECTION, CFG_HEADER_REPAIRTIME,
             json.dumps(self.header.repairtime)
         )
-        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_FLOODTIME,
-            self.header.default_floodtime
-        )
-        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_REPAIRTIME,
-            self.header.default_repairtime
-        )
-        c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_MONTH,
-            self.header.default_month
-        )
+        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_FLOODTIME,
+            #self.header.default_floodtime
+        #)
+        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_REPAIRTIME,
+            #self.header.default_repairtime
+        #)
+        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_MONTH,
+            #self.header.default_month
+        #)
 
         for code, dr in self.data.items():
             section = unicode(code)
@@ -259,12 +259,12 @@ class DamageTable(object):
                                          CFG_HEADER_FLOODTIME)),
                     repairtime=json.loads(cp.get(section,
                                          CFG_HEADER_REPAIRTIME)),
-                    default_floodtime=(cp.get(section,
-                                       CFG_HEADER_DEFAULT_FLOODTIME)),
-                    default_repairtime=(cp.get(section,
-                                       CFG_HEADER_DEFAULT_REPAIRTIME)),
-                    default_month=(cp.get(section,
-                                       CFG_HEADER_DEFAULT_MONTH)),
+                    #default_floodtime=(cp.get(section,
+                                       #CFG_HEADER_DEFAULT_FLOODTIME)),
+                    #default_repairtime=(cp.get(section,
+                                       #CFG_HEADER_DEFAULT_REPAIRTIME)),
+                    #default_month=(cp.get(section,
+                                       #CFG_HEADER_DEFAULT_MONTH)),
                 )
             else:
                 code = int(section)
