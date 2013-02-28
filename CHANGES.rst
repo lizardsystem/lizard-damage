@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.27 (unreleased)
+0.9.27 (2013-02-28)
 -------------------
 
 - Updated help files, added e-mail address for support.
