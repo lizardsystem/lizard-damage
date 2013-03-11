@@ -365,6 +365,7 @@ class Wizard(ViewContextMixin, SessionWizardView):
 
         all_form_data = self.get_all_cleaned_data()
 
+        logger.info('Scenario is being created: %r' % all_form_data)
         scenario_type = int(all_form_data['scenario_type'])
         if scenario_type in (0, 1, 2, 3, 4, 5):
             damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
