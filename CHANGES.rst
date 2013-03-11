@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.29 (unreleased)
+0.9.29 (2013-03-11)
 -------------------
 
 - Added log for scenario being created -> for stats.
