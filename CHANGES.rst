@@ -5,7 +5,8 @@ Changelog of lizard-damage
 0.9.30 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Adjust asc file fix function to remove anything that does
+  not look like a aaigrid header.
 
 
 0.9.29 (2013-03-11)

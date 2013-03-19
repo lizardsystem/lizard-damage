@@ -8,13 +8,15 @@ from __future__ import (
 )
 
 import numpy as np
+
+import collections
 import logging
 import os
+import shutil
 import tempfile
-import collections
-
-import zipfile
 import traceback
+import zipfile
+
 from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
@@ -407,16 +409,40 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
+def correct_single_ascfile(ascpath):
+    """ Remove non-native headers in ascfile. """
+    asc_headers = [
+        'ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'nodata_value',
+    ]
+    ascfile = open(ascpath)
+    for i, line in enumerate (ascfile):
+        if line.split()[0].lower() in asc_headers:
+            if i == 0:
+            # File ok, nothing to do.
+                return
+            break
+
+    # Write the last (correct) line and remaining lines to tempfile
+    logger.warning('Correcting file: %s' % ascpath)
+    tempfd, temppath = tempfile.mkstemp()
+
+    with os.fdopen(tempfd, 'w') as asctempfile:
+        asctempfile.write(line)  # First good line
+        asctempfile.writelines(ascfile)  # Remaining lines
+    ascfile.close()
+
+    shutil.move(temppath, ascpath)
+
+
 def correct_ascfiles(input_list):
     """
     test ascfiles for known faulty behaviour and correct them if needed
     """
     for filename in input_list:
-        lines = open(filename).readlines()
-        # It seems that sobek will do this...
-        if lines[0][0:3] == '/* ':
-            logger.warning('Correcting file: %s' % filename)
-            open(filename, 'w').writelines(lines[1:])
+        # Skip anything non-asc
+        if not os.path.splitext(filename)[-1].lower() == '.asc':
+            continue
+        correct_single_ascfile(ascpath=filename)
 
 
 def add_to_zip(output_zipfile, zip_result, logger):
@@ -498,7 +524,7 @@ def calc_damage_for_waterlevel(
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
         if ds is None:
             logger.error('data source is not available,'
-                         ' please check folder %s' % fn)
+                         ' please check %s' % fn)
             return
 
     if dt_path is None:
