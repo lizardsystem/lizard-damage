@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.30 (unreleased)
+0.9.30 (2013-03-19)
 -------------------
 
 - Adjust asc file fix function to remove anything that does
