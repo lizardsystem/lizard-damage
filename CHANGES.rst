@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.30 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added logging for stats.
 
 
 0.9.29 (2013-03-11)

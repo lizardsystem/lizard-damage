@@ -362,11 +362,21 @@ class Wizard(ViewContextMixin, SessionWizardView):
         """
         #import ipdb; ipdb.set_trace()
         #do_something_with_the_form_data(form_list)
+        scenario_type_name = {
+            0: '1 Kaart met de max waterstand van 1 gebeurtenis',
+            1: '1 Kaart met de waterstand voor een zekere herhalingstijd',
+            2: 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis',
+            3: 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.',
+            4: 'Kaarten met voor verschillende herhalingstijden de waterstanden',
+            5: 'Tijdserie aan kaarten met per tijdstip de waterstand van meerdere gebeurtenissen',
+            6: 'baten taak'}
 
         all_form_data = self.get_all_cleaned_data()
 
         logger.info('Scenario is being created: %r' % all_form_data)
         scenario_type = int(all_form_data['scenario_type'])
+        logger.info('STATS scenario aangemaakt door %s: %s, %r' % (
+                all_form_data['email'], scenario_type_name[scenario_type], all_form_data))
         if scenario_type in (0, 1, 2, 3, 4, 5):
             damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
             # launch task

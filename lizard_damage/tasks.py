@@ -27,6 +27,7 @@ import string
 import traceback
 import json
 import subprocess
+import datetime
 from osgeo import gdal
 from PIL import Image
 
@@ -145,6 +146,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
     """
     Main calculation task.
     """
+    start_dt = datetime.datetime.now()
     logger = logging.getLogger(taskname)
     logger.info("calculate damage")
     damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
@@ -267,11 +269,19 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
     damage_scenario.save()
 
     if errors == 0:
+        logger.info('STATS scenario type %s van %s is klaar in %r' % (
+                damage_scenario.scenario_type_str, 
+                damage_scenario.email, 
+                str(datetime.datetime.now() - start_dt)))
         logger.info("creating email task for scenario %d" % damage_scenario.id)
         subject = 'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
         send_email_to_task(damage_scenario.id, 'email_ready', subject, username=username)
         logger.info("finished")
     else:
+        logger.info('STATS scenario type %s van %s is mislukt in %r' % (
+                damage_scenario.scenario_type_str, 
+                damage_scenario.email, 
+                str(datetime.datetime.now() - start_dt)))
         logger.info("there were errors in scenario %d" % damage_scenario.id)
         logger.info("creating email task for error")
         subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % damage_scenario.name
