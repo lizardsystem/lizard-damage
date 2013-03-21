@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.32 (unreleased)
+0.9.32 (2013-03-21)
 -------------------
 
 - Added stats logging for benefit tasks as well.
