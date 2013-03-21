@@ -295,6 +295,7 @@ def calculate_damage(damage_scenario_id, username=None, taskname=None, loglevel=
 @task
 @task_logging
 def calculate_benefit(benefit_scenario_id, username=None, taskname=None, loglevel=20):
+    start_dt = datetime.datetime.now()
     logger = logging.getLogger(taskname)
     logger.info("calculate benefit")
     benefit_scenario = BenefitScenario.objects.get(pk=benefit_scenario_id)
@@ -315,6 +316,9 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
     # add BenefitScenarioResult objects for display on the map.
     
     if errors == 0:
+        logger.info('STATS benefit van %s is klaar in %r' % (
+                benefit_scenario.email, 
+                str(datetime.datetime.now() - start_dt)))
         logger.info("creating email task for scenario %d" % benefit_scenario.id)
         subject = 'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s ' % benefit_scenario.name
         send_email_to_task(
@@ -323,6 +327,9 @@ def calculate_benefit(benefit_scenario_id, username=None, taskname=None, logleve
         )
         logger.info("finished")
     else:
+        logger.info('STATS benefit van %s is mislukt in %r' % (
+                benefit_scenario.email, 
+                str(datetime.datetime.now() - start_dt)))
         logger.info("there were errors in scenario %d" % benefit_scenario.id)
         logger.info("creating email task for error")
         subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % (
