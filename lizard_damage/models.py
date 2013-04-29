@@ -24,7 +24,7 @@ import random
 import string
 import json
 import tempfile
-import Image
+from PIL import Image
 import subprocess
 import re
 

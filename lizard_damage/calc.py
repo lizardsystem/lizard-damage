@@ -788,10 +788,21 @@ def calc_damage_for_waterlevel(
         for road, info in roads_flooded.iteritems():
             if info['area'] >= 100:
                 roads_flooded_over_threshold.append(road)
-                overall_damage[code] += (
+                indirect_road_damage = (
                     dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) *
                     dt.data[code].to_gamma_repairtime(repairtime_roads)
                 )
+                logger.debug(
+                    '%s - %s - %s: %.2f ind' %
+                    (
+                        dt.data[code].code,
+                        dt.data[code].source,
+                        dt.data[code].description,
+                        indirect_road_damage,
+                    ),
+                )
+                overall_damage[code] += indirect_road_damage
+
 
     def add_roads_to_image(roads, image_path, extent):
         """ This function could be moved to top level. """
@@ -819,9 +830,16 @@ def calc_damage_for_waterlevel(
         rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
             roadgrid.shape[0], roadgrid.shape[1], 1
         )
-
-        image_roads_rgb = Image.fromarray(rgba[:, :, 0:3])
-        image_roads_mask = Image.fromarray(rgba[:, :, 3])
+        image_roads_rgb = Image.fromstring(
+            'RGB',
+            (rgba.shape[1], rgba.shape[0]),
+            rgba[:, :, 0:3].tostring(),
+        )
+        image_roads_mask = Image.fromstring(
+            'L',
+            (rgba.shape[1], rgba.shape[0]),
+            rgba[:, :, 3].tostring(),
+        )
         image.paste(image_roads_rgb, None, image_roads_mask)
         image.save(result_image['path'])
 
