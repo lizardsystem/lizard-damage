@@ -74,10 +74,12 @@ def calculate_risk(iterable):
         if risk is None:
             risk = current_damage / current_time
         else:
-            risk += (
-                (1 / current_time - 1 / previous_time) * 
+            risk_increment = (
+                (1 / current_time - 1 / previous_time) *
                 ((current_damage + previous_damage) / 2)
             )
+            risk = np.ma.sum([risk, risk_increment], 0)
+ 
         previous_time = current_time
         previous_damage = current_damage
 
