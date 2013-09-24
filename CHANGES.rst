@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.33 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix riskmap calculation: Risk is no longer discarded after mask changes shape.
 
 
 0.9.32 (2013-03-21)
