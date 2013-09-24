@@ -16,6 +16,7 @@ install_requires = [
     'lizard-task',
     'openpyxl',
     'Pillow',
+    'pyproj',
     ],
 
 tests_require = [
