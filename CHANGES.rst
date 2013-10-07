@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.9.34 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Subtract differently in benefitmap creation.
 
 
 0.9.33 (2013-09-24)

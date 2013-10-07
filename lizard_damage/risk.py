@@ -9,8 +9,6 @@ from __future__ import division
 from django.template.defaultfilters import slugify
 from django.core.files import File
 
-from lizard_damage import models
-
 from osgeo import gdal
 from osgeo import gdalconst
 
@@ -19,7 +17,6 @@ import numpy as np
 import os
 import re
 import shutil
-import sys
 import tempfile
 import zipfile
 
@@ -52,10 +49,10 @@ def _index_and_filenames(event):
 
 
 def calculate_risk(iterable):
-    """ 
+    """
     Return risk.
 
-    Iterable consists of {'geotransform':geotransform, 
+    Iterable consists of {'geotransform':geotransform,
                           'damage':damage,
                           'time': time} elements.
 
@@ -68,6 +65,9 @@ def calculate_risk(iterable):
 
     """
     risk = None
+    previous_time = None
+    previous_damage = None
+
     for element in iterable:
         current_damage = element['damage']
         current_time = element['time']
@@ -79,7 +79,7 @@ def calculate_risk(iterable):
                 ((current_damage + previous_damage) / 2)
             )
             risk = np.ma.sum([risk, risk_increment], 0)
- 
+
         previous_time = current_time
         previous_damage = current_damage
 
@@ -112,10 +112,9 @@ def create_risk_map(damage_scenario, logger):
         riskresult.zip_risk.delete()
         riskresult.delete()
 
-
     tempdir = tempfile.mkdtemp()
     zipriskpath = os.path.join(
-        tempdir, 
+        tempdir,
         'risk_' + slugify(damage_scenario.name) + '.zip',
     )
 
@@ -127,13 +126,15 @@ def create_risk_map(damage_scenario, logger):
             jobdict[index].append(dict(event=event, filename=filename))
 
     for index, jobs in jobdict.items():
-        
-        logger.debug('calculating risk for {} ({} rasters)'.format(index, len(jobs)))
-        
+
+        logger.debug('calculating risk for {} ({} rasters)'.format(
+            index, len(jobs)),
+        )
+
         calc_dict = calculate_risk(iter_risk_and_damage(jobs))
         risk = calc_dict['risk']
         geotransform = calc_dict['geotransform']
-        
+
         # Create dataset
         logger.debug('Writing to zipfile.')
         dataset = gdal.GetDriverByName(b'mem').Create(
@@ -147,7 +148,8 @@ def create_risk_map(damage_scenario, logger):
         # Write to asc and add to zip
         ascpath = os.path.join(tempdir, str('risk_' + index + '.asc'))
         gdal.GetDriverByName(b'aaigrid').CreateCopy(ascpath, dataset)
-        with zipfile.ZipFile(zipriskpath, 'a', zipfile.ZIP_DEFLATED) as archive:
+        with zipfile.ZipFile(zipriskpath,
+                             'a', zipfile.ZIP_DEFLATED) as archive:
             archive.write(ascpath, os.path.basename(ascpath))
         os.remove(ascpath)
 
@@ -162,6 +164,7 @@ def create_risk_map(damage_scenario, logger):
     riskresult.save()
     shutil.rmtree(tempdir)
 
+
 def create_benefit_map(benefit_scenario, logger):
     logger.info('Calculating benefit map for {}'.format(benefit_scenario))
 
@@ -174,7 +177,7 @@ def create_benefit_map(benefit_scenario, logger):
     # Create tempdir
     tempdir = tempfile.mkdtemp()
     zipbenefitpath = os.path.join(
-        tempdir, 
+        tempdir,
         'benefit_' + slugify(benefit_scenario.name) + '.zip',
     )
 
@@ -192,8 +195,9 @@ def create_benefit_map(benefit_scenario, logger):
         )
         before = benefit_scenario.get_data_before(filename)
         after = benefit_scenario.get_data_after(filename)
-        benefit = (before['data'] - after['data']) / 0.055
-        
+        benefit = np.ma.array([before['data'],
+                               -after['data']]).sum(0) / 0.055
+
         # Create dataset
         logger.debug('Writing to zipfile.')
         dataset = gdal.GetDriverByName(b'mem').Create(
@@ -222,4 +226,3 @@ def create_benefit_map(benefit_scenario, logger):
     benefit_scenario.save()
 
     shutil.rmtree(tempdir)
-    
