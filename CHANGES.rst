@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.35 (unreleased)
+0.9.35 (2013-11-11)
 -------------------
 
 - Update damagetable, 27 and 49 must be the same.
