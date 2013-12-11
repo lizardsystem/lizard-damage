@@ -60,8 +60,8 @@ def calculate_risk(iterable):
         >>> time = [250,100,50,25,10,5]
         >>> iterable = [dict(damage=d, time=t, geotransform=None)
         ...             for d, t in zip(damage, time)]
-        >>> calculate_risk(iterable)['risk']
-        18.9
+        >>> "{:.2f}".format(calculate_risk(iterable)['risk'])
+        u'18.90'
 
     """
     risk = None

@@ -2,10 +2,7 @@
 
 from django.test import TestCase
 
-from lizard_damage import (
-    table,
-    calc,
-)
+from lizard_damage import table
 
 import numpy
 
@@ -24,11 +21,3 @@ class ExampleTest(TestCase):
 
         self.depth = numpy.ma.array(depth, mask=mask)
         self.use = numpy.ma.array(use, mask=mask)
-
-    def test_calculation(self):
-        self.damage, self.count, self.area, self.result = calc.calculate(
-            use=self.use, depth=self.depth, area_per_pixel=1,
-            table=self.dt, month=7,
-            floodtime=20 * 3600, repairtime=None,
-        )
-        self.assertEquals(1, 1)
