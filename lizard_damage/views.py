@@ -1,7 +1,6 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import unicode_literals
 
-from django.utils.translation import ugettext as _
 from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -9,8 +8,6 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView
 from django.views.generic import View
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
 from django.conf import settings
@@ -23,10 +20,8 @@ from lizard_damage.models import DamageEventWaterlevel
 from lizard_damage.models import GeoImage
 from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
-from lizard_damage import forms
 
 from zipfile import ZipFile
-import datetime
 import tempfile
 import os
 import re
@@ -37,7 +32,7 @@ import logging
 
 # Do not generate directoryname, because for each worker the directory
 # will be different and that loads to errors.
-temp_storage_location = '/tmp/django_uploads' # tempfile.mkdtemp()
+temp_storage_location = '/tmp/django_uploads'
 temp_storage = FileSystemStorage(location=temp_storage_location)
 
 
@@ -72,16 +67,19 @@ DamageScenario types:
    'waterstand van meerdere gebeurtenissen'),
 6, 'Batenkaart',
 """
+
+
 def damage_scenario_from_type_0(all_form_data):
     damage_scenario = DamageScenario(
         name=all_form_data['name'], email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
     if all_form_data['damagetable']:
-        damage_scenario.damagetable=all_form_data['damagetable']
+        damage_scenario.damagetable = all_form_data['damagetable']
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(all_form_data['repairtime_buildings']) * 3600 * 24
+    repairtime_buildings = float(
+        all_form_data['repairtime_buildings']) * 3600 * 24
     damage_event = damage_scenario.damageevent_set.create(
         floodtime=all_form_data['floodtime'] * 3600,
         repairtime_roads=repairtime_roads,
@@ -100,10 +98,11 @@ def damage_scenario_from_type_1(all_form_data):
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
     if all_form_data['damagetable']:
-        damage_scenario.damagetable=all_form_data['damagetable']
+        damage_scenario.damagetable = all_form_data['damagetable']
     damage_scenario.save()
     repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(all_form_data['repairtime_buildings']) * 3600 * 24
+    repairtime_buildings = float(
+        all_form_data['repairtime_buildings']) * 3600 * 24
     damage_event = damage_scenario.damageevent_set.create(
         repetition_time=all_form_data['repetition_time'],  # Difference is here
         floodtime=all_form_data['floodtime'] * 3600,
@@ -126,7 +125,9 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
     """
     with ZipFile(zipfile, 'r') as myzip:
         index = myzip.read('index.csv')
-        index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
+        index_data = [
+            line.strip().split(',')
+            for line in index.split('\n') if line.strip()]
 
         scenario_data = {}
         if scenario_name:
@@ -145,7 +146,8 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
             elif line[0] == 'scenario_type':
                 scenario_data['scenario_type'] = int(line[1])
             elif line[0] == 'scenario_calc_type':
-                scenario_data['calc_type'] = {'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
+                scenario_data['calc_type'] = {
+                    'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
             elif line[0] == 'scenario_damage_table':
                 if line[1]:
                     zip_temp = tempfile.mkdtemp()
@@ -153,7 +155,8 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                     damage_table = os.path.join(zip_temp, line[1])
             elif line[0] == 'event_name':
                 # Header for second part: create damage_scenario object
-                logger.info('Create a damage scenario using %r' % scenario_data)
+                logger.info(
+                    'Create a damage scenario using %r' % scenario_data)
                 damage_scenario = DamageScenario(**scenario_data)
                 damage_scenario.save()
                 if damage_table:
@@ -179,23 +182,30 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                 if scenario_data['scenario_type'] == 2:
                     zip_file_names = myzip.namelist()
                     re_match = re.match(
-                        '(.*[^0-9])([0-9]+)(\.asc)$', line[1]).groups()  # i.e. ('ws', '324', '.asc')
+                        '(.*[^0-9])([0-9]+)(\.asc)$',
+                        line[1]).groups()  # i.e. ('ws', '324', '.asc')
 
-                    re_pattern = re.compile('%s[0-9]+%s' % (re_match[0], re_match[2]))
+                    re_pattern = re.compile(
+                        '%s[0-9]+%s' % (re_match[0], re_match[2]))
                     water_level_filenames = [
-                        fn for fn in zip_file_names if re.match(re_pattern, fn)]
+                        fn for fn in zip_file_names
+                        if re.match(re_pattern, fn)]
                     water_level_filenames.sort()
                 else:
                     water_level_filenames = [line[1], ]
 
-                for index, water_level_filename in enumerate(water_level_filenames):
+                for index, water_level_filename in enumerate(
+                    water_level_filenames):
                     water_level_tempdir = tempfile.mkdtemp()
                     myzip.extract(water_level_filename, water_level_tempdir)
-                    tempfilename = os.path.join(water_level_tempdir, water_level_filename)
+                    tempfilename = os.path.join(
+                        water_level_tempdir, water_level_filename)
                     with open(tempfilename) as water_level_tempfile:
-                        damage_event_waterlevel = DamageEventWaterlevel(event=damage_event, index=index)
+                        damage_event_waterlevel = DamageEventWaterlevel(
+                            event=damage_event, index=index)
                         damage_event_waterlevel.waterlevel.save(
-                            water_level_filename, File(water_level_tempfile), save=True)
+                            water_level_filename,
+                            File(water_level_tempfile), save=True)
                         damage_event_waterlevel.save()
                     os.remove(tempfilename)
     return damage_scenario
@@ -239,7 +249,9 @@ def analyze_zip_file(zipfile):
 
         try:
             index = myzip.read('index.csv')
-            index_data = [line.strip().split(',') for line in index.split('\n') if line.strip()]
+            index_data = [
+                line.strip().split(',')
+                for line in index.split('\n') if line.strip()]
         except:
             result.append('index.csv is afwezig of is niet goed')
 
@@ -248,23 +260,29 @@ def analyze_zip_file(zipfile):
                 try:
                     DamageScenario.SCENARIO_TYPES_DICT[int(line[1])]
                 except:
-                    result.append('Scenario type "%s" niet goed (moet 0..4 zijn)' % line[1])
+                    result.append(
+                        'Scenario type "%s" niet goed (moet 0..4 zijn)'
+                        % line[1])
             elif line[0] == 'scenario_name':
                 pass
             elif line[0] == 'scenario_email':
                 pass
             elif line[0] == 'scenario_calc_type':
                 if line[1].lower() not in ['min', 'max', 'avg']:
-                    result.append('FOUT: scenario type "%s" moet min, max of avg zijn' % line[1].lower())
+                    result.append(
+                        'FOUT: scenario type "%s" moet min, max of avg zijn'
+                        % line[1].lower())
             elif line[0] == 'scenario_damage_table':
                 if line[1] not in zip_file_names:
-                    result.append('FOUT: schadetabel %s (NIET gevonden in zipfile)' % line[1])
+                    result.append(
+                        'FOUT: schadetabel %s (NIET gevonden in zipfile)'
+                        % line[1])
             elif line[0] == 'event_name':
                 pass
             else:
-                # result.append('gebeurtenis (naam, waterlevel, overstromingsduur, reparatie wegen, rep. bebouwing, maand): %s' % ', '.join(line))
                 if line[1] not in zip_file_names:
-                    result.append('FOUT: waterlevel %s NIET gevonden' % line[1])
+                    result.append(
+                        'FOUT: waterlevel %s NIET gevonden' % line[1])
     if not result:
         # Everything seems to be ok
         result.append("zip bestand ok")
@@ -309,17 +327,10 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 form_data = self.get_cleaned_data_for_step(form_step)
                 if form_data:
                     form_datas.update(form_data)
-            # return {'zip_content': analyze_zip_file(form_datas['zipfile'])}
-            #print form_datas
             try:
                 zipfile = form_datas['zipfile']
-                #logger.info('%r' % str(dir(zipfile)))
-                #logger.info('%s' % str(dir(zipfile.file)))
-                #logger.info('zipfile.file %s' % zipfile.file)
                 logger.info('zipfile.file.name %s' % zipfile.file.name)
                 print 'zipfile.file.name %s' % zipfile.file.name
-                #logger.info('zipfile: %r' % zipfile.name)
-                #logger.info('temp storage location: %r' % temp_storage_location)
                 return {'zip_content': analyze_zip_file(zipfile)}
             except:
                 return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
@@ -327,30 +338,15 @@ class Wizard(ViewContextMixin, SessionWizardView):
         if step == '9':
             form_data = self.get_cleaned_data_for_step('7')
             try:
-                #logger.info('zipfile_risk_before: %r' % form_datas['zipfile_risk_before'])
-                #logger.info('zipfile_risk_after: %r' % form_datas['zipfile_risk_after'])
                 return {'zip_content': analyze_benefit_files(
                     form_data['zipfile_risk_before'],
                     form_data['zipfile_risk_after'])}
             except:
-                return {'zip_content': 'analyse gefaald, batenkaart bestanden zijn niet goed'}
+                return {
+                    'zip_content':
+                        'analyse gefaald, batenkaart bestanden zijn niet goed'
+                    }
         return super(Wizard, self).get_form_initial(step)
-
-    # def get_form(self, step=None, data=None, files=None):
-    #     if step == '7':
-    #         #form = forms.FormStep7(initial={'test_title': 'asdf'})
-    #         #from django.forms.models import inlineformset_factory
-    #         from django.forms.formsets import formset_factory
-    #         # FormSetScenario = formset_factory(forms.FormScenario)
-    #         # FormSetEvent = formset_factory(forms.FormEvent, extra=2)
-    #         # FormSet =
-    #         #FormSet = inlineformset_factory(DamageScenario, DamageEvent)
-    #         FormSet = formset_factory(forms.FormZipResult)
-    #         form = FormSet(initial=[{'test': '1'}, {'test': 'event 2'}])
-    #         #form = forms.FormZipResult(extra=(('extra', 'Extra veld'),))
-    #     else:
-    #         form = super(Wizard, self).get_form(step, data, files)
-    #     return form
 
     def version(self):
         return tools.version()
@@ -366,42 +362,46 @@ class Wizard(ViewContextMixin, SessionWizardView):
             0: '1 Kaart met de max waterstand van 1 gebeurtenis',
             1: '1 Kaart met de waterstand voor een zekere herhalingstijd',
             2: 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis',
-            3: 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen.',
-            4: 'Kaarten met voor verschillende herhalingstijden de waterstanden',
-            5: 'Tijdserie aan kaarten met per tijdstip de waterstand van meerdere gebeurtenissen',
+            3: 'Kaarten met de max. waterstand van afzonderlijke '
+            'gebeurtenissen.',
+            4: 'Kaarten met voor verschillende herhalingstijden de '
+            'waterstanden',
+            5: 'Tijdserie aan kaarten met per tijdstip de waterstand van '
+            'meerdere gebeurtenissen',
             6: 'baten taak'}
 
         all_form_data = self.get_all_cleaned_data()
 
         logger.info('Scenario is being created: %r' % all_form_data)
         scenario_type = int(all_form_data['scenario_type'])
-        logger.info('STATS scenario aangemaakt door %s: %s, %r' % (
-                all_form_data['email'], scenario_type_name[scenario_type], all_form_data))
+        logger.info(
+            'STATS scenario aangemaakt door %s: %s, %r' % (
+                all_form_data['email'],
+                scenario_type_name[scenario_type], all_form_data))
         if scenario_type in (0, 1, 2, 3, 4, 5):
-            damage_scenario = self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data)
+            damage_scenario = (
+                self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data))
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
-            return HttpResponseRedirect(reverse('lizard_damage_thank_you') +
-                                        '?damage_scenario_id=%d' % damage_scenario.id)
+            return HttpResponseRedirect(
+                reverse('lizard_damage_thank_you') +
+                '?damage_scenario_id=%d' % damage_scenario.id)
         elif scenario_type == 6:
             # baten taak
             benefit_scenario = create_benefit_scenario(all_form_data)
             tasks.benefit_scenario_to_task(benefit_scenario, username="web")
-            return HttpResponseRedirect(reverse('lizard_damage_thank_you') +
-                                        '?benefit_scenario_id=%d' % benefit_scenario.id)
-
-        # e-mail received: let's not do this. Feedback is given directly
-        # subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
-        # tasks.send_email_to_task(
-        #     damage_scenario.id, 'email_received', subject, username='web')
-
+            return HttpResponseRedirect(
+                reverse('lizard_damage_thank_you') +
+                '?benefit_scenario_id=%d' % benefit_scenario.id)
 
 
 class DamageScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/damage_scenario_result.html'
 
     def title(self):
-        return 'WaterSchadeSchatter resultatenpagina %s' % str(self.damage_scenario)
+        return (
+            'WaterSchadeSchatter resultatenpagina %s'
+            % str(self.damage_scenario))
 
     def version(self):
         return tools.version()
@@ -444,7 +444,8 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')
+        return self.render_to_response(
+            context, mimetype='application/vnd.google-earth.kml+xml')
 
 
 class GeoImageKML(DamageEventKML):
@@ -453,7 +454,6 @@ class GeoImageKML(DamageEventKML):
         slugs = self.kwargs['slugs']
         # When multiple GeoImages have the same slug, just take first
         return GeoImage.objects.filter(slug__in=slugs.split(','))
-        #return [GeoImage.objects.filter(slug=slug)[0] for slug in slugs.split(',')]
 
 
 class GeoImageNoLegendKML(GeoImageKML):
@@ -495,12 +495,14 @@ class LegendHeight(View):
         f1 = float(kwargs.get('min_height', '0')) / 1000
         f2 = float(kwargs.get('max_height', '1000')) / 1000
 
-        image = Image.open(os.path.join(settings.STATIC_ROOT, "lizard_damage/legend_height.png"))
+        image = Image.open(
+            os.path.join(
+                settings.STATIC_ROOT, "lizard_damage/legend_height.png"))
         f = ImageFont.load_default()
 
         draw = ImageDraw.Draw(image)
-        draw.text( (45, 15), " %.1f mNAP" % f2, font=f, fill=(90, 90, 90))
-        draw.text( (45, 65), " %.1f mNAP" % f1, font=f, fill=(90, 90, 90))
+        draw.text((45, 15), " %.1f mNAP" % f2, font=f, fill=(90, 90, 90))
+        draw.text((45, 65), " %.1f mNAP" % f1, font=f, fill=(90, 90, 90))
 
         # serialize to HTTP response
         response = HttpResponse(mimetype="image/png")
@@ -512,7 +514,9 @@ class BenefitScenarioResult(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/benefit_scenario_result.html'
 
     def title(self):
-        return 'WaterSchadeSchatter resultatenpagina baten %s' % str(self.benefit_scenario)
+        return (
+            'WaterSchadeSchatter resultatenpagina baten %s'
+            % str(self.benefit_scenario))
 
     def version(self):
         return tools.version()
@@ -547,7 +551,8 @@ class BenefitScenarioKML(ViewContextMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        return self.render_to_response(context, mimetype='application/vnd.google-earth.kml+xml')
+        return self.render_to_response(
+            context, mimetype='application/vnd.google-earth.kml+xml')
 
 
 class Disclaimer(ViewContextMixin, TemplateView):
@@ -558,7 +563,7 @@ class Disclaimer(ViewContextMixin, TemplateView):
 
 
 class ThankYou(ViewContextMixin, TemplateView):
-    template_name="lizard_damage/thank_you.html"
+    template_name = "lizard_damage/thank_you.html"
 
     @property
     def message(self):

@@ -7,14 +7,9 @@ from __future__ import (
   division,
 )
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 
-from lizard_damage import (
-    table,
-)
-
-import os
+from lizard_damage import table
 
 
 def main(*args, **options):

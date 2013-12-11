@@ -7,7 +7,7 @@ from __future__ import (
   division,
 )
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import connections
 from django.conf import settings
 
@@ -36,6 +36,7 @@ SQL_TEMPLATE = (
     "END;\n"
 )
 
+
 class Main(object):
     """
     find some_path/ -mindepth 3 -maxdepth 3 -name '*' | \
@@ -51,10 +52,10 @@ class Main(object):
     def __init__(self, *args, **options):
         for k, v in options.iteritems():
             setattr(self, k, v)
-       
+
         self.table = args[-1]
         self.psql_command = self._psql_command()
-       
+
         if self.use_stdin:
             self.raster_files = [f.rstrip() for f in sys.stdin.readlines()]
         elif self.ignore_aux_xml_files:
@@ -96,7 +97,7 @@ class Main(object):
         os.mkfifo(fifo_name)
         try:
             zip_command = shlex.split(
-                'zip %(fifo_name)s.zip --fifo %(fifo_name)s' % 
+                'zip %(fifo_name)s.zip --fifo %(fifo_name)s' %
                 dict(fifo_name=fifo_name),
             )
             p1 = subprocess.Popen(zip_command)
@@ -104,6 +105,7 @@ class Main(object):
             p2 = self._pgsql2raster(action, path, fifo)
             p2.communicate()
             fifo.close()
+            p1  # pyflakes
         except Exception as e:
             raise e
         finally:
@@ -129,7 +131,7 @@ class Main(object):
             name=os.path.basename(path),
         ))
         p2 = subprocess.Popen(sed_command, stdin=p1.stdout, stdout=destination)
-        
+
         return p2
 
     def run(self):
@@ -145,11 +147,11 @@ class Main(object):
         total = len(self.raster_files)
 
         for i, path in enumerate(self.raster_files):
-            logger.debug('Saving raster %s/%s' % (i,total))
+            logger.debug('Saving raster %s/%s' % (i, total))
 
             filename = os.path.basename(path)
-            if i==0 and not table_exists:
-                    self._save(action=PREPARE, path=path)
+            if i == 0 and not table_exists:
+                self._save(action=PREPARE, path=path)
 
             if filename in existing_records:
                 logger.debug('%s already in %s' %

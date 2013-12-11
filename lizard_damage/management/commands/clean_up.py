@@ -7,7 +7,7 @@ from __future__ import (
   division,
 )
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from lizard_damage import models
 from lizard_task.models import SecuredPeriodicTask
@@ -16,7 +16,6 @@ import logging
 import datetime
 
 logger = logging.getLogger(__name__)
-
 
 
 class Command(BaseCommand):
@@ -29,21 +28,22 @@ class Command(BaseCommand):
         for damage_scenario in models.DamageScenario.objects.filter(
             expiration_date__lte=now):
 
-            logger.info("Deleting scenario %d (%s), tasks, events and results..." % (
+            logger.info(
+                "Deleting scenario %d (%s), tasks, events and results..." % (
                     damage_scenario.id, str(damage_scenario)))
 
             SecuredPeriodicTask.objects.filter(
                 name__contains='Scenario (%05d)' % damage_scenario.id).delete()
 
             for damage_event in damage_scenario.damageevent_set.all():
-                for damage_event_result in damage_event.damageeventresult_set.all():
+                for damage_event_result in (
+                    damage_event.damageeventresult_set.all()):
                     if damage_event_result.image:
                         damage_event_result.image.delete()
                     damage_event_result.delete()
                 if damage_event.result:
                     damage_event.result.delete()
-                # if damage_event.waterlevel:
-                #     damage_event.waterlevel.delete()
+
                 damage_event.delete()
             damage_scenario.delete()
 

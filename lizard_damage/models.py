@@ -9,8 +9,6 @@ from __future__ import (
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from django.core.files import File
-from lizard_map import coordinates
-from lizard_task.models import SecuredPeriodicTask
 from lizard_damage import utils
 from pyproj import transform
 from pyproj import Proj
@@ -32,9 +30,12 @@ from osgeo import gdal
 
 # from django.utils.translation import ugettext_lazy as _
 
-RD = str("""
-+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +no_defs <>
-""")
+RD = str(
+"+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908"
+" +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,"
+"50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,"
+"4.0812 +no_defs <>"
+)
 
 WGS84 = str('+proj=latlong +datum=WGS84')
 
@@ -48,8 +49,8 @@ def extent_from_geotiff(filename):
     height = ds.RasterYSize
     gt = ds.GetGeoTransform()
     minx = gt[0]
-    miny = gt[3] + width*gt[4] + height*gt[5]
-    maxx = gt[0] + width*gt[1] + height*gt[2]
+    miny = gt[3] + width * gt[4] + height * gt[5]
+    maxx = gt[0] + width * gt[1] + height * gt[2]
     maxy = gt[3]
     return (minx, miny, maxx, maxy)
 
@@ -74,15 +75,15 @@ def write_pgw(name, extent):
 
 
 def friendly_filesize(size):
-    if size > 1024*1024*1024*1024*1024:
+    if size > 1024 * 1024 * 1024 * 1024 * 1024:
         # Just for fun
-        return '%0.1fPB' % (float(size) / (1024*1024*1024*1024*1024))
-    if size > 1024*1024*1024*1024:
-        return '%0.1fTB' % (float(size) / (1024*1024*1024*1024))
-    if size > 1024*1024*1024:
-        return '%0.1fGB' % (float(size) / (1024*1024*1024))
-    if size > 1024*1024:
-        return '%0.1fMB' % (float(size) / (1024*1024))
+        return '%0.1fPB' % (float(size) / (1024 * 1024 * 1024 * 1024 * 1024))
+    if size > 1024 * 1024 * 1024 * 1024:
+        return '%0.1fTB' % (float(size) / (1024 * 1024 * 1024 * 1024))
+    if size > 1024 * 1024 * 1024:
+        return '%0.1fGB' % (float(size) / (1024 * 1024 * 1024))
+    if size > 1024 * 1024:
+        return '%0.1fMB' % (float(size) / (1024 * 1024))
     if size > 1024:
         return '%0.1fKB' % (float(size) / (1024))
     return str(size)
@@ -110,7 +111,8 @@ class AhnIndex(models.Model):
     min_datum = models.DateField(null=True, blank=True)
     max_datum = models.DateField(null=True, blank=True)
     ar = models.FloatField(null=True, blank=True)
-    the_geom = models.MultiPolygonField(srid=28992, null=True, blank=True)  # All squares?
+    the_geom = models.MultiPolygonField(
+        srid=28992, null=True, blank=True)  # All squares?
     objects = models.GeoManager()
 
     class Meta:
@@ -122,17 +124,8 @@ class AhnIndex(models.Model):
     def extent_wgs84(self, e=None):
         if e is None:
             e = self.the_geom.extent
-        #x0, y0 = coordinates.rd_to_wgs84(e[0], e[1])
-        #x1, y1 = coordinates.rd_to_wgs84(e[2], e[3])
         x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
         x1, y1 = transform(rd_proj, wgs84_proj, e[2], e[3])
-        #print ('Converting RD %r to WGS84 %s' % (e, '%f %f %f %f' % (x0, y0, x1, y1)))
-        # we're using it for google maps and it does not project exactly on the correct spot.. try to fix it ugly
-        # add rotation = 0.9 too for the kml
-        #x0 = x0 - 0.00012
-        #y0 = y0 + 0.000057
-        #x1 = x1 + 0.000154
-        #y1 = y1 - 0.000051
         return (x0, y0, x1, y1)
 
 
@@ -175,14 +168,6 @@ class Unit(models.Model):
     def from_si(self, value):
         return value / self.factor
 
-#SCENARIO_STATUS_CHOICES = (
-    #(1, 'Ontvangen'),
-    #(2, 'Bezig'),
-    #(3, 'Gereed'),
-    #(4, 'Verzonden'),
-    #(5, 'Opgeschoond'),
-#)
-
 
 class DamageScenario(models.Model):
     """
@@ -219,7 +204,8 @@ class DamageScenario(models.Model):
         (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
         (2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
         (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen'),
-        (4, 'Kaarten met voor verschillende herhalingstijden de waterstanden (voor risicokaart)'),
+        (4, 'Kaarten met voor verschillende herhalingstijden de '
+         'waterstanden (voor risicokaart)'),
         (5, 'Tijdserie aan kaarten met per tijdstip de '
             'waterstand van meerdere gebeurtenissen'),
         (6, 'Batenkaart maken met resultaten uit twee risicokaarten'),
@@ -231,18 +217,19 @@ class DamageScenario(models.Model):
         default=SCENARIO_STATUS_RECEIVED,
     )
     name = models.CharField(max_length=64)
-    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
+    slug = models.SlugField(
+        null=True, blank=True,
+        help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
 
     datetime_created = models.DateTimeField(auto_now=True)
     expiration_date = models.DateTimeField()
-    # For cleaning up
-    #task = models.ForeignKey(SecuredPeriodicTask, null=True, blank=True)
 
     damagetable = models.FileField(
         upload_to='scenario/damage_table',
         null=True, blank=True,
-        help_text='Optionele schadetabel, indien niet ingevuld wordt de default gebruikt'
+        help_text='Optionele schadetabel, indien niet ingevuld '
+        'wordt de default gebruikt'
         )
 
     calc_type = models.IntegerField(
@@ -254,14 +241,12 @@ class DamageScenario(models.Model):
     def __unicode__(self):
         return self.name
 
-    # def process(self):
-    #     pass
-
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = ''.join(random.sample(string.letters, 20))
         if not self.expiration_date:
-            self.expiration_date = datetime.datetime.now() + datetime.timedelta(days=7)
+            self.expiration_date = (
+                datetime.datetime.now() + datetime.timedelta(days=7))
         return super(DamageScenario, self).save(*args, **kwargs)
 
     @property
@@ -298,13 +283,15 @@ class DamageEvent(models.Model):
         default=EVENT_STATUS_RECEIVED,
     )
     scenario = models.ForeignKey(DamageScenario)
-    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
-    floodtime = models.FloatField(help_text='How long was it flooded, in seconds')
-    repairtime_roads = models.FloatField(help_text='In seconds', default=5*3600*24)
-    repairtime_buildings = models.FloatField(help_text='In seconds', default=5*3600*24)
-    # waterlevel = models.FileField(upload_to='scenario/waterlevel',
-    #     blank=True, null=True)
-    # flooddate = models.DateTimeField()
+    slug = models.SlugField(
+        null=True, blank=True,
+        help_text='auto generated on save; used for url')
+    floodtime = models.FloatField(
+        help_text='How long was it flooded, in seconds')
+    repairtime_roads = models.FloatField(
+        help_text='In seconds', default=5 * 3600 * 24)
+    repairtime_buildings = models.FloatField(
+        help_text='In seconds', default=5 * 3600 * 24)
     floodmonth = models.IntegerField(default=9)
 
     repetition_time = models.FloatField(blank=True, null=True,
@@ -329,7 +316,8 @@ class DamageEvent(models.Model):
     max_height = models.FloatField(null=True, blank=True)
 
     def __unicode__(self):
-        if self.name: return self.name
+        if self.name:
+            return self.name
         dew = self.damageeventwaterlevel_set.all()
         if dew:
             return ', '.join([str(d) for d in dew])
@@ -350,7 +338,7 @@ class DamageEvent(models.Model):
         return json.loads(self.table)
 
     def get_filenames(self, pattern=None):
-        """ 
+        """
         Return list of filenames in the result zip file.
 
         If a pattern is supplied, only returns files matching pattern.
@@ -361,8 +349,8 @@ class DamageEvent(models.Model):
         if pattern is None:
             return filenames
         else:
-            return [filename 
-                    for filename in filenames 
+            return [filename
+                    for filename in filenames
                     if re.match(pattern, filename)]
 
     def get_data(self, filename):
@@ -443,10 +431,10 @@ class RiskResult(models.Model):
         upload_to='scenario/result',
     )
     scenario = models.ForeignKey(DamageScenario)
-    
+
     def __unicode__(self):
         return os.path.basename(self.zip_risk.path)
-    
+
     @property
     def result_display(self):
         """display name of result"""
@@ -477,7 +465,9 @@ class BenefitScenario(models.Model):
     SCENARIO_STATUS_DICT = dict(SCENARIO_STATUS_CHOICES)
 
     name = models.CharField(max_length=64)
-    slug = models.SlugField(null=True, blank=True, help_text='auto generated on save; used for url')
+    slug = models.SlugField(
+        null=True, blank=True,
+        help_text='auto generated on save; used for url')
     email = models.EmailField(max_length=128)
 
     datetime_created = models.DateTimeField(auto_now=True)
@@ -490,7 +480,7 @@ class BenefitScenario(models.Model):
         upload_to='benefit/result',
         null=True, blank=True,
         help_text='Will be filled when results are available')
-    
+
     status = models.IntegerField(
         choices=SCENARIO_STATUS_CHOICES,
         default=SCENARIO_STATUS_RECEIVED,
@@ -503,11 +493,13 @@ class BenefitScenario(models.Model):
         if not self.slug:
             self.slug = ''.join(random.sample(string.letters, 20))
         if not self.expiration_date:
-            self.expiration_date = datetime.datetime.now() + datetime.timedelta(days=7)
+            self.expiration_date = (
+                datetime.datetime.now() + datetime.timedelta(days=7))
         return super(BenefitScenario, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('lizard_damage_benefit_result', kwargs=dict(slug=self.slug))
+        return reverse(
+            'lizard_damage_benefit_result', kwargs=dict(slug=self.slug))
 
     def result_display(self):
         try:
@@ -520,7 +512,7 @@ class BenefitScenario(models.Model):
 
     def get_data_after(self, filename):
         return self._get_data(filename, 'after')
-    
+
     def _get_data(self, filename, when):
         """
         Return numpy masked array corresponding to damage result.
@@ -602,9 +594,9 @@ class GeoImage(models.Model):
 
         return cls.from_rd_png(tmp_base, slug, extent)
 
-
     @classmethod
-    def from_data_with_min_max(cls, slug, data, extent, min_value, max_value, cdict=None):
+    def from_data_with_min_max(
+        cls, slug, data, extent, min_value, max_value, cdict=None):
         """
         Create GeoImage from slug and data.
         """
@@ -614,29 +606,29 @@ class GeoImage(models.Model):
         # Step 1: save png + pgw in RD
         if cdict is None:
             cdict = {
-                'red': ((0.0, 51./256, 51./256),
-                        (0.5, 237./256, 237./256),
-                        (1.0, 83./256, 83./256)),
-                'green': ((0.0, 114./256, 114./256),
-                          (0.5, 245./256, 245./256),
-                          (1.0, 83./256, 83./256)),
-                'blue': ((0.0, 54./256, 54./256),
-                         (0.5, 170./256, 170./256),
-                         (1.0, 83./256, 83./256)),
+                'red': ((0.0, 51. / 256, 51. / 256),
+                        (0.5, 237. / 256, 237. / 256),
+                        (1.0, 83. / 256, 83. / 256)),
+                'green': ((0.0, 114. / 256, 114. / 256),
+                          (0.5, 245. / 256, 245. / 256),
+                          (1.0, 83. / 256, 83. / 256)),
+                'blue': ((0.0, 54. / 256, 54. / 256),
+                         (0.5, 170. / 256, 170. / 256),
+                         (1.0, 83. / 256, 83. / 256)),
                 }
-        colormap = mpl.colors.LinearSegmentedColormap('something', cdict, N=1024)
+        colormap = mpl.colors.LinearSegmentedColormap(
+            'something', cdict, N=1024)
         normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
         rgba = colormap(normalize(data), bytes=True)
         #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
         if 'depth' in slug:
             # Make transparent where depth is zero or less
-            rgba[:,:,3] = np.where(np.greater(data, 0), 255, 0)
+            rgba[:, :, 3] = np.where(np.greater(data, 0), 255, 0)
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
 
         write_pgw(tmp_base + '.pgw', extent)
 
         return cls.from_rd_png(tmp_base, slug, extent)
-
 
     @classmethod
     def from_rd_png(cls, tmp_base, slug, extent):
@@ -646,10 +638,6 @@ class GeoImage(models.Model):
         """
 
         # Step 2: warp using gdalwarp to lon/lat in .tif
-        #logger.info('Warping png to tif... %s' % img['filename_png'])
-        command = 'gdalwarp %s %s -t_srs "+proj=latlong +datum=WGS83" -s_srs "%s"' % (
-            tmp_base + '.png', tmp_base + '.tif', RD.strip())
-        #logger.info(command)
         # Warp png file, output is tif.
         subprocess.call([
                 'gdalwarp', tmp_base + '.png', tmp_base + '.tif',

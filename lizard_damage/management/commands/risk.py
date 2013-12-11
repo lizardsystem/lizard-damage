@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from lizard_damage import models
 from lizard_damage import risk
 
@@ -19,5 +19,5 @@ class Command(BaseCommand):
     help = 'Command help'
 
     def handle(self, *args, **options):
-        damage_scenario=models.DamageScenario.objects.get(id=sys.argv[2])
+        damage_scenario = models.DamageScenario.objects.get(id=sys.argv[2])
         risk.create_risk_map(damage_scenario=damage_scenario, logger=logging)

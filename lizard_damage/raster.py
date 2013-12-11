@@ -110,7 +110,6 @@ def get_polygon_from_geo_and_shape(geo, shape):
     return Polygon(coordinates, srid=28992)
 
 
-
 def get_polygon(ds):
     gs = ds.GetGeoTransform()
     x1 = gs[0]
@@ -297,7 +296,8 @@ def get_ds_for_tile(ahn_name, method='filesystem', logger=None):
     return ds_ahn, ds_lgn
 
 
-def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, caching=True):
+def get_calc_data(
+    waterlevel_datasets, method, floodtime, ahn_name, logger, caching=True):
     def hash_code(ahn_name):
         """make hash for ahn tile"""
         return ahn_name
@@ -331,11 +331,15 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
         )
 
         df = disk_free()
-        logger.info('caching data... (Disk free: %iGB)' % (df / 1024/1024/1024))
-        if df > 2*1024*1024*1024:
-            cache.set(hash_code(ahn_name), (geo, height, landuse), 1*24*3600)
+        logger.info(
+            'caching data... (Disk free: %iGB)' % (df / 1024 / 1024 / 1024))
+        if df > 2 * 1024 * 1024 * 1024:
+            cache.set(
+                hash_code(ahn_name), (geo, height, landuse), 1 * 24 * 3600)
         else:
-            logger.warning('Less than 2 GB free. Increase disk size for cache, or reduce cache time.')
+            logger.warning(
+                'Less than 2 GB free. Increase disk size for cache,'
+                ' or reduce cache time.')
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
@@ -347,7 +351,7 @@ def get_calc_data(waterlevel_datasets, method, floodtime, ahn_name, logger, cach
     ) - height
 
     depth = depths.max(0)  # part of result
-    floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)  # part of result
+    floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
     landuse.mask = depth.mask
 
     return landuse, depth, geo, floodtime_px, ds_height, height
@@ -398,7 +402,8 @@ def get_mask(roads, shape, geo):
         layerdefinition = layer.GetLayerDefn()
         for road in roads:
             feature = ogr.Feature(layerdefinition)
-            feature.SetGeometry(ogr.CreateGeometryFromWkb(str(road.the_geom.wkb)))
+            feature.SetGeometry(
+                ogr.CreateGeometryFromWkb(str(road.the_geom.wkb)))
             layer.CreateFeature(feature)
 
         # Prepare in-memory copy of ds_gdal
@@ -408,5 +413,5 @@ def get_mask(roads, shape, geo):
         set_geo(ds_road, geo)
 
         # Rasterize and return
-        gdal.RasterizeLayer(ds_road,(1,),layer, burn_values=(1,))
+        gdal.RasterizeLayer(ds_road, (1,), layer, burn_values=(1,))
         return ds_road.GetRasterBand(1).ReadAsArray()

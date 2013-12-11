@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 from lizard_damage import models
-from lizard_task.models import SecuredPeriodicTask
 
 from lizard_damage import tasks
+
 
 class DamageEventInline(admin.TabularInline):
     model = models.DamageEvent
@@ -61,27 +61,35 @@ class DamageScenarioAdmin(admin.ModelAdmin):
         """Create a send mail task and put it on the queue."""
         sent = 0
         for damage_scenario in queryset:
-            subject = 'Schademodule: Scenario %s ontvangen' % damage_scenario.name
+            subject = (
+                'Schademodule: Scenario %s ontvangen' % damage_scenario.name)
             tasks.send_email_to_task(
-                damage_scenario.id, 'email_received', subject, username='admin')
+                damage_scenario.id, 'email_received',
+                subject, username='admin')
             sent += 1
         return self.message_user(
             request,
-            '%d mail tasks are sent (the mails themselves are sent by the task).' % sent)
-    send_received_email.short_description = 'Zend e-mail dat het scenario is ontvangen'
+            '%d mail tasks are sent (the mails themselves '
+            'are sent by the task).' % sent)
+    send_received_email.short_description = (
+        'Zend e-mail dat het scenario is ontvangen')
 
     def send_finished_email(self, request, queryset):
         """Create a send mail task and put it on the queue."""
         sent = 0
         for damage_scenario in queryset:
-            subject = 'Schademodule: Resultaten beschikbaar voor scenario %s ' % damage_scenario.name
+            subject = (
+                'Schademodule: Resultaten beschikbaar voor scenario %s '
+                % damage_scenario.name)
             tasks.send_email_to_task(
                 damage_scenario.id, 'email_ready', subject, username='admin')
             sent += 1
         return self.message_user(
             request,
-            '%d mail tasks are sent (the mails themselves are sent by the task).' % sent)
-    send_finished_email.short_description = 'Zend e-mail dat het scenario is uitgerekend'
+            '%d mail tasks are sent (the mails themselves are '
+            'sent by the task).' % sent)
+    send_finished_email.short_description = (
+        'Zend e-mail dat het scenario is uitgerekend')
 
 
 class UnitAdmin(admin.ModelAdmin):

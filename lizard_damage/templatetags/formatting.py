@@ -5,7 +5,7 @@ register = template.Library()
 
 def split_len(seq, length):
     """splits a string into length sized strings, beginning at the end"""
-    result = [seq[max(i-length, 0):i] for i in range(len(seq), 0, -length)]
+    result = [seq[max(i - length, 0):i] for i in range(len(seq), 0, -length)]
     result.reverse()
     return result
 

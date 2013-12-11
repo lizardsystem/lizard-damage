@@ -14,7 +14,7 @@ import numpy as np
 import logging
 import re
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 
 class DamageWorksheet(object):
@@ -80,7 +80,7 @@ class DamageWorksheet(object):
             row_source = self._sequence(i, 0)[0]
             if row_source:
                 source = row_source
-                
+
             code = self._sequence(i, 1)[0]
             description = self._sequence(i, 2)[0]
 
@@ -94,7 +94,7 @@ class DamageWorksheet(object):
                 indirect_damage_seq[j] = self._to_float(indirect_damage_seq[j])
             direct_damage = dict(zip(damage_keys, direct_damage_seq))
             indirect_damage = dict(zip(damage_keys, indirect_damage_seq))
-            
+
             gamma_depth = self._float_sequence(i, 5)
             gamma_floodtime = self._float_sequence(i, 6)
             gamma_repairtime = self._float_sequence(i, 7)
@@ -111,11 +111,6 @@ class DamageWorksheet(object):
                 'gamma_repairtime': gamma_repairtime,
                 'gamma_month': gamma_month,
             }
-
-
-
-# -*- coding: utf-8 -*-
-# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 
 
 NODATAVALUE = -9999
@@ -222,14 +217,15 @@ def rasterize(ds, shapepath):
 
 
 def dms2dec(dms):
-     d, e, f, a, b ,c = re.match(
+    d, e, f, a, b, c = re.match(
         '''( *[0-9]+)d( *[0-9]+)'( *[0-9]+\.[0-9]+)"E,''' +
         '''( *[0-9]+)d( *[0-9]+)'( *[0-9]+\.[0-9]+)"N''',
-     dms).groups()
-     return (
-         int(a) + int(b) / 60 + float(c) / 3600, 
-         int(d) + int(e) / 60 + float(f) / 3600,
+        dms).groups()
+    return (
+        int(a) + int(b) / 60 + float(c) / 3600,
+        int(d) + int(e) / 60 + float(f) / 3600,
         )
+
 
 def ds_empty_copy(ds, bands=1, datatype=gdalconst.GDT_Float64):
     empty = gdal.GetDriverByName(b'MEM').Create(
@@ -253,7 +249,3 @@ def set_geo(ds, geo):
     """ Put geo in ds """
     ds.SetProjection(geo[0])
     ds.SetGeoTransform(geo[1])
-    
-    
-
-

@@ -82,6 +82,7 @@ class DamageHeader(object):
 
     def _to_seconds(self, text):
         value, unit = text.split()
+        logger.error("_to_seconds, _units = {}".format(self._units))
         seconds = self._units[unit].to_si(float(value))
         return seconds
 
@@ -227,7 +228,8 @@ class DamageTable(object):
             c.set(section, CFG_ROW_I_MAX, dr.indirect_damage.max)
             c.set(section, CFG_ROW_G_DEPTH, json.dumps(dr.gamma_depth))
             c.set(section, CFG_ROW_G_FLOODTIME, json.dumps(dr.gamma_floodtime))
-            c.set(section, CFG_ROW_G_REPAIRTIME, json.dumps(dr.gamma_repairtime))
+            c.set(section, CFG_ROW_G_REPAIRTIME, json.dumps(
+                    dr.gamma_repairtime))
             c.set(section, CFG_ROW_G_MONTH, json.dumps(dr.gamma_month))
 
         c.write(file_object)

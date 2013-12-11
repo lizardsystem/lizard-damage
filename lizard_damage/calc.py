@@ -23,8 +23,6 @@ from lizard_damage import table
 from lizard_damage import tools
 from lizard_damage import models
 
-from osgeo import gdal
-from matplotlib import cm
 from matplotlib import colors
 from PIL import Image
 
@@ -91,7 +89,7 @@ def landuse_legend():
     result[30] = '#33ff33'  # Gras
     result[31] = result[30]
 
-    result[32] = result[22]  #Spoorbaanlichaam
+    result[32] = result[22]  # Spoorbaanlichaam
 
     result[41] = result[30]
 
@@ -151,7 +149,7 @@ def slug_for_landuse(ahn_name):
 def slug_for_height(ahn_name, min_value, max_value):
     """Name as slug in GeoImage"""
     return 'height_%s_%d_%d' % (
-        ahn_name, int(min_value*1000), int(max_value*1000))
+        ahn_name, int(min_value * 1000), int(max_value * 1000))
 
 
 def slug_for_depth(ahn_name, min_value, max_value):
@@ -160,7 +158,7 @@ def slug_for_depth(ahn_name, min_value, max_value):
     min_value and max_values are depths
     """
     return 'depth_%s_%d_%d' % (
-        ahn_name, int(min_value*1000), int(max_value*1000))
+        ahn_name, int(min_value * 1000), int(max_value * 1000))
 
 
 def get_colorizer(max_damage):
@@ -236,11 +234,9 @@ def calculate(use, depth, geo,
     count = {}
     damage = {}
     damage_area = {}
-    roads_flooded = {}
 
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
-
 
     codes_in_use = np.unique(use.compressed())
     for code, dr in table.data.items():
@@ -284,7 +280,6 @@ def calculate(use, depth, geo,
 
         result[index] = partial_result_direct + partial_result_indirect
 
-
         damage_area[code] = np.where(
             np.greater(result[index], 0), area_per_pixel, 0,
         ).sum()
@@ -294,7 +289,6 @@ def calculate(use, depth, geo,
             damage[code] = result[index].sum()
         else:
             damage[code] = 0.
-
 
         logger.debug(
             '%s - %s - %s: %.2f dir + %.2f ind = %.2f tot' %
@@ -307,8 +301,6 @@ def calculate(use, depth, geo,
                 damage[code],
             ),
         )
-        #logger.debug(dr.source + ' - ' +
-                     #dr.description + ': ' + unicode(damage[code]))
 
     return damage, count, damage_area, result, roads_flooded_for_tile
 
@@ -405,7 +397,7 @@ def write_image(name, values):
     """
     colorize = get_colorizer(max_damage=11)
     rgba = colorize(values)
-    rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
+    rgba[:, :, 3] = np.where(rgba[:, :, 0], 153, 0)
     Image.fromarray(rgba).save(name, 'PNG')
 
 
@@ -415,7 +407,7 @@ def correct_single_ascfile(ascpath):
         'ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'nodata_value',
     ]
     ascfile = open(ascpath)
-    for i, line in enumerate (ascfile):
+    for i, line in enumerate(ascfile):
         if line.split()[0].lower() in asc_headers:
             if i == 0:
             # File ok, nothing to do.
@@ -460,7 +452,9 @@ def add_to_zip(output_zipfile, zip_result, logger):
             logger.info('zipping %s...' % file_in_zip['arcname'])
             myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
             if file_in_zip.get('delete_after', False):
-                logger.info('removing %r (%s in arc)' % (file_in_zip['filename'], file_in_zip['arcname']))
+                logger.info(
+                    'removing %r (%s in arc)'
+                    % (file_in_zip['filename'], file_in_zip['arcname']))
                 os.remove(file_in_zip['filename'])
 
 
@@ -468,7 +462,7 @@ def calc_damage_for_waterlevel(
     repetition_time,
     ds_wl_filenames,
     dt_path=None,
-    month=9, floodtime=20*3600,
+    month=9, floodtime=20 * 3600,
     repairtime_roads=None, repairtime_buildings=None,
     calc_type=CALC_TYPE_MAX,
     logger=logger):
@@ -495,18 +489,19 @@ def calc_damage_for_waterlevel(
 
     """
     cdict_water_depth = {
-        'red': ((0.0, 170./256, 170./256),
-                (0.5, 65./256, 65./256),
-                (1.0, 4./256, 4./256)),
-        'green': ((0.0, 200./256, 200./256),
-                  (0.5, 120./256, 120./256),
-                  (1.0, 65./256, 65./256)),
-        'blue': ((0.0, 255./256, 255./256),
-                 (0.5, 221./256, 221./256),
-                 (1.0, 176./256, 176./256)),
+        'red': ((0.0, 170. / 256, 170. / 256),
+                (0.5, 65. / 256, 65. / 256),
+                (1.0, 4. / 256, 4. / 256)),
+        'green': ((0.0, 200. / 256, 200. / 256),
+                  (0.5, 120. / 256, 120. / 256),
+                  (1.0, 65. / 256, 65. / 256)),
+        'blue': ((0.0, 255. / 256, 255. / 256),
+                 (0.5, 221. / 256, 221. / 256),
+                 (1.0, 176. / 256, 176. / 256)),
         }
 
-    zip_result = []  # store all the file references for zipping. {'filename': .., 'arcname': ...}
+    zip_result = []  # store all the file references for
+                     # zipping. {'filename': .., 'arcname': ...}
     img_result = []
     landuse_slugs = []  # slugs for landuse geo images
     height_slugs = []  # slugs for height geo images
@@ -566,13 +561,15 @@ def calc_damage_for_waterlevel(
 
             landuse, depth, geo, floodtime_px, ds_height, height = alldata
         except:
-            # Log this error and all previous normal logs, instead of hard crashing
+            # Log this error and all previous normal logs, instead of
+            # hard crashing
             logger.error('Exception')
             for exception_line in traceback.format_exc().split('\n'):
                 logger.error(exception_line)
             return
 
-        extent = ahn_index.the_geom.extent  # 1000x1250 meters = 2000x2500 pixels
+        # 1000x1250 meters = 2000x2500 pixels
+        extent = ahn_index.the_geom.extent
 
         # For height map
         new_min_height = np.amin(height)
@@ -597,7 +594,8 @@ def calc_damage_for_waterlevel(
         # enter this function at the same time
         if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
             logger.info("Generating landuse GeoImage: %s" % landuse_slug)
-            models.GeoImage.from_data_with_legend(landuse_slug, landuse.data, extent, landuse_legend())
+            models.GeoImage.from_data_with_legend(
+                landuse_slug, landuse.data, extent, landuse_legend())
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(
@@ -622,7 +620,8 @@ def calc_damage_for_waterlevel(
         arcname = 'schade_{}'.format(ahn_name)
         if repetition_time:
             arcname += '_T%.1f' % repetition_time
-        asc_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.asc',
+        asc_result = {
+            'filename': mkstemp_and_close(), 'arcname': arcname + '.asc',
             'delete_after': True}
         write_result(
             name=asc_result['filename'],
@@ -639,23 +638,31 @@ def calc_damage_for_waterlevel(
         tile_y_size = (extent[3] - extent[1]) / y_tiles
         result_tile_size_x = result.shape[1] / x_tiles
         result_tile_size_y = result.shape[0] / y_tiles
-        #print ('result tile size: %r %r' % (result_tile_size_x, result_tile_size_y))
+
         for tile_x in range(x_tiles):
             for tile_y in range(y_tiles):
-                e = (extent[0] + tile_x * tile_x_size, extent[1] + tile_y * tile_y_size,
-                    extent[0] + (tile_x + 1) * tile_x_size, extent[1] + (tile_y + 1) * tile_y_size)
-                # We are writing a png + pgw now, but in the task a tiff will be created and uploaded
+                e = (
+                    extent[0] + tile_x * tile_x_size,
+                    extent[1] + tile_y * tile_y_size,
+                    extent[0] + (tile_x + 1) * tile_x_size,
+                    extent[1] + (tile_y + 1) * tile_y_size)
+                # We are writing a png + pgw now, but in the task a
+                # tiff will be created and uploaded
                 base_filename = mkstemp_and_close()
                 image_result = {
                     'filename_tif': base_filename + '.tif',
                     'filename_png': base_filename + '.png',
                     'filename_pgw': base_filename + '.pgw',
+                    # %s is for the damage_event.slug
                     'dstname': 'schade_%s_' + ahn_name + '.png',
-                    'extent': ahn_index.extent_wgs84(e=e)}  # %s is for the damage_event.slug
+                    'extent': ahn_index.extent_wgs84(e=e)}
                 write_image(
                     name=image_result['filename_png'],
-                    values=result[(y_tiles-tile_y-1)*result_tile_size_y:(y_tiles-tile_y)*result_tile_size_y,
-                                (tile_x)*result_tile_size_x:(tile_x+1)*result_tile_size_x])
+                    values=result[
+                        (y_tiles - tile_y - 1) * result_tile_size_y:
+                            (y_tiles - tile_y) * result_tile_size_y,
+                        (tile_x) * result_tile_size_x:
+                            (tile_x + 1) * result_tile_size_x])
                 result_images.append({
                     'extent': e,
                     'path': image_result['filename_png'],
@@ -665,7 +672,8 @@ def calc_damage_for_waterlevel(
                     extent=e)
                 img_result.append(image_result)
 
-        csv_result = {'filename': mkstemp_and_close(), 'arcname': arcname + '.csv',
+        csv_result = {
+            'filename': mkstemp_and_close(), 'arcname': arcname + '.csv',
             'delete_after': True}
         meta = [
             ['schade module versie', tools.version()],
@@ -675,7 +683,8 @@ def calc_damage_for_waterlevel(
             ['duur overstroming (s)', str(floodtime)],
             ['hersteltijd wegen (s)', str(repairtime_roads)],
             ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
-            ['berekening', {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+            ['berekening',
+             {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
             ['ahn_name', ahn_name],
             ]
         write_table(
@@ -724,7 +733,8 @@ def calc_damage_for_waterlevel(
                     slug=depth_slug,
                 ).count()
             except:
-                logger.warning('GeoImage for depth failed because of fully masked')
+                logger.warning(
+                    'GeoImage for depth failed because of fully masked')
 
             geo_image_height_count = models.GeoImage.objects.filter(
                 slug=height_slug,
@@ -746,7 +756,8 @@ def calc_damage_for_waterlevel(
                         )
                         continue
 
-                    landuse, depth, geo, floodtime_px, ds_height, height = alldata
+                    (landuse, depth, geo, floodtime_px,
+                     ds_height, height) = alldata
                 except:
                     # Log this error and all previous normal logs,
                     # instead of hard crashing
@@ -767,13 +778,15 @@ def calc_damage_for_waterlevel(
                 extent = ahn_index.the_geom.extent
                 # Actually create tile
                 logger.info("Generating depth GeoImage: %s" % depth_slug)
-                try: #if isinstance(min_depth, float) and isinstance(max_depth, float):
+                try:
                     models.GeoImage.from_data_with_min_max(
                         depth_slug, depth, extent, min_depth, max_depth,
                         cdict=cdict_water_depth)
                     depth_slugs.append(depth_slug)  # part of result
                 except:
-                    logger.info("Skipped depth GeoImage because of masked only or unknown error")
+                    logger.info(
+                        "Skipped depth GeoImage because of masked "
+                        "only or unknown error")
 
     if ((min_height is not None) and
         (max_height is not None) and
@@ -802,7 +815,6 @@ def calc_damage_for_waterlevel(
                     ),
                 )
                 overall_damage[code] += indirect_road_damage
-
 
     def add_roads_to_image(roads, image_path, extent):
         """ This function could be moved to top level. """
@@ -853,7 +865,8 @@ def calc_damage_for_waterlevel(
             extent=result_image['extent'],
         )
 
-    csv_result = {'filename': mkstemp_and_close(), 'arcname': 'schade_totaal.csv',
+    csv_result = {
+        'filename': mkstemp_and_close(), 'arcname': 'schade_totaal.csv',
         'delete_after': True}
     meta = [
         ['schade module versie', tools.version()],
@@ -863,7 +876,8 @@ def calc_damage_for_waterlevel(
         ['duur overstroming (s)', str(floodtime)],
         ['hersteltijd wegen (s)', str(repairtime_roads)],
         ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
-        ['berekening', {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+        ['berekening',
+         {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
         ]
     write_table(
         name=csv_result['filename'],
@@ -886,4 +900,5 @@ def calc_damage_for_waterlevel(
 
     logger.info('zipfile: %s' % output_zipfile)
 
-    return output_zipfile, img_result, result_table, landuse_slugs, height_slugs, depth_slugs
+    return (output_zipfile, img_result, result_table,
+            landuse_slugs, height_slugs, depth_slugs)
