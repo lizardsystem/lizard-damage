@@ -141,6 +141,111 @@ def send_email(scenario_id, username=None, taskname=None, loglevel=20,
     logger.info("e-mail has been successfully sent")
 
 
+def call_calc_damage_for_waterlevel(
+    logger, damage_event, damagetable, calc_type):
+    waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
+                       damage_event.damageeventwaterlevel_set.all()]
+    logger.info("event %s" % (damage_event))
+    #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
+    logger.info(" - month %s, floodtime %s" % (
+            damage_event.floodmonth, damage_event.floodtime))
+    if damagetable:
+        dt_path = damagetable.path
+    else:
+        # Default
+        dt_path = os.path.join(
+            settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
+
+    return calc.calc_damage_for_waterlevel(
+        repetition_time=damage_event.repetition_time,
+        waterlevel_ascfiles=waterlevel_ascfiles,
+        dt_path=dt_path,
+        month=damage_event.floodmonth,
+        floodtime=damage_event.floodtime,
+        repairtime_roads=damage_event.repairtime_roads,
+        repairtime_buildings=damage_event.repairtime_buildings,
+        calc_type=calc_type,
+        logger=logger)
+
+
+def process_result(
+    logger, damage_event, damage_event_index, result, scenario_name):
+    errors = 0
+    # result[0] is the result zip file name in temp dir.
+    with open(result[0], 'rb') as doc_file:
+        try:
+            if damage_event.result:
+                logger.warning('Deleting existing results...')
+                damage_event.result.delete()  # Delete old results
+            logger.info('Saving results...')
+            damage_event.result.save(
+                '%s%i.zip' % (
+                    slugify(scenario_name),
+                    damage_event_index + 1),
+                File(doc_file), save=True)
+            damage_event.save()
+        except:
+            logger.error('Exception saving zipfile. Too big?')
+            for exception_line in traceback.format_exc().split('\n'):
+                logger.error(exception_line)
+            errors = 1
+        os.remove(result[0])  # remove temp file, whether it was saved
+                              # or not
+
+        # result[2] is the table in a data structure
+        damage_event.table = json.dumps(result[2])
+        # Store references to GeoImage objects
+        damage_event.landuse_slugs = ','.join(result[3])
+        damage_event.height_slugs = ','.join(result[4])
+        damage_event.depth_slugs = ','.join(result[5])
+        damage_event.save()
+
+        # result[1] is a list of png files to be uploaded to the django db.
+        if damage_event.damageeventresult_set.count() >= 0:
+            logger.warning("Removing old images...")
+            for damage_event_result in (
+                damage_event.damageeventresult_set.all()):
+                damage_event_result.image.delete()
+                damage_event_result.delete()
+        for img in result[1]:
+            # convert filename_png to geotiff,
+            #import pdb; pdb.set_trace()
+
+            logger.info('Warping png to tif... %s' % img['filename_png'])
+            command = (
+                'gdalwarp %s %s -t_srs "+proj=latlong '
+                '+datum=WGS83" -s_srs "%s"' % (
+                    img['filename_png'], img['filename_tif'], RD.strip()))
+            logger.info(command)
+            # Warp png file, output is tif.
+            subprocess.call([
+                    'gdalwarp', img['filename_png'], img['filename_tif'],
+                    '-t_srs', "+proj=latlong +datum=WGS84",
+                    '-s_srs', RD.strip()])
+
+            img['extent'] = extent_from_geotiff(img['filename_tif'])
+            # Convert it back to png
+            convert_tif_to_png(img['filename_tif'], img['filename_png'])
+
+            damage_event_result = DamageEventResult(
+                damage_event=damage_event,
+                west=img['extent'][0],
+                south=img['extent'][1],
+                east=img['extent'][2],
+                north=img['extent'][3])
+            logger.info('Uploading %s...' % img['filename_png'])
+            with open(img['filename_png'], 'rb') as img_file:
+                damage_event_result.image.save(
+                    img['dstname'] % damage_event.slug,
+                    File(img_file), save=True)
+            damage_event_result.save()
+            os.remove(img['filename_png'])
+            os.remove(img['filename_pgw'])
+            os.remove(img['filename_tif'])
+        logger.info('Result has %d images' % len(result[1]))
+    return errors
+
+
 @task
 @task_logging
 def calculate_damage(
@@ -165,110 +270,13 @@ def calculate_damage(
     for damage_event_index, damage_event in enumerate(
         damage_scenario.damageevent_set.all(),
     ):
-        # ds_wl_filename = os.path.join(
-        #     settings.DATA_ROOT, 'waterlevel', 'ws_test1.asc',
-        #     )
-
-        # damage_event.waterlevel.path
-        ds_wl_filenames = [dewl.waterlevel.path for dewl in
-                          damage_event.damageeventwaterlevel_set.all()]
-        logger.info("event %s" % (damage_event))
-        #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
-        logger.info(" - month %s, floodtime %s" % (
-                damage_event.floodmonth, damage_event.floodtime))
-        if damage_scenario.damagetable:
-            dt_path = damage_scenario.damagetable.path
-        else:
-            # Default
-            dt_path = os.path.join(
-                settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
-        result = calc.calc_damage_for_waterlevel(
-            repetition_time=damage_event.repetition_time,
-            ds_wl_filenames=ds_wl_filenames,
-            dt_path=dt_path,
-            month=damage_event.floodmonth,
-            floodtime=damage_event.floodtime,
-            repairtime_roads=damage_event.repairtime_roads,
-            repairtime_buildings=damage_event.repairtime_buildings,
-            calc_type=damage_scenario.calc_type,
-            logger=logger)
+        result = call_calc_damage_for_waterlevel(
+            logger, damage_event,
+            damage_scenario.damagetable, damage_scenario.calc_type)
         if result:
-            # result[0] is the result zip file name in temp dir.
-            with open(result[0], 'rb') as doc_file:
-                try:
-                    if damage_event.result:
-                        logger.warning('Deleting existing results...')
-                        damage_event.result.delete()  # Delete old results
-                    logger.info('Saving results...')
-                    damage_event.result.save(
-                        '%s%i.zip' % (
-                            slugify(damage_scenario.name),
-                            damage_event_index + 1),
-                        File(doc_file), save=True)
-                    damage_event.save()
-                except:
-                    logger.error('Exception saving zipfile. Too big?')
-                    for exception_line in traceback.format_exc().split('\n'):
-                        logger.error(exception_line)
-                    errors += 1
-            os.remove(result[0])  # remove temp file, whether it was
-                                  # saved or not
-
-            # result[2] is the table in a data structure
-            damage_event.table = json.dumps(result[2])
-            # Store references to GeoImage objects
-            damage_event.landuse_slugs = ','.join(result[3])
-            damage_event.height_slugs = ','.join(result[4])
-            damage_event.depth_slugs = ','.join(result[5])
-            damage_event.save()
-
-            # result[1] is a list of png files to be uploaded to the django db.
-            if damage_event.damageeventresult_set.count() >= 0:
-                logger.warning("Removing old images...")
-                for damage_event_result in (
-                    damage_event.damageeventresult_set.all()):
-                    damage_event_result.image.delete()
-                    damage_event_result.delete()
-            for img in result[1]:
-                # convert filename_png to geotiff,
-                #import pdb; pdb.set_trace()
-
-                logger.info('Warping png to tif... %s' % img['filename_png'])
-                command = (
-                    'gdalwarp %s %s -t_srs "+proj=latlong '
-                    '+datum=WGS83" -s_srs "%s"' % (
-                    img['filename_png'], img['filename_tif'], RD.strip()))
-                logger.info(command)
-                # Warp png file, output is tif.
-                subprocess.call([
-                    'gdalwarp', img['filename_png'], img['filename_tif'],
-                    '-t_srs', "+proj=latlong +datum=WGS84",
-                    '-s_srs', RD.strip()])
-
-                img['extent'] = extent_from_geotiff(img['filename_tif'])
-                # Convert it back to png
-                #subprocess.call([
-                #    'convert', img['filename_tif'], img['filename_png']])
-                convert_tif_to_png(img['filename_tif'], img['filename_png'])
-
-            #logger.info('Creating damage event results...')
-            #for img in result[1]:
-                damage_event_result = DamageEventResult(
-                    damage_event=damage_event,
-                    west=img['extent'][0],
-                    south=img['extent'][1],
-                    east=img['extent'][2],
-                    north=img['extent'][3])
-                logger.info('Uploading %s...' % img['filename_png'])
-                with open(img['filename_png'], 'rb') as img_file:
-                    damage_event_result.image.save(
-                        img['dstname'] % damage_event.slug,
-                        File(img_file), save=True)
-                damage_event_result.save()
-                os.remove(img['filename_png'])
-                os.remove(img['filename_pgw'])
-                os.remove(img['filename_tif'])
-            logger.info('Result has %d images' % len(result[1]))
+            errors += process_result(
+                logger, damage_event, damage_event_index,
+                result, damage_scenario.name)
         else:
             errors += 1
 
@@ -277,11 +285,11 @@ def calculate_damage(
         risk.create_risk_map(damage_scenario=damage_scenario, logger=logger)
 
     # Roundup
-
     damage_scenario.status = damage_scenario.SCENARIO_STATUS_DONE
     damage_scenario.save()
 
     if errors == 0:
+        # Send success mail
         logger.info('STATS scenario type %s van %s is klaar in %r' % (
                 damage_scenario.scenario_type_str,
                 damage_scenario.email,
@@ -294,6 +302,7 @@ def calculate_damage(
             damage_scenario.id, 'email_ready', subject, username=username)
         logger.info("finished")
     else:
+        # Send error mail
         logger.info('STATS scenario type %s van %s is mislukt in %r' % (
                 damage_scenario.scenario_type_str,
                 damage_scenario.email,

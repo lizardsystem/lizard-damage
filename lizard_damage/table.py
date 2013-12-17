@@ -11,7 +11,9 @@ import ConfigParser
 import openpyxl
 import logging
 import numpy
+import os
 
+from django.conf import settings
 from django.utils import simplejson as json
 from lizard_damage import (
     models,
@@ -302,3 +304,13 @@ class DamageTable(object):
         XLSX_TYPE: _import_from_xlsx,
         CFG_TYPE: _import_from_cfg,
     }
+
+
+def read_damage_table(dt_path):
+    """Returns possibly changed dt_path and damage table"""
+    if dt_path is None:
+        damage_table_path = 'data/damagetable/dt.cfg'
+        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
+    with open(dt_path) as cfg:
+        dt = DamageTable.read_cfg(cfg)
+        return dt_path, dt
