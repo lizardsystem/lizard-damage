@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.template import Context
-#from django.template import Template
 from django.template.loader import get_template
 
 from lizard_damage.models import BenefitScenario
@@ -139,10 +139,13 @@ def send_email(scenario_id, username=None, taskname=None, loglevel=20,
     scenario.save()
 
     logger.info("e-mail has been successfully sent")
+    logger.info("url was {}".format(
+            reverse("lizard_damage_result", kwargs=dict(slug=scenario.slug))))
 
 
 def call_calc_damage_for_waterlevel(
-    logger, damage_event, damagetable, calc_type):
+    logger, damage_event, damagetable, calc_type,
+    alternative_heights_dataset, alternative_landuse_dataset):
     waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
                        damage_event.damageeventwaterlevel_set.all()]
     logger.info("event %s" % (damage_event))
@@ -165,6 +168,8 @@ def call_calc_damage_for_waterlevel(
         repairtime_roads=damage_event.repairtime_roads,
         repairtime_buildings=damage_event.repairtime_buildings,
         calc_type=calc_type,
+        alternative_landuse_dataset=alternative_landuse_dataset,
+        alternative_heights_dataset=alternative_heights_dataset,
         logger=logger)
 
 
@@ -272,7 +277,10 @@ def calculate_damage(
     ):
         result = call_calc_damage_for_waterlevel(
             logger, damage_event,
-            damage_scenario.damagetable, damage_scenario.calc_type)
+            damage_scenario.damagetable,
+            damage_scenario.calc_type,
+            damage_scenario.alternative_heights_dataset,
+            damage_scenario.alternative_landuse_dataset)
         if result:
             errors += process_result(
                 logger, damage_event, damage_event_index,

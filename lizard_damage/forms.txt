@@ -13,19 +13,14 @@ import logging
 import shutil
 import tempfile
 import os
-import xlrd
+from lizard_damage.models import extent_from_dataset
+from lizard_damage.raster import extent_within_extent
+from lizard_damage.models import DamageScenario
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
-from .models import extent_from_dataset
-from .raster import extent_within_extent
-from .models import DamageScenario
-from . import landuse_translator
-
 logger = logging.getLogger(__name__)
 
-
-GDAL_TIFF_DRIVER = gdal.GetDriverByName(b'gtiff')
 
 SCENARIO_TYPES = DamageScenario.SCENARIO_TYPES
 SCENARIO_TYPES_DICT = DamageScenario.SCENARIO_TYPES_DICT
@@ -167,15 +162,6 @@ class FormStep1(forms.Form):
         'die minstens het gebied van het maximale waterstandsbestand beslaat. '
         )
 
-    customlanduseexcel = forms.FileField(
-        label="Optioneel: vertaaltabel bij eigen landgebruikskaart",
-        required=False,
-        help_text='Als u een eigen landgebruikskaart gebruikt, kan het zijn '
-        'dat uw kaart andere codes gebruikt voor de verschillende typen '
-        'landgebruik. In dit geval kan er een Excel file meegeleverd worden '
-        'die gebruikt zal worden om de codes om te nummeren. Zie het '
-        'voorbeeldbestand.')
-
     floodtime = forms.FloatField(
         label="Duur overlast (uur)",
         help_text="Hiermee wordt de periode bedoeld waarbij er daadwerkelijk"
@@ -233,143 +219,43 @@ class FormStep1(forms.Form):
         """Assumes this field has no errors yet"""
         self._errors[field] = self.error_class([message])
 
-    @property
-    def temp_directory(self):
-        if not hasattr(self, '_temp_directory'):
-            self._temp_directory = tempfile.mkdtemp()
-        return self._temp_directory
-
-    def save_uploaded_gdal_file_field(self, fieldname):
-        uploadedfile = self.cleaned_data.get(fieldname)
-        if uploadedfile is None:
-            return
-
-        filename = os.path.join(self.temp_directory, uploadedfile.name)
-        with open(filename, 'wb') as f:
-            for chunk in uploadedfile.chunks():
-                f.write(chunk)
-
-        dataset = gdal.Open(filename)
-        if dataset is None:
-            self.add_field_error(fieldname, "Kan raster niet openen.")
-            dataset = None
-            os.remove(filename)
-        else:
-            self.cleaned_data[fieldname + '_file'] = filename
-            self.cleaned_data[fieldname + '_dataset'] = dataset
-
-    def save_uploaded_excel_file(self, fieldname):
-        uploadedfile = self.cleaned_data.get(fieldname)
-        if uploadedfile is None:
-            return
-
-        filename = os.path.join(self.temp_directory, uploadedfile.name)
-        with open(filename, 'wb') as f:
-            for chunk in uploadedfile.chunks():
-                f.write(chunk)
-
-        try:
-            translator = landuse_translator.LanduseTranslator(filename)
-            translator.check()
-        except landuse_translator.TranslatorException as e:
-            self.add_field_error(fieldname, e.description)
-            os.remove(filename)
-            return
-
-        self.cleaned_data[fieldname + "_file"] = filename
-        self.cleaned_data[fieldname + "_translator"] = translator
-
-    def clean_customlanduse(self):
-        self.save_uploaded_gdal_file_field('customlanduse')
-        return self.cleaned_data.get('customlanduse')
-
-    def clean_customlanduseexcel(self):
-        if (self.cleaned_data['customlanduseexcel'] and not
-            self.cleaned_data['customlanduse']):
-            self.add_field_error(
-                'customlanduseexcel',
-                "Uploaden van een vertaaltabelbestand heeft "
-                "alleen zin als er een eigen landgebruikskaart "
-                "gebruikt wordt.")
-
-        self.save_uploaded_excel_file('customlanduseexcel')
-
-        return self.cleaned_data['customlanduseexcel']
-
-    def clean_customheights(self):
-        self.save_uploaded_gdal_file_field('customheights')
-        return self.cleaned_data.get('customheights')
-
-    def clean_waterlevel(self):
-        self.save_uploaded_gdal_file_field('waterlevel')
-        return self.cleaned_data.get('waterlevel')
-
     def clean(self):
         """Check that optional custom datasets cover the right area."""
         cleaned_data = super(FormStep1, self).clean()
 
-        customlanduse = cleaned_data.get('customlanduse_dataset')
-        customheights = cleaned_data.get('customheights_dataset')
-        waterlevel = cleaned_data.get('waterlevel_dataset')
+        if 'customlanduse' and 'waterlevel' in cleaned_data:
+            # Save files to a temporary directory to check them
+            self.temp_directory = tempfile.mkdtemp()
 
-        if customlanduse and waterlevel:
-            water_extent = extent_from_dataset(waterlevel)
-            landuse_extent = extent_from_dataset(customlanduse)
+            for field in ('customlanduse', 'waterlevel'):
+                filename = os.path.join(
+                    self.temp_directory, cleaned_data[field].name)
+                with open(filename, 'wb') as f:
+                    for chunk in cleaned_data[field].chunks():
+                        f.write(chunk)
+                cleaned_data[field + '_filename'] = filename
 
-            if not extent_within_extent(
-                inner_extent=water_extent, outer_extent=landuse_extent):
-                self.add_field_error('customlanduse', "Not within extent")
+            # Open datasets
+            customlanduse = gdal.Open(cleaned_data['customlanduse_filename'])
+            waterlevel = gdal.Open(cleaned_data['waterlevel_filename'])
 
-        if customheights and waterlevel:
-            water_extent = extent_from_dataset(waterlevel)
-            heights_extent = extent_from_dataset(customheights)
+            if customlanduse is None:
+                self.add_field_error("customlanduse", "Can't open dataset")
+            if waterlevel is None:
+                self.add_field_error("waterlevel", "Can't open dataset")
 
-            if not extent_within_extent(
-                inner_extent=water_extent, outer_extent=heights_extent):
-                self.add_field_error('customheights', "Not within extent")
+            if customlanduse is not None and waterlevel is not None:
+                water_extent = extent_from_dataset(waterlevel)
+                landuse_extent = extent_from_dataset(customlanduse)
 
-        # Check the landuse Excel sheet
-        translator = self.cleaned_data.get('customlanduseexcel_translator')
-        landuse = self.cleaned_data.get('customlanduse_dataset')
-        if translator and landuse:
-            try:
-                translator.check_with_dataset(landuse)
-
-                # It's apparently correct. Use it to translate the
-                # customlanduse dataset, creating a new one. It's a
-                # bit dirty to do this in the form, but OK...
-                dataset = self.cleaned_data.get('customlanduse_dataset')
-                grid = dataset.GetRasterBand(1).ReadAsArray()
-
-                new_filename = str(os.path.join(
-                    self.temp_directory, 'translated_landusemap.tiff'))
-                new_dataset = GDAL_TIFF_DRIVER.CreateCopy(
-                    new_filename, dataset)
-                band = new_dataset.GetRasterBand(1)
-                band.WriteArray(translator.translate_grid(grid))
-                new_dataset.Close()
-                dataset.Close()
-                os.path.remove(self.cleaned_data.get('customlanduse_file'))
-                self.cleaned_data['customlanduse_file'] = new_filename
-            except landuse_translator.TranslatorException as e:
-                self.add_field_error(
-                    'customlanduseexcel', e.description)
-
-        # This closes the datasets, we don't need them anymore at
-        # this stage
-        for key in ('customlanduse_dataset', 'customheights_dataset',
-                    'waterlevel_dataset'):
-            if key in cleaned_data:
-                del cleaned_data[key]
+                if not extent_within_extent(
+                    inner_extent=water_extent, outer_extent=landuse_extent):
+                    self.add_field_error('customlanduse', "Not within extent")
 
         return cleaned_data
 
     def cleanup_files(self):
         """This must be called after processing the saved files."""
-        for key in self.cleaned_data:
-            if key.endswith('_file'):
-                del self.cleaned_data[key]
-
         shutil.rmtree(self.temp_directory)
 
 

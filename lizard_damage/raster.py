@@ -213,12 +213,23 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
-def get_ds_for_tile(ahn_name, logger=None):
+def get_ds_for_tile(
+    ahn_name,
+    alternative_heights_dataset=None,
+    alternative_landuse_dataset=None,
+    logger=None):
     """
     Return datasets (waterlevel, height, landuse).
 
     Input:
         ahn_name: ahn subunit name
+        ds_wl_original: supplied waterlevel dataset
+        method can be 'filesystem' or 'database'
+
+        If an alternative_heights_dataset or
+        alternative_landuse_dataset is given, use that. But first we
+        do retrieve the standard ahn/lgn datasets, and reproject the
+        alternatives to have the same dimensions.
     """
     basepath = settings.DATA_ROOT
     # ahn
@@ -236,17 +247,35 @@ def get_ds_for_tile(ahn_name, logger=None):
     if ds_lgn is None:
         logger.warning('No landuse data for {}'.format(ahn_name))
 
+    logger.info("get_ds_for_tile, alternatives present: {} {}"
+                .format(alternative_heights_dataset is not None,
+                        alternative_landuse_dataset is not None))
+
+    if ds_lgn and alternative_landuse_dataset is not None:
+        logger.info('Reproject alternative dataset to same dimensions as LGN')
+        ds_lgn = reproject(alternative_landuse_dataset, ds_lgn)
+
+    if ds_ahn and alternative_heights_dataset is not None:
+        logger.info('Reproject alternative dataset to same dimensions as AHN')
+        ds_ahn = reproject(alternative_heights_dataset, ds_ahn)
+
     return ds_ahn, ds_lgn
 
 
-def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
+def get_calc_data(
+    waterlevel_datasets, floodtime, ahn_name, logger,
+    alternative_heights_dataset=None, alternative_landuse_dataset=None):
     """ Return a tuple with data. """
 
     logger.info('Reading datasets for %s' % ahn_name)
     ds_height, ds_landuse = get_ds_for_tile(
         ahn_name=ahn_name, logger=logger,
+        alternative_heights_dataset=alternative_heights_dataset,
+        alternative_landuse_dataset=alternative_landuse_dataset
     )  # ds_height: part of result
+
     if ds_height is None or ds_landuse is None:
+        logger.info("ds_height or ds_landuse is None")
         return None
 
     logger.info('landuse, etc...')
@@ -255,8 +284,7 @@ def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
     logger.info('height to masked array...')
     height = to_masked_array(ds_height)
     if height.mask.any():
-        logger.warn(
-            '%s nodata pixels in height tile %s',
+        logger.warn('%s nodata pixels in height tile %s',
             height.mask.sum(), ahn_name,
         )
 
@@ -270,6 +298,8 @@ def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
+    logger.info('Max of height data is {}'.
+                format(numpy.amax(height)))
     # Here all the datasets are read in one big array.
     # Mem reduction could be achieved here by incrementally read and update.
     depths = numpy.ma.array(
@@ -277,6 +307,8 @@ def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 
+    logger.info('Max of depth data is {}'.
+                format(numpy.amax(depths)))
     depth = depths.max(0)  # part of result
     floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
     landuse.mask = depth.mask
@@ -342,3 +374,12 @@ def get_mask(roads, shape, geo):
         # Rasterize and return
         gdal.RasterizeLayer(ds_road, (1,), layer, burn_values=(1,))
         return ds_road.GetRasterBand(1).ReadAsArray()
+
+
+def extent_within_extent(outer_extent, inner_extent):
+    ominx, ominy, omaxx, omaxy = outer_extent
+    iminx, iminy, imaxx, imaxy = inner_extent
+
+    return (
+        (ominx <= iminx <= imaxx <= omaxx) and
+        (ominy <= iminy <= imaxy <= omaxy))

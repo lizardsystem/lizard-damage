@@ -6,7 +6,21 @@ from __future__ import (
   absolute_import,
   division,
 )
+
+from PIL import Image
+import datetime
+import json
+import logging
+import os
+import random
+import re
+import string
+import subprocess
+import tempfile
+import zipfile
+
 from django.contrib.gis.db import models
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.files import File
 from lizard_damage import utils
@@ -15,18 +29,9 @@ from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
 
-import datetime
-import zipfile
-import os
-import random
-import string
-import json
-import tempfile
-from PIL import Image
-import subprocess
-import re
-
 from osgeo import gdal
+
+logger = logging.getLogger(__name__)
 
 # from django.utils.translation import ugettext_lazy as _
 
@@ -45,6 +50,10 @@ wgs84_proj = Proj(WGS84)
 
 def extent_from_geotiff(filename):
     ds = gdal.Open(filename)
+    return extent_from_dataset(ds)
+
+
+def extent_from_dataset(ds):
     width = ds.RasterXSize
     height = ds.RasterYSize
     gt = ds.GetGeoTransform()
@@ -198,6 +207,13 @@ class DamageScenario(models.Model):
     scenario_type = models.IntegerField(
         choices=SCENARIO_TYPES, default=0)
 
+    customheights = models.FileField(
+        upload_to='scenario/customheights',
+        null=True, blank=True)
+    customlanduse = models.FileField(
+        upload_to='scenario/customlanduse',
+        null=True, blank=True)
+
     def __unicode__(self):
         return self.name
 
@@ -219,6 +235,22 @@ class DamageScenario(models.Model):
     @property
     def scenario_type_str(self):
         return self.SCENARIO_TYPES_DICT[self.scenario_type]
+
+    @property
+    def alternative_heights_dataset(self):
+        if self.customheights:
+            logger.info("Opening {}".format(self.customheights))
+            return gdal.Open(str(
+                    os.path.join(
+                        settings.MEDIA_ROOT, self.customheights.name)))
+
+    @property
+    def alternative_landuse_dataset(self):
+        if self.customlanduse:
+            logger.info("Opening {}".format(self.customlanduse))
+            return gdal.Open(str(
+                    os.path.join(
+                        settings.MEDIA_ROOT, self.customlanduse.name)))
 
 
 class DamageEvent(models.Model):

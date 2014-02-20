@@ -313,7 +313,8 @@ def write_result(name, ma_result, ds_template):
     )
 
 
-def write_table(name, damage, area, dt, meta=[], include_total=False):
+def write_table(
+    name, damage, area, damage_table, meta=[], include_total=False):
     """
     Write results in a csv table on disk.
 
@@ -347,7 +348,7 @@ def write_table(name, damage, area, dt, meta=[], include_total=False):
                     sum(damage.values()),
                 )
             )
-        for code, dr in dt.data.items():
+        for code, dr in damage_table.data.items():
             resultfile.write(
                 '%s,%s,%s,%s,%s\r\n' %
                 (
@@ -441,6 +442,8 @@ def calc_damage_for_waterlevel(
     month=9, floodtime=20 * 3600,
     repairtime_roads=None, repairtime_buildings=None,
     calc_type=CALC_TYPE_MAX,
+    alternative_heights_dataset=None,
+    alternative_landuse_dataset=None,
     logger=logger):
     """
     Calculate damage for provided waterlevel file.
@@ -495,8 +498,8 @@ def calc_damage_for_waterlevel(
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
     result_images = []  # Images to be modified for indirect road damage.
 
-    min_height = None
-    max_height = None
+    min_height = float('inf')
+    max_height = float('-inf')
     min_depth = 0.0  # Set defaults for testing... depth is always >= 0
     max_depth = 0.1
 
@@ -510,6 +513,8 @@ def calc_damage_for_waterlevel(
                 waterlevel_datasets=waterlevel_datasets,
                 floodtime=floodtime,
                 ahn_name=ahn_name,
+                alternative_heights_dataset=alternative_heights_dataset,
+                alternative_landuse_dataset=alternative_landuse_dataset,
                 logger=logger,
             )
             if alldata is None:
@@ -531,20 +536,12 @@ def calc_damage_for_waterlevel(
         extent = index_info[ahn_name]
 
         # For height map
-        new_min_height = np.amin(height)
-        if min_height is None or new_min_height < min_height:
-            min_height = new_min_height
-        new_max_height = np.amax(height)
-        if max_height is None or new_max_height < max_height:
-            max_height = new_max_height
+        min_height = min(min_height, np.amin(height))
+        max_height = max(max_height, np.amax(height))
 
         # For depth map
-        new_min_depth = np.amin(depth)
-        if min_depth is None or new_min_depth < min_depth:
-            min_depth = new_min_depth
-        new_max_depth = np.amax(depth)
-        if max_depth is None or new_max_depth < max_depth:
-            max_depth = new_max_depth
+        min_depth = min(min_depth, np.amin(depth))
+        max_depth = max(max_depth, np.amax(depth))
 
         # For landuse map
         landuse_slug = slug_for_landuse(ahn_name)
@@ -745,10 +742,7 @@ def calc_damage_for_waterlevel(
                         "Skipped depth GeoImage because of masked "
                         "only or unknown error")
 
-    if ((min_height is not None) and
-        (max_height is not None) and
-        (min_depth is not None) and
-        (max_depth is not None)):
+    if (min_height <= max_height):
         generate_height_tiles()
 
     # Only after all tiles have been processed, calculate overall indirect
