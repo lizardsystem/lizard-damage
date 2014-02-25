@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
-from __future__ import (
-  print_function,
-  unicode_literals,
-  absolute_import,
-  division,
-)
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
 
+from osgeo import gdal
 import numpy as np
 
 import collections
@@ -380,12 +379,12 @@ def result_as_dict(name, damage, area, damage_table):
             {'display': 'schade', 'key': 'damage'}]
     for code, dr in damage_table.data.items():
         data.append({
-                'source': dr.source,
-                'code': dr.code,
-                'description': dr.description,
-                'area_ha': area[dr.code] / 10000.,
-                'damage': damage[dr.code],
-                })
+            'source': dr.source,
+            'code': dr.code,
+            'description': dr.description,
+            'area_ha': area[dr.code] / 10000.,
+            'damage': damage[dr.code],
+        })
     return (head, data)
 
 
@@ -459,13 +458,14 @@ def add_to_zip(output_zipfile, zip_result, logger):
 
 
 def calc_damage_for_waterlevel(
-    repetition_time,
-    ds_wl_filenames,
-    dt_path=None,
-    month=9, floodtime=20 * 3600,
-    repairtime_roads=None, repairtime_buildings=None,
-    calc_type=CALC_TYPE_MAX,
-    logger=logger):
+        repetition_time,
+        ds_wl_filenames,
+        dt_path=None,
+        month=9, floodtime=20 * 3600,
+        repairtime_roads=None, repairtime_buildings=None,
+        calc_type=CALC_TYPE_MAX,
+        logger=logger
+    ):
     """
     Calculate damage for provided waterlevel file.
 
@@ -512,8 +512,7 @@ def calc_damage_for_waterlevel(
     output_zipfile = mkstemp_and_close()
     waterlevel_ascfiles = ds_wl_filenames
     correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
-    waterlevel_datasets = [raster.import_dataset(waterlevel_ascfile, 'AAIGrid')
-                           for waterlevel_ascfile in waterlevel_ascfiles]
+    waterlevel_datasets = [gdal.Open(str(p)) for p in waterlevel_ascfiles]
     logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
     logger.info('waterlevel_datasets: %r' % waterlevel_datasets)
     for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
@@ -539,16 +538,14 @@ def calc_damage_for_waterlevel(
     min_depth = 0.0  # Set defaults for testing... depth is always >= 0
     max_depth = 0.1
 
-    ahn_indices = raster.get_ahn_indices(waterlevel_datasets[0])
-    for ahn_index in ahn_indices:
-        ahn_name = ahn_index.bladnr
+    index_info = raster.get_index_info(waterlevel_datasets[0])
+    for ahn_name in index_info:
         logger.info("Preparing calculation for tile %s..." % ahn_name)
 
         # Prepare data for calculation
         try:
             alldata = raster.get_calc_data(
                 waterlevel_datasets=waterlevel_datasets,
-                method=settings.RASTER_SOURCE,
                 floodtime=floodtime,
                 ahn_name=ahn_name,
                 logger=logger,
@@ -569,7 +566,7 @@ def calc_damage_for_waterlevel(
             return
 
         # 1000x1250 meters = 2000x2500 pixels
-        extent = ahn_index.the_geom.extent
+        extent = index_info[ahn_name]
 
         # For height map
         new_min_height = np.amin(height)
@@ -655,7 +652,7 @@ def calc_damage_for_waterlevel(
                     'filename_pgw': base_filename + '.pgw',
                     # %s is for the damage_event.slug
                     'dstname': 'schade_%s_' + ahn_name + '.png',
-                    'extent': ahn_index.extent_wgs84(e=e)}
+                    'extent': raster.transform_extent(e)}
                 write_image(
                     name=image_result['filename_png'],
                     values=result[

@@ -82,7 +82,6 @@ class DamageHeader(object):
 
     def _to_seconds(self, text):
         value, unit = text.split()
-        logger.error("_to_seconds, _units = {}".format(self._units))
         seconds = self._units[unit].to_si(float(value))
         return seconds
 
