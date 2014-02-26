@@ -5,7 +5,11 @@ Changelog of lizard-damage
 0.9.36 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Do not use the postgis raster database and the django cache anymore
+
+- Instead use a directory as source for landuse and dem data
+
+- Determine the part with data in waterlevel files and skip other tiles
 
 
 0.9.35 (2013-11-11)
