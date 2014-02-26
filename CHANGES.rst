@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-0.9.36 (unreleased)
--------------------
+0.10 (2014-02-26)
+-----------------
 
 - Do not use the postgis raster database and the django cache anymore
 
