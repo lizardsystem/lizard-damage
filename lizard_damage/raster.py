@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
-from __future__ import (
-  print_function,
-#  unicode_literals,
-  absolute_import,
-  division,
-)
+
+from __future__ import print_function
+# from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+
+import logging
+import numpy
+import os
 
 from osgeo import gdal
 from osgeo import gdalconst
@@ -13,85 +16,26 @@ from osgeo import ogr
 from osgeo import osr
 
 from django.contrib.gis.geos import Polygon
-from django.db import connections
 from django.conf import settings
 
 from lizard_damage import models
 
-from django.core.cache import cache
-import logging
-import numpy
-import os
-
 logger = logging.getLogger(__name__)
 
-# Get RD projection string
-spatial_reference_rd = osr.SpatialReference()
-spatial_reference_rd.ImportFromEPSG(28992)
-PROJECTION_RD = spatial_reference_rd.ExportToWkt()
+PROJECTION_RD = osr.GetUserInputAsWKT('epsg:28992')
 
 
-def get_postgisraster_argument(dbname, table, filename):
+def transform_extent(extent, source='epsg:28992', target='epsg:4326'):
     """
-    Return argument for PostGISRaster driver.
-
-    dbname is the Django database name from the project settings.
+    Transform an extent.
     """
-    template = ' '.join("""
-        PG:host=%(host)s
-        port=%(port)s
-        dbname='%(dbname)s'
-        user='%(user)s'
-        password='%(password)s'
-        schema='public'
-        table='%(table)s'
-        where='filename=\\'%(filename)s\\''
-        mode=1
-    """.split())
-
-    db = settings.DATABASES[dbname]
-
-    if db['HOST'] == '':
-        host = 'localhost'
-    else:
-        host = db['HOST']
-
-    if db['PORT'] == '':
-        port = '5432'
-    else:
-        port = db['HOST']
-
-    return template % dict(
-        host=host,
-        port=port,
-        dbname=db['NAME'],
-        user=db['USER'],
-        password=db['PASSWORD'],
-        table=table,
-        filename=filename,
+    x1, y1, x2, y2 = extent
+    ct = osr.CoordinateTransformation(
+        osr.SpatialReference(osr.GetUserInputAsWKT(source)),
+        osr.SpatialReference(osr.GetUserInputAsWKT(target)),
     )
-
-
-def get_postgisraster_nodatavalue(dbname, table, filename):
-    """
-    Return the nodatavalue.
-    """
-    cursor = connections[dbname].cursor()
-
-    # Data retrieval operation - no commit required
-    cursor.execute(
-        """
-        SELECT
-            ST_BandNoDataValue(rast)
-        FROM
-            %(table)s
-        WHERE
-            filename='%(filename)s'
-        """ % dict(table=table, filename=filename),
-    )
-    row = cursor.fetchall()
-
-    return row[0][0]
+    (p1, q1, r1), (p2, q2, r2) = ct.TransformPoints(((x1, y1), (x2, y2)))
+    return p1, q1, p2, q2
 
 
 def get_polygon_from_geo_and_shape(geo, shape):
@@ -134,7 +78,7 @@ def get_area_per_pixel(ds):
 
 def get_geo(ds):
     """ Return tuple (projection, geotransform) """
-    return  ds.GetProjection(), ds.GetGeoTransform()
+    return ds.GetProjection(), ds.GetGeoTransform()
 
 
 def set_geo(ds, geo):
@@ -148,13 +92,52 @@ def geo2cellsize(geo):
     return abs(geo[1][1] * geo[1][5])
 
 
-def get_ahn_indices(ds):
-    """ Return the ahn index objects that cover this dataset. """
-    polygon = get_polygon(ds)
-    ahn_indices = models.AhnIndex.objects.filter(
-        the_geom__intersects=polygon,
+def get_index_info(ds):
+    """
+    Return the ahn leaf numbers that cover this dataset.
+
+    Only the portions with data are considered in determining the leaf
+    numbers for the data tiles.
+    """
+    logger.info('Determine relevant portions of ahn2 tiles.')
+    # create an ogr datasource
+    driver = ogr.GetDriverByName('Memory')
+    datasource = driver.CreateDataSource('')
+    layer = datasource.CreateLayer(
+        '', osr.SpatialReference(PROJECTION_RD),
     )
-    return ahn_indices
+    field_defn = ogr.FieldDefn(b'class', ogr.OFTInteger)
+    layer.CreateField(field_defn)
+    # need a projection and asc does not support update, so create tmp dataset
+    driver = gdal.GetDriverByName('mem')
+    dataset = driver.Create(
+        '', ds.RasterXSize, ds.RasterYSize, ds.RasterCount, gdal.GDT_Byte,
+    )
+    band = dataset.GetRasterBand(1)
+    band.WriteArray(ds.GetRasterBand(1).GetMaskBand().ReadAsArray())
+    band.SetNoDataValue(255)
+    dataset.SetGeoTransform(ds.GetGeoTransform())
+    dataset.SetProjection(ds.GetProjection())
+    # polygonize the mask band
+    gdal.Polygonize(band, band, layer, 0)
+    # put all features in a multipolygon
+    geometry = ogr.Geometry(ogr.wkbMultiPolygon)
+    for feature in layer:
+        geometry.AddGeometry(feature.geometry())
+    # read from the index
+    index_datasource = ogr.Open(
+        os.path.join(settings.BUILDOUT_DIR, 'data', 'index')
+    )
+    index_layer = index_datasource[0]
+    index_layer.SetSpatialFilter(geometry)
+
+    def feature2extent(feature):
+        x1, x2, y1, y2 = feature.geometry().GetEnvelope()
+        return x1, y1, x2, y2
+
+    result = {feature['BLADNR']: feature2extent(feature)
+              for feature in index_layer}
+    return result
 
 
 def get_roads(gridcode, geo, shape):
@@ -221,38 +204,6 @@ def reproject(ds_source, ds_match):
     return ds_destination
 
 
-def import_dataset(filepath, driver):
-    """
-    Driver can be 'AIG', 'AAIGrid', 'PostGISRaster'
-
-    When using the PostGISRaster driver, use 'tablename/filename' as
-    the filepath
-    """
-    gdal.GetDriverByName(str(driver))
-    if driver == 'PostGISRaster':
-        table, filename = os.path.split(filepath)
-        open_argument = get_postgisraster_argument(
-            'raster', table, filename,
-        )
-    else:
-        open_argument = filepath
-    dataset = gdal.Open(str(open_argument))
-
-    logger.debug('Opening dataset: %s', open_argument)
-
-    # PostGISRaster driver in GDAL 1.9.1 sets nodatavalue to 0.
-    # In that case we get it from the database
-    if (driver == 'PostGISRaster' and
-        dataset is not None and
-        dataset.GetRasterBand(1).GetNoDataValue() == 0):
-        nodatavalue = get_postgisraster_nodatavalue(
-            'raster', table, filename,
-        )
-        dataset.GetRasterBand(1).SetNoDataValue(nodatavalue)
-
-    return dataset
-
-
 def export_dataset(filepath, ds, driver='AAIGrid'):
     """
     Save ds at filepath using driver.
@@ -262,84 +213,60 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
-def disk_free():
-    stat = os.statvfs('/')
-    return stat.f_bavail * stat.f_frsize
-
-
-def get_ds_for_tile(ahn_name, method='filesystem', logger=None):
+def get_ds_for_tile(ahn_name, logger=None):
     """
     Return datasets (waterlevel, height, landuse).
 
     Input:
         ahn_name: ahn subunit name
-        ds_wl_original: supplied waterlevel dataset
-        method can be 'filesystem' or 'database'
     """
-    if method == 'filesystem':
-        driver = 'AIG'
-        basepath = settings.DATA_ROOT
-    elif method == 'database':
-        driver = 'PostGISRaster'
-        basepath = ''
-
-    ds_ahn_filename = os.path.join(basepath, 'data_ahn', ahn_name)
-    ds_lgn_filename = os.path.join(basepath, 'data_lgn', ahn_name)
-    ds_ahn = import_dataset(ds_ahn_filename, driver)
-    ds_lgn = import_dataset(ds_lgn_filename, driver)
-
-    if ds_lgn is None:
-        logger.warning('No landuse data for {}'.format(ahn_name))
+    basepath = settings.DATA_ROOT
+    # ahn
+    ds_ahn_filename = os.path.join(
+        basepath, 'data_ahn', ahn_name[1:4], ahn_name + '.tif'
+    )
+    ds_ahn = gdal.Open(str(ds_ahn_filename))
     if ds_ahn is None:
         logger.warning('No height data for {}'.format(ahn_name))
+    # lgn
+    ds_lgn_filename = os.path.join(
+        basepath, 'data_lgn', ahn_name[1:4], ahn_name + '.tif'
+    )
+    ds_lgn = gdal.Open(str(ds_lgn_filename))
+    if ds_lgn is None:
+        logger.warning('No landuse data for {}'.format(ahn_name))
 
     return ds_ahn, ds_lgn
 
 
-def get_calc_data(
-    waterlevel_datasets, method, floodtime, ahn_name, logger, caching=True):
-    def hash_code(ahn_name):
-        """make hash for ahn tile"""
-        return ahn_name
+def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
+    """ Return a tuple with data. """
+
     logger.info('Reading datasets for %s' % ahn_name)
     ds_height, ds_landuse = get_ds_for_tile(
-        ahn_name=ahn_name, method=method, logger=logger,
+        ahn_name=ahn_name, logger=logger,
     )  # ds_height: part of result
     if ds_height is None or ds_landuse is None:
         return None
 
-    cached = cache.get(hash_code(ahn_name))
-    if cached is not None and caching:
-        logger.info('data from cache')
-        geo, height, landuse = cached
-    else:
-        logger.info('landuse, etc...')
-        geo = get_geo(ds_height)  # part of result
+    logger.info('landuse, etc...')
+    geo = get_geo(ds_height)  # part of result
 
-        logger.info('height to masked array...')
-        height = to_masked_array(ds_height)
-        if height.mask.any():
-            logger.warn('%s nodata pixels in height tile %s',
+    logger.info('height to masked array...')
+    height = to_masked_array(ds_height)
+    if height.mask.any():
+        logger.warn(
+            '%s nodata pixels in height tile %s',
             height.mask.sum(), ahn_name,
         )
 
-        logger.info('landuse to masked array...')
-        landuse = to_masked_array(ds_landuse)  # part of result
-        if landuse.mask.any():
-            logger.warn('%s nodata pixels in landuse tile %s',
+    logger.info('landuse to masked array...')
+    landuse = to_masked_array(ds_landuse)  # part of result
+    if landuse.mask.any():
+        logger.warn(
+            '%s nodata pixels in landuse tile %s',
             landuse.mask.sum(), ahn_name,
         )
-
-        df = disk_free()
-        logger.info(
-            'caching data... (Disk free: %iGB)' % (df / 1024 / 1024 / 1024))
-        if df > 2 * 1024 * 1024 * 1024:
-            cache.set(
-                hash_code(ahn_name), (geo, height, landuse), 1 * 24 * 3600)
-        else:
-            logger.warning(
-                'Less than 2 GB free. Increase disk size for cache,'
-                ' or reduce cache time.')
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
