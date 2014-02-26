@@ -718,8 +718,7 @@ def calc_damage_for_waterlevel(
             'height min max=%f, %f, depth min max=%f, %f' %
             (min_height, max_height, min_depth, max_depth),
         )
-        for ahn_index in ahn_indices:
-            ahn_name = ahn_index.bladnr
+        for ahn_name in index_info:
             height_slug = slug_for_height(ahn_name, min_height, max_height)
             height_slugs.append(height_slug)  # part of result
             geo_image_depth_count = -1
@@ -765,14 +764,14 @@ def calc_damage_for_waterlevel(
 
             if geo_image_height_count == 0:
                 # 1000x1250 meters = 2000x2500 pixels
-                extent = ahn_index.the_geom.extent
+                extent = index_info[ahn_name]
                 # Actually create tile
                 logger.info("Generating height GeoImage: %s" % height_slug)
                 models.GeoImage.from_data_with_min_max(
                     height_slug, height, extent, min_height, max_height)
             if geo_image_depth_count == 0:
                 # 1000x1250 meters = 2000x2500 pixels
-                extent = ahn_index.the_geom.extent
+                extent = index_info[ahn_name]
                 # Actually create tile
                 logger.info("Generating depth GeoImage: %s" % depth_slug)
                 try:
