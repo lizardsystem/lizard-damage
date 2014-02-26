@@ -740,7 +740,6 @@ def calc_damage_for_waterlevel(
                 try:
                     alldata = raster.get_calc_data(
                         waterlevel_datasets=waterlevel_datasets,
-                        method=settings.RASTER_SOURCE,
                         floodtime=floodtime,
                         ahn_name=ahn_name,
                         logger=logger,
