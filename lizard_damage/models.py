@@ -89,46 +89,6 @@ def friendly_filesize(size):
     return str(size)
 
 
-class AhnIndex(models.Model):
-    """
-    Sql for this table can be generated using:
-
-    shp2pgsql -s 28992 ahn2_05_int_index public.data_index | sed\
-    s/geom/the_geom/g > index.sql
-
-    Table definition can be obtained by executing this sql and using
-    bin/django inspectdb, and then replace DecimalFields by FloatFields
-    """
-    gid = models.IntegerField(primary_key=True)
-    x = models.FloatField(null=True, blank=True)  # In RD
-    y = models.FloatField(null=True, blank=True)
-    cellsize = models.CharField(max_length=2, blank=True)
-    lo_x = models.CharField(max_length=6, blank=True)
-    lo_y = models.CharField(max_length=6, blank=True)
-    bladnr = models.CharField(max_length=24, blank=True)
-    update = models.DateField(null=True, blank=True)
-    datum = models.DateField(null=True, blank=True)
-    min_datum = models.DateField(null=True, blank=True)
-    max_datum = models.DateField(null=True, blank=True)
-    ar = models.FloatField(null=True, blank=True)
-    the_geom = models.MultiPolygonField(
-        srid=28992, null=True, blank=True)  # All squares?
-    objects = models.GeoManager()
-
-    class Meta:
-        db_table = 'data_index'
-
-    def __unicode__(self):
-        return '%s %f %f %r' % (self.gid, self.x, self.y, self.extent_wgs84)
-
-    def extent_wgs84(self, e=None):
-        if e is None:
-            e = self.the_geom.extent
-        x0, y0 = transform(rd_proj, wgs84_proj, e[0], e[1])
-        x1, y1 = transform(rd_proj, wgs84_proj, e[2], e[3])
-        return (x0, y0, x1, y1)
-
-
 class Roads(models.Model):
     """
     Generated with bin/django inspectdb after executing:
