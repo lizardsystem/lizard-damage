@@ -5,7 +5,7 @@ Changelog of lizard-damage
 0.10.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Remove the obsolete AhnIndex model.
 
 
 0.10.2 (2014-02-26)
