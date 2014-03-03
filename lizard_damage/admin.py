@@ -101,7 +101,6 @@ class BenefitScenarioAdmin(admin.ModelAdmin):
     inlines = [BenefitScenarioResultInline]
 
 
-admin.site.register(models.AhnIndex)
 admin.site.register(models.BenefitScenario, BenefitScenarioAdmin)
 admin.site.register(models.GeoImage)
 admin.site.register(models.Unit, UnitAdmin)
