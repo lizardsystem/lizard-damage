@@ -14,6 +14,7 @@ import logging
 import os
 import random
 import re
+import shutil
 import string
 import subprocess
 import tempfile
@@ -207,12 +208,8 @@ class DamageScenario(models.Model):
     scenario_type = models.IntegerField(
         choices=SCENARIO_TYPES, default=0)
 
-    customheights = models.FileField(
-        upload_to='scenario/customheights',
-        null=True, blank=True)
-    customlanduse = models.FileField(
-        upload_to='scenario/customlanduse',
-        null=True, blank=True)
+    customheights = models.FilePathField(null=True, blank=True)
+    customlanduse = models.FilePathField(null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -224,6 +221,15 @@ class DamageScenario(models.Model):
             self.expiration_date = (
                 datetime.datetime.now() + datetime.timedelta(days=7))
         return super(DamageScenario, self).save(*args, **kwargs)
+
+    @property
+    def workdir(self):
+        workdir = os.path.join(
+            settings.BUILDOUT_DIR, 'var', 'wss',
+            'damagescenario', str(self.id))
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
+        return workdir
 
     @property
     def display_status(self):
@@ -242,7 +248,7 @@ class DamageScenario(models.Model):
             logger.info("Opening {}".format(self.customheights))
             return gdal.Open(str(
                     os.path.join(
-                        settings.MEDIA_ROOT, self.customheights.name)))
+                        settings.MEDIA_ROOT, self.customheights)))
 
     @property
     def alternative_landuse_dataset(self):
@@ -250,7 +256,19 @@ class DamageScenario(models.Model):
             logger.info("Opening {}".format(self.customlanduse))
             return gdal.Open(str(
                     os.path.join(
-                        settings.MEDIA_ROOT, self.customlanduse.name)))
+                        settings.MEDIA_ROOT, self.customlanduse)))
+
+    def move_files(self, file_dict):
+        """file_dict has keys like 'customheights_file', and paths to
+        these files as values. The files are moved to
+        var/wss/damagescenario/<id>/filename and those new paths are saved
+        to this objects."""
+        for field, path in file_dict.items():
+            if path is None:
+                continue
+            target = os.path.join(self.workdir, os.path.basename(path))
+            shutil.copyfile(path, target)
+            setattr(self, field, target)
 
 
 class DamageEvent(models.Model):

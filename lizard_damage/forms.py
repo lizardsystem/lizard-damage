@@ -10,10 +10,9 @@ from __future__ import (
 from django import forms
 import gdal
 import logging
-import shutil
 import tempfile
 import os
-import xlrd
+
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
@@ -347,9 +346,9 @@ class FormStep1(forms.Form):
                     new_filename, dataset)
                 band = new_dataset.GetRasterBand(1)
                 band.WriteArray(translator.translate_grid(grid))
-                new_dataset.Close()
-                dataset.Close()
-                os.path.remove(self.cleaned_data.get('customlanduse_file'))
+                del new_dataset
+                del dataset
+                os.remove(self.cleaned_data.get('customlanduse_file'))
                 self.cleaned_data['customlanduse_file'] = new_filename
             except landuse_translator.TranslatorException as e:
                 self.add_field_error(
@@ -362,15 +361,9 @@ class FormStep1(forms.Form):
             if key in cleaned_data:
                 del cleaned_data[key]
 
+        cleaned_data['temporary_directory'] = self.temp_directory
+
         return cleaned_data
-
-    def cleanup_files(self):
-        """This must be called after processing the saved files."""
-        for key in self.cleaned_data:
-            if key.endswith('_file'):
-                del self.cleaned_data[key]
-
-        shutil.rmtree(self.temp_directory)
 
 
 class FormStep2(FormStep1):

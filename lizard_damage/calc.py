@@ -15,12 +15,10 @@ import tempfile
 import traceback
 import zipfile
 
-from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
 from lizard_damage import tools
 from lizard_damage import models
-from lizard_damage import calc_helpers
 
 from matplotlib import colors
 from PIL import Image
@@ -437,7 +435,7 @@ CDICT_WATER_DEPTH = {
 
 def calc_damage_for_waterlevel(
     repetition_time,
-    ds_wl_filenames,
+    waterlevel_ascfiles,
     dt_path=None,
     month=9, floodtime=20 * 3600,
     repairtime_roads=None, repairtime_buildings=None,
@@ -478,8 +476,7 @@ def calc_damage_for_waterlevel(
     logger.info('damage table: %s' % dt_path)
     output_zipfile = mkstemp_and_close()
 
-    waterlevel_ascfiles = ds_wl_filenames
-    correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
+    #correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [gdal.Open(str(p)) for p in waterlevel_ascfiles]
     logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
     logger.info('waterlevel_datasets: %r' % waterlevel_datasets)

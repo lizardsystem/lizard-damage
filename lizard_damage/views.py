@@ -22,6 +22,7 @@ from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 
 from zipfile import ZipFile
+import shutil
 import tempfile
 import os
 import re
@@ -73,9 +74,11 @@ def damage_scenario_from_type_0(all_form_data):
     damage_scenario = DamageScenario(
         name=all_form_data['name'], email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
-        calc_type=all_form_data['calc_type'],
-        customheights=all_form_data.get('customheights'),
-        customlanduse=all_form_data.get('customlanduse'))
+        calc_type=all_form_data['calc_type'])
+    damage_scenario.move_files({
+            'customheights': all_form_data.get('customheights_file'),
+            'customlanduse': all_form_data.get('customlanduse_file')
+            })
     if all_form_data['damagetable']:
         damage_scenario.damagetable = all_form_data['damagetable']
     damage_scenario.save()
@@ -383,6 +386,7 @@ class Wizard(ViewContextMixin, SessionWizardView):
         if scenario_type in (0, 1, 2, 3, 4, 5):
             damage_scenario = (
                 self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data))
+            self.clean_temporary_directory(all_form_data)
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
             return HttpResponseRedirect(
@@ -395,6 +399,11 @@ class Wizard(ViewContextMixin, SessionWizardView):
             return HttpResponseRedirect(
                 reverse('lizard_damage_thank_you') +
                 '?benefit_scenario_id=%d' % benefit_scenario.id)
+
+    def clean_temporary_directory(self, all_form_data):
+        """This must be called after processing the saved files."""
+        if 'temporary_directory' in all_form_data:
+            shutil.rmtree(all_form_data['temporary_directory'])
 
 
 class DamageScenarioResult(ViewContextMixin, TemplateView):
@@ -451,6 +460,18 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
 
 class GeoImageKML(DamageEventKML):
+    @property
+    def scenario(self):
+        scenario_type = self.kwargs['scenario_type']
+
+        if scenario_type == 'd':
+            return DamageScenario.objects.get(
+                pk=self.kwargs['scenario_id'])
+        elif scenario_type == 'b':
+            return BenefitScenario.objects.get(
+                pk=self.kwargs['scenario_id'])
+        return None
+
     @property
     def events(self):
         slugs = self.kwargs['slugs']

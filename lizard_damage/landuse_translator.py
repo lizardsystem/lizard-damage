@@ -5,6 +5,8 @@
 import numpy as np
 import xlrd
 
+from . import table
+
 
 class TranslatorException(Exception):
     def __init__(self, description):
@@ -88,10 +90,20 @@ class LanduseTranslator(object):
                     "Die waarde komt wel voor op de landgebruikskaart."
                     .format(value))
 
-        raise TranslatorException("Testing")
+        # Check if all values are in the default damage table
+        damage_table = table.read_damage_table(None)[1]
+        codes = set(damage_table.data)
+        for value in sorted(self.translate_dict.values()):
+            if value not in codes:
+                raise TranslatorException(
+                    "De vertaaltabel heeft waarde {} in kolom B, "
+                    "maar die waarde komt niet voor de in de schadetabel."
+                    .format(value))
 
     def translate_grid(self, grid):
         """Translates the values in grid so that they are known."""
+        grid = grid.astype(np.int)
+
         # Build a numpy translation array
         maxvalue = max(self.translate_dict)
 

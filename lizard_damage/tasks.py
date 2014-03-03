@@ -149,7 +149,6 @@ def call_calc_damage_for_waterlevel(
     waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
                        damage_event.damageeventwaterlevel_set.all()]
     logger.info("event %s" % (damage_event))
-    #logger.info(" - waterlevel: %s" % (damage_event.waterlevel))
     logger.info(" - month %s, floodtime %s" % (
             damage_event.floodmonth, damage_event.floodtime))
     if damagetable:
