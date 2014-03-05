@@ -474,6 +474,9 @@ class GeoImageKML(DamageEventKML):
 
     @property
     def events(self):
+        """HACK. Our superclass returns DamageEventResult instances,
+        but we return GeoImage instances that just happen to have the
+        same attributes so that they work in the template."""
         slugs = self.kwargs['slugs']
         # When multiple GeoImages have the same slug, just take first
         return GeoImage.objects.filter(slug__in=slugs.split(','))

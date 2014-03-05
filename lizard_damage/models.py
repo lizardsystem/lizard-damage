@@ -25,7 +25,6 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.files import File
 from lizard_damage import utils
-from pyproj import transform
 from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
