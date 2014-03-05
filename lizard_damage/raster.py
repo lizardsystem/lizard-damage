@@ -18,7 +18,9 @@ from osgeo import osr
 from django.contrib.gis.geos import Polygon
 from django.conf import settings
 
-from lizard_damage import models
+from . import models
+from . import tiles
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -180,30 +182,6 @@ def init_dataset(ds, nodatavalue=None):
     return result
 
 
-def reproject(ds_source, ds_match):
-    """
-    Reproject source to match the raster layout of match.
-
-    Accepts and resturns gdal datasets.
-    """
-    nodatavalue_source = ds_source.GetRasterBand(1).GetNoDataValue()
-
-    # Create destination dataset
-    ds_destination = init_dataset(ds_match, nodatavalue=nodatavalue_source)
-
-    # Do nearest neigbour interpolation to retain the nodata value
-    projection_source = ds_source.GetProjection()
-    projection_match = ds_match.GetProjection()
-
-    gdal.ReprojectImage(
-        ds_source, ds_destination,
-        projection_source, projection_match,
-        gdalconst.GRA_NearestNeighbour,
-    )
-
-    return ds_destination
-
-
 def export_dataset(filepath, ds, driver='AAIGrid'):
     """
     Save ds at filepath using driver.
@@ -213,62 +191,13 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
-def get_ds_for_tile(
-    ahn_name,
-    alternative_heights_dataset=None,
-    alternative_landuse_dataset=None,
-    logger=None):
-    """
-    Return datasets (waterlevel, height, landuse).
-
-    Input:
-        ahn_name: ahn subunit name
-        ds_wl_original: supplied waterlevel dataset
-        method can be 'filesystem' or 'database'
-
-        If an alternative_heights_dataset or
-        alternative_landuse_dataset is given, use that. But first we
-        do retrieve the standard ahn/lgn datasets, and reproject the
-        alternatives to have the same dimensions.
-    """
-    basepath = settings.DATA_ROOT
-    # ahn
-    ds_ahn_filename = os.path.join(
-        basepath, 'data_ahn', ahn_name[1:4], ahn_name + '.tif'
-    )
-    ds_ahn = gdal.Open(str(ds_ahn_filename))
-    if ds_ahn is None:
-        logger.warning('No height data for {}'.format(ahn_name))
-    # lgn
-    ds_lgn_filename = os.path.join(
-        basepath, 'data_lgn', ahn_name[1:4], ahn_name + '.tif'
-    )
-    ds_lgn = gdal.Open(str(ds_lgn_filename))
-    if ds_lgn is None:
-        logger.warning('No landuse data for {}'.format(ahn_name))
-
-    logger.info("get_ds_for_tile, alternatives present: {} {}"
-                .format(alternative_heights_dataset is not None,
-                        alternative_landuse_dataset is not None))
-
-    if ds_lgn and alternative_landuse_dataset is not None:
-        logger.info('Reproject alternative dataset to same dimensions as LGN')
-        ds_lgn = reproject(alternative_landuse_dataset, ds_lgn)
-
-    if ds_ahn and alternative_heights_dataset is not None:
-        logger.info('Reproject alternative dataset to same dimensions as AHN')
-        ds_ahn = reproject(alternative_heights_dataset, ds_ahn)
-
-    return ds_ahn, ds_lgn
-
-
 def get_calc_data(
     waterlevel_datasets, floodtime, ahn_name, logger,
     alternative_heights_dataset=None, alternative_landuse_dataset=None):
     """ Return a tuple with data. """
 
     logger.info('Reading datasets for %s' % ahn_name)
-    ds_height, ds_landuse = get_ds_for_tile(
+    ds_height, ds_landuse, ds_landuse_orig = tiles.get_ds_for_tile(
         ahn_name=ahn_name, logger=logger,
         alternative_heights_dataset=alternative_heights_dataset,
         alternative_landuse_dataset=alternative_landuse_dataset
@@ -290,6 +219,7 @@ def get_calc_data(
 
     logger.info('landuse to masked array...')
     landuse = to_masked_array(ds_landuse)  # part of result
+    landuse_orig = to_masked_array(ds_landuse_orig)
     if landuse.mask.any():
         logger.warn(
             '%s nodata pixels in landuse tile %s',
@@ -303,7 +233,7 @@ def get_calc_data(
     # Here all the datasets are read in one big array.
     # Mem reduction could be achieved here by incrementally read and update.
     depths = numpy.ma.array(
-        [to_masked_array(reproject(ds_waterlevel, ds_height))
+        [to_masked_array(utils.reproject(ds_waterlevel, ds_height))
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 
@@ -313,7 +243,9 @@ def get_calc_data(
     floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
     landuse.mask = depth.mask
 
-    return landuse, depth, geo, floodtime_px, ds_height, height
+    return (
+        landuse, depth, geo, floodtime_px, ds_height,
+        height, landuse_orig)
 
 
 def fill_dataset(ds, masked_array):

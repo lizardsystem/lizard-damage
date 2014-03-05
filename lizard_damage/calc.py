@@ -520,7 +520,8 @@ def calc_damage_for_waterlevel(
                 )
                 continue
 
-            landuse, depth, geo, floodtime_px, ds_height, height = alldata
+            (landuse, depth, geo, floodtime_px, ds_height, height,
+             landuse_orig) = alldata
         except:
             # Log this error and all previous normal logs, instead of
             # hard crashing
@@ -545,10 +546,13 @@ def calc_damage_for_waterlevel(
         landuse_slugs.append(landuse_slug)  # part of result
         # note: multiple objects with the same slug can exist if they
         # enter this function at the same time
+        # NOTE: Save with the data from _landuse_orig_! This is
+        #       basically a cache, and we don't want custom uploaded
+        #       landuse grids to end up in the generic cache.
         if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
             logger.info("Generating landuse GeoImage: %s" % landuse_slug)
             models.GeoImage.from_data_with_legend(
-                landuse_slug, landuse.data, extent, landuse_legend())
+                landuse_slug, landuse_orig.data, extent, landuse_legend())
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(
@@ -668,6 +672,18 @@ def calc_damage_for_waterlevel(
         """
         This is in a subroutine because it
         must be possible to not use it.
+
+        POSSIBLE BUG: All the height and depth tiles from different
+            scenarios (including scenarios with custom height grids,
+            but all scenarios have custom waterheights anyway so the
+            problem is with all scenarios) use the same slugs to save
+            their grids under. Meaning that it is possible that the
+            wrong data is shown for some scenario.
+
+            However, since the slugs have min and max values in them,
+            and difference heights will often lead to different
+            min/max values, this bug is unlikely to show up much in
+            practice. We currently choose to ignore it.
         """
         logger.info('Generating height and depth tiles...')
         logger.debug(

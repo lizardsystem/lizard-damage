@@ -5,6 +5,10 @@
     <description>Resultaat {{ view.damage_event }} (beschikbaar tot {{ view.damage_event.scenario.expiration_date|date:"d-m-y" }})
     </description>
     {% for damage_event_result in view.events %}
+    {% comment %}
+      Note that these "damage_event_result"s may also be GeoImage instances,
+      or a dictionary...
+    {% endcomment %}
     <GroundOverlay>
       <name>{{ damage_event_result.image.name }}</name>
       <description>{{ damage_event_result.image.name }}</description>

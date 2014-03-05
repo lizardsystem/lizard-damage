@@ -18,6 +18,7 @@ install_requires = [
     'xlrd',
     'Pillow',
     'pyproj',
+    'mock'
     ],
 
 tests_require = [

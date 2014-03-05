@@ -590,19 +590,16 @@ class GeoImage(models.Model):
         Create GeoImage from slug and data.
 
         Data is numpy array.
+
+        Extent is list/tuple of the form (west, south, east, north).
         """
         tmp_base = tempfile.mktemp()
-        #print('tmp_base: %s' % tmp_base)
-        #print('step 1')
-        # Step 1: save png + pgw in RD
-
         colormap = mpl.colors.ListedColormap(legend, 'indexed')
         rgba = colormap(data, bytes=True)
-        #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
         write_pgw(tmp_base + '.pgw', extent)
 
-        return cls.from_rd_png(tmp_base, slug, extent)
+        return cls._from_rd_png(tmp_base, slug, extent)
 
     @classmethod
     def from_data_with_min_max(
@@ -611,9 +608,6 @@ class GeoImage(models.Model):
         Create GeoImage from slug and data.
         """
         tmp_base = tempfile.mktemp()
-        #print('tmp_base: %s' % tmp_base)
-        #print('step 1')
-        # Step 1: save png + pgw in RD
         if cdict is None:
             cdict = {
                 'red': ((0.0, 51. / 256, 51. / 256),
@@ -630,21 +624,28 @@ class GeoImage(models.Model):
             'something', cdict, N=1024)
         normalize = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
         rgba = colormap(normalize(data), bytes=True)
-        #rgba[:,:,3] = np.where(rgba[:,:,0], 153 , 0)
+
         if 'depth' in slug:
             # Make transparent where depth is zero or less
             rgba[:, :, 3] = np.where(np.greater(data, 0), 255, 0)
+
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
 
         write_pgw(tmp_base + '.pgw', extent)
 
-        return cls.from_rd_png(tmp_base, slug, extent)
+        return cls._from_rd_png(tmp_base, slug, extent)
 
     @classmethod
-    def from_rd_png(cls, tmp_base, slug, extent):
+    def _from_rd_png(cls, tmp_base, slug, extent):
         """
         Input: <tmp_base>.png
         Output: geo_image object
+
+        Takes a RD PNG, turns it into a WGS84 PNG and sets the extent of that
+        on the GeoImage object. Also removes <tmp_base>.png and <tmp_base>.pgw
+        that were made elsewhere.
+
+        Does not save a .pgw for the new .png.
         """
 
         # Step 2: warp using gdalwarp to lon/lat in .tif

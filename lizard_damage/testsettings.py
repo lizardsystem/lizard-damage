@@ -77,6 +77,8 @@ STATIC_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'static')
 MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 STATICFILES_FINDERS = STATICFILES_FINDERS
 
+# Forn AHN, LGN tiles
+DATA_ROOT = os.path.join(BUILDOUT_DIR, 'data')
 
 try:
     # Import local settings that aren't stored in svn/git.
