@@ -1,0 +1,15 @@
+{# template for error #}
+L.S.,
+
+    Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is gecrasht. Dat
+    komt meestal door een fout aan de kant van de WaterSchadeSchatter. De gebruiker
+    weet dat deze mail naar de Servicedesk automatisch verstuurd is.
+
+Exception: {{ exception }}
+{{ traceback }}
+
+
+  --
+  waterschadeschatter.nl
+
+  Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

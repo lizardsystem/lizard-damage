@@ -11,6 +11,9 @@ Changelog of lizard-damage
   landuse map slug for the landuse KML if a custom map was uploaded
   (so not tiled in that case).
 
+- Send email if an exception occurs in a task (one to the user,
+  one with a traceback to the servicedesk).
+
 0.10.2 (2014-02-26)
 -------------------
 

@@ -57,7 +57,7 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     """
     Send provided benefit scenario as task
     """
-    task_name = 'Scenario (%05d) calculate benefit' % benefit_scenario.id
+    task_name = 'Scenario ({}) calculate benefit'.format(benefit_scenario.id)
     task_kwargs = (
         '{"username": "%s", "taskname": "%s", "benefit_scenario_id": "%d"}' % (
         username, task_name, benefit_scenario.id))
@@ -73,22 +73,25 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
 
 def send_email_to_task(
     scenario_id, mail_template, subject, username='admin',
-    email="", scenario_type='damage'):
+    email="", scenario_type='damage', extra_context=None):
     """
     Create a task for sending email
     """
-    task_name = 'Scenario (%05d) send mail %s' % (scenario_id, mail_template)
+    task_name = 'Scenario ({}) send mail {}'.format(scenario_id, mail_template)
     task_kwargs = (
-        '{'
+        '{{'
         '"username": "admin", '
-        '"taskname": "%s", '
-        '"scenario_id": "%d", '
-        '"mail_template": "%s", '
-        '"subject": "%s", '
-        '"email": "%s", '
-        '"scenario_type": "%s"'
-        '}'
-    ) % (task_name, scenario_id, mail_template, subject, email, scenario_type)
+        '"taskname": "{}", '
+        '"scenario_id": "{}", '
+        '"mail_template": "{}", '
+        '"subject": "{}", '
+        '"email": "{}", '
+        '"scenario_type": "{}", '
+        '"extra_context": {} '
+        '}}'
+        ).format(task_name, scenario_id, mail_template,
+                 subject, email, scenario_type,
+                 "{}" if not extra_context else json.dumps(extra_context))
     email_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
             'kwargs': task_kwargs,
@@ -104,7 +107,7 @@ def send_email_to_task(
 @task_logging
 def send_email(scenario_id, username=None, taskname=None, loglevel=20,
                mail_template='email_received', subject='Onderwerp', email='',
-               scenario_type='damage'):
+               scenario_type='damage', extra_context={}):
     logger = logging.getLogger(taskname)
     # Do your thing
     logger.info("send_mail: %s" % mail_template)
@@ -119,6 +122,7 @@ def send_email(scenario_id, username=None, taskname=None, loglevel=20,
         root_url = 'http://damage.lizard.net'
         logger.error('Error fetching Site... defaulting to damage.lizard.net')
     context = Context({"damage_scenario": scenario, 'ROOT_URL': root_url})
+    context.update(extra_context)
     template_text = get_template("lizard_damage/%s.txt" % mail_template)
     template_html = get_template("lizard_damage/%s.html" % mail_template)
 
@@ -258,6 +262,32 @@ def process_result(
 @task
 @task_logging
 def calculate_damage(
+    damage_scenario_id, username=None, taskname=None, loglevel=20):
+    """Call real_calculate_damage, send emails if an uncaught
+    exception occurs.  Uncaught exceptions are usually problems in the
+    code, not the input."""
+    try:
+        return real_calculate_damage(
+            damage_scenario_id, username, taskname, loglevel)
+    except:
+        exc_info = sys.exc_info()
+
+        tracebackbuf = StringIO.StringIO()
+        traceback.print_exception(*exc_info, limit=None, file=tracebackbuf)
+
+        send_email_to_task(
+            damage_scenario_id, 'email_exception',
+            "WaterSchadeSchatter: berekening mislukt", username=username)
+        send_email_to_task(
+            damage_scenario_id, 'email_exception_traceback',
+            "WaterSchadeSchatter: berekening gecrasht", username=username,
+            email="remco.gerlich@nelen-schuurmans.nl", extra_context={
+                'exception': "{}: {}".format(exc_info[0], exc_info[1]),
+                'traceback': tracebackbuf.getvalue()
+                })
+
+
+def real_calculate_damage(
     damage_scenario_id, username=None, taskname=None, loglevel=20):
     """
     Main calculation task.
