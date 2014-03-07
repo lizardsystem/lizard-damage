@@ -1,31 +1,33 @@
+import datetime
+import json
+import logging
+import os
+import subprocess
+import sys
+import StringIO
+import traceback
+
+from PIL import Image
+from celery.task import task
+
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.template import Context
+from django.template.defaultfilters import slugify
 from django.template.loader import get_template
 
-from lizard_damage.models import BenefitScenario
-from lizard_damage.models import DamageScenario
-from lizard_damage.models import DamageEventResult
-from lizard_damage.models import RD
-from lizard_damage.models import extent_from_geotiff
 from lizard_damage import calc
 from lizard_damage import risk
-from lizard_task.task import task_logging
+from lizard_damage.models import BenefitScenario
+from lizard_damage.models import DamageEventResult
+from lizard_damage.models import DamageScenario
+from lizard_damage.models import RD
+from lizard_damage.models import extent_from_geotiff
 from lizard_task.models import SecuredPeriodicTask
-
-from celery.task import task
-from django.contrib.sites.models import Site
-from django.template.defaultfilters import slugify
-
-import logging
-import os
-import traceback
-import json
-import subprocess
-import datetime
-from PIL import Image
+from lizard_task.task import task_logging
 
 
 def convert_tif_to_png(filename_tif, filename_png):
