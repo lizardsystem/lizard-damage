@@ -198,10 +198,13 @@ def process_result(
 
         # result[2] is the table in a data structure
         damage_event.table = json.dumps(result[2])
+
         # Store references to GeoImage objects
-        damage_event.landuse_slugs = ','.join(result[3])
-        damage_event.height_slugs = ','.join(result[4])
-        damage_event.depth_slugs = ','.join(result[5])
+        damage_event.set_slugs(
+            landuse_slugs=','.join(result[3]),
+            height_slugs=','.join(result[4]),
+            depth_slugs=','.join(result[5]))
+
         damage_event.save()
 
         # result[1] is a list of png files to be uploaded to the django db.

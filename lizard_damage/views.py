@@ -75,6 +75,7 @@ def damage_scenario_from_type_0(all_form_data):
         name=all_form_data['name'], email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
+    damage_scenario.save()  # Move_files needs an existing ID
     damage_scenario.move_files({
             'customheights': all_form_data.get('customheights_file'),
             'customlanduse': all_form_data.get('customlanduse_file')

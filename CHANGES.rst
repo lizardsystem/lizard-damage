@@ -7,6 +7,9 @@ Changelog of lizard-damage
 
 - Remove the obsolete AhnIndex model.
 
+- Save custom landuse map in a GeoImage, use only the scenario's
+  landuse map slug for the landuse KML if a custom map was uploaded
+  (so not tiled in that case).
 
 0.10.2 (2014-02-26)
 -------------------
