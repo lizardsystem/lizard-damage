@@ -10,7 +10,6 @@ import traceback
 from PIL import Image
 from celery.task import task
 
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.mail import EmailMultiAlternatives
@@ -21,6 +20,7 @@ from django.template.loader import get_template
 
 from lizard_damage import calc
 from lizard_damage import risk
+from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageEventResult
 from lizard_damage.models import DamageScenario
@@ -281,7 +281,7 @@ def calculate_damage(
         send_email_to_task(
             damage_scenario_id, 'email_exception_traceback',
             "WaterSchadeSchatter: berekening gecrasht", username=username,
-            email="remco.gerlich@nelen-schuurmans.nl", extra_context={
+            email=settings.LIZARD_DAMAGE_EXCEPTION_EMAIL, extra_context={
                 'exception': "{}: {}".format(exc_info[0], exc_info[1]),
                 'traceback': tracebackbuf.getvalue()
                 })

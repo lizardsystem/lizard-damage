@@ -7,7 +7,6 @@ from __future__ import (
   division,
 )
 
-from PIL import Image
 import datetime
 import json
 import logging
@@ -20,16 +19,18 @@ import subprocess
 import tempfile
 import zipfile
 
-from django.contrib.gis.db import models
-from django.conf import settings
-from django.core.urlresolvers import reverse
-from django.core.files import File
-from lizard_damage import utils
+from PIL import Image
+from osgeo import gdal
 from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
 
-from osgeo import gdal
+from django.contrib.gis.db import models
+from django.core.urlresolvers import reverse
+from django.core.files import File
+
+from lizard_damage.conf import settings
+from lizard_damage import utils
 
 logger = logging.getLogger(__name__)
 

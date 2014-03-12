@@ -18,7 +18,8 @@ install_requires = [
     'xlrd',
     'Pillow',
     'pyproj',
-    'mock'
+    'mock',
+    'django-appconf'
     ],
 
 tests_require = [

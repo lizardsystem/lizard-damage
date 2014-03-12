@@ -16,11 +16,11 @@ from osgeo import ogr
 from osgeo import osr
 
 from django.contrib.gis.geos import Polygon
-from django.conf import settings
 
 from . import models
 from . import tiles
 from . import utils
+from .conf import settings
 
 logger = logging.getLogger(__name__)
 

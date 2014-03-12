@@ -13,8 +13,9 @@ import logging
 import numpy
 import os
 
-from django.conf import settings
 from django.utils import simplejson as json
+
+from lizard_damage.conf import settings
 from lizard_damage import (
     models,
     utils,

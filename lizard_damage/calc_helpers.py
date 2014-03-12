@@ -14,9 +14,6 @@ import os
 import shutil
 import tempfile
 
-from django.conf import settings
-
-from lizard_damage import table
 from lizard_damage import raster
 
 logger = logging.getLogger(__name__)

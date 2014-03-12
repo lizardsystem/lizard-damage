@@ -4,15 +4,14 @@ from __future__ import unicode_literals
 from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-# from lizard_map.views import MapView
 from django.views.generic import TemplateView
 from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
-from django.conf import settings
 
 from lizard_damage import tasks
+from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent

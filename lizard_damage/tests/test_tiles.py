@@ -1,9 +1,9 @@
 import mock
 import os
 
-from django.conf import settings
 from django.test import TestCase
 
+from lizard_damage.conf import settings
 from lizard_damage import tiles
 
 
@@ -18,7 +18,7 @@ class TestTiles(TestCase):
             self.assertEquals(dataset, mock_dataset)
 
             expected_path = os.path.join(
-                settings.BUILDOUT_DIR, 'data', 'data_ahn',
+                settings.BUILDOUT_DIR, 'var', 'data', 'data_ahn',
                 'est', 'testing.tif').encode('utf8')
 
             mocked.assert_called_with(expected_path)

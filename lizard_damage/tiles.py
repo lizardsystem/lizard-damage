@@ -13,16 +13,15 @@ import os
 
 import gdal
 
-from django.conf import settings
-
 from . import utils
+from .conf import settings
 
 
 def get_tile_filename(datadir, ahn_name):
     """Return bytestring path to the needed tile. datadir is
     'data_ahn' or 'data_lgn'."""
     return os.path.join(
-        settings.DATA_ROOT, datadir, ahn_name[1:4],
+        settings.LIZARD_DAMAGE_DATA_ROOT, datadir, ahn_name[1:4],
         ahn_name + '.tif').encode('utf8')
 
 
