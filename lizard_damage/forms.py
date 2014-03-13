@@ -18,6 +18,7 @@ from django.utils.encoding import force_unicode
 
 from .models import extent_from_dataset
 from .raster import extent_within_extent
+from .raster import gdal_open
 from .models import DamageScenario
 from . import landuse_translator
 
@@ -248,7 +249,7 @@ class FormStep1(forms.Form):
             for chunk in uploadedfile.chunks():
                 f.write(chunk)
 
-        dataset = gdal.Open(filename)
+        dataset = gdal_open(filename)
         if dataset is None:
             self.add_field_error(fieldname, "Kan raster niet openen.")
             dataset = None

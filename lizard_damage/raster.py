@@ -27,6 +27,13 @@ logger = logging.getLogger(__name__)
 PROJECTION_RD = osr.GetUserInputAsWKT('epsg:28992')
 
 
+def gdal_open(path):
+    """Make sure path is a bytestring"""
+    if isinstance(path, unicode):
+        path = path.encode('utf-8')
+    return gdal.Open(path)
+
+
 def transform_extent(extent, source='epsg:28992', target='epsg:4326'):
     """
     Transform an extent.
