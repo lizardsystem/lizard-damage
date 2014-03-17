@@ -144,7 +144,7 @@ def get_index_info(ds):
         x1, x2, y1, y2 = feature.geometry().GetEnvelope()
         return x1, y1, x2, y2
 
-    result = {feature['BLADNR']: feature2extent(feature)
+    result = {feature.GetField('BLADNR'): feature2extent(feature)
               for feature in index_layer}
     return result
 
