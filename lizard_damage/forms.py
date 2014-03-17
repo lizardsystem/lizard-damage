@@ -18,7 +18,7 @@ from django.utils.encoding import force_unicode
 
 from .models import extent_from_dataset
 from .raster import extent_within_extent
-from .raster import gdal_open
+from .models import gdal_open
 from .models import DamageScenario
 from . import landuse_translator
 

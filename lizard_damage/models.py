@@ -49,8 +49,15 @@ rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
 
 
+def gdal_open(path):
+    """Make sure path is a bytestring"""
+    if isinstance(path, unicode):
+        path = path.encode('utf-8')
+    return gdal.Open(path)
+
+
 def extent_from_geotiff(filename):
-    ds = gdal.Open(filename)
+    ds = gdal_open(filename)
     return extent_from_dataset(ds)
 
 
@@ -252,17 +259,17 @@ class DamageScenario(models.Model):
     def alternative_heights_dataset(self):
         if self.customheights:
             logger.info("Opening {}".format(self.customheights))
-            return gdal.Open(str(
-                    os.path.join(
-                        settings.MEDIA_ROOT, self.customheights)))
+            return gdal_open(
+                os.path.join(
+                    settings.MEDIA_ROOT, self.customheights))
 
     @property
     def alternative_landuse_dataset(self):
         if self.customlanduse:
             logger.info("Opening {}".format(self.customlanduse))
-            return gdal.Open(str(
-                    os.path.join(
-                        settings.MEDIA_ROOT, self.customlanduse)))
+            return gdal_open(
+                os.path.join(
+                    settings.MEDIA_ROOT, self.customlanduse))
 
     def move_files(self, file_dict):
         """file_dict has keys like 'customheights_file', and paths to
@@ -286,7 +293,7 @@ class DamageScenario(models.Model):
 
         if self.customlandusegeoimage is None:
             self.customlandusegeoimage = GeoImage.from_landuse_dataset(
-                gdal.Open(self.customlanduse.encode('utf-8')),
+                gdal_open(self.customlanduse),
                 slug="customlanduse_{}".format(self.id))
             self.save()
 
@@ -398,7 +405,7 @@ class DamageEvent(models.Model):
             tempdir = tempfile.mkdtemp()
             archive.extract(filename, tempdir)
             filepath = os.path.join(tempdir, filename)
-            dataset = gdal.Open(filepath)
+            dataset = gdal_open(filepath)
             data = utils.ds2ma(dataset)
             geotransform = dataset.GetGeoTransform()
             dataset = None  # Should closes the file
@@ -571,7 +578,7 @@ class BenefitScenario(models.Model):
             tempdir = tempfile.mkdtemp()
             archive.extract(filename, tempdir)
             filepath = os.path.join(tempdir, filename)
-            dataset = gdal.Open(filepath)
+            dataset = gdal_open(filepath)
             geotransform = dataset.GetGeoTransform()
             data = utils.ds2ma(dataset)
             dataset = None  # Should closes the file
