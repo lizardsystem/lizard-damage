@@ -204,7 +204,7 @@ def get_calc_data(
     """ Return a tuple with data. """
 
     logger.info('Reading datasets for %s' % ahn_name)
-    ds_height, ds_landuse, ds_landuse_orig = tiles.get_ds_for_tile(
+    ds_height, ds_landuse, ds_landuse_orig = tiles.get_datasets_for_tile(
         ahn_name=ahn_name, logger=logger,
         alternative_heights_dataset=alternative_heights_dataset,
         alternative_landuse_dataset=alternative_landuse_dataset
