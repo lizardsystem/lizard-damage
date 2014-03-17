@@ -284,7 +284,8 @@ class DamageScenario(models.Model):
 
         if self.customlandusegeoimage is None:
             self.customlandusegeoimage = GeoImage.from_landuse_dataset(
-                self.customlanduse, slug="customlanduse_{}".format(self.id))
+                gdal.Open(self.customlanduse.encode('utf-8')),
+                slug="customlanduse_{}".format(self.id))
             self.save()
 
         # Return a comma-separated list of a single slug, aka the slug itself
