@@ -228,9 +228,11 @@ class DamageScenario(models.Model):
 
     @property
     def workdir(self):
+        """The workdir must be located inside MEDIA_ROOT, because
+        that's the directory that's mounted on both the webserver and
+        the taskserver."""
         workdir = os.path.join(
-            settings.BUILDOUT_DIR, 'var', 'wss',
-            'damagescenario', str(self.id))
+            settings.MEDIA_ROOT, 'damagescenario', str(self.id))
         if not os.path.exists(workdir):
             os.makedirs(workdir)
         return workdir
