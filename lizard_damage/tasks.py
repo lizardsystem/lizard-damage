@@ -10,16 +10,12 @@ import traceback
 from PIL import Image
 from celery.task import task
 
-from django.contrib.sites.models import Site
 from django.core.files import File
-from django.core.mail import EmailMultiAlternatives
-from django.core.urlresolvers import reverse
-from django.template import Context
 from django.template.defaultfilters import slugify
-from django.template.loader import get_template
 
 from lizard_damage import calc
 from lizard_damage import risk
+from lizard_damage import emails
 from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageEventResult
@@ -71,82 +67,14 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     calc_damage_task.send_task(username=username)
 
 
-def send_email_to_task(
-    scenario_id, mail_template, subject, username='admin',
-    email="", scenario_type='damage', extra_context=None):
-    """
-    Create a task for sending email
-    """
-    task_name = 'Scenario ({}) send mail {}'.format(scenario_id, mail_template)
-    task_kwargs = (
-        '{{'
-        '"username": "admin", '
-        '"taskname": "{}", '
-        '"scenario_id": "{}", '
-        '"mail_template": "{}", '
-        '"subject": "{}", '
-        '"email": "{}", '
-        '"scenario_type": "{}", '
-        '"extra_context": {} '
-        '}}'
-        ).format(task_name, scenario_id, mail_template,
-                 subject, email, scenario_type,
-                 "{}" if not extra_context else json.dumps(extra_context))
-    email_task, created = SecuredPeriodicTask.objects.get_or_create(
-        name=task_name, defaults={
-            'kwargs': task_kwargs,
-            'task': 'lizard_damage.tasks.send_email'}
-        )
-    email_task.kwargs = task_kwargs
-    email_task.task = 'lizard_damage.tasks.send_email'
-    email_task.save()
-    email_task.send_task(username=username)
-
-
 @task
 @task_logging
 def send_email(scenario_id, username=None, taskname=None, loglevel=20,
                mail_template='email_received', subject='Onderwerp', email='',
                scenario_type='damage', extra_context={}):
-    logger = logging.getLogger(taskname)
-    # Do your thing
-    logger.info("send_mail: %s" % mail_template)
-    scenario = dict(
-        damage=DamageScenario, benefit=BenefitScenario,
-    )[scenario_type].objects.get(pk=scenario_id)
-
-    #subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
-    try:
-        root_url = 'http://%s' % Site.objects.all()[0].domain
-    except:
-        root_url = 'http://damage.lizard.net'
-        logger.error('Error fetching Site... defaulting to damage.lizard.net')
-    context = Context({"damage_scenario": scenario, 'ROOT_URL': root_url})
-    context.update(extra_context)
-    template_text = get_template("lizard_damage/%s.txt" % mail_template)
-    template_html = get_template("lizard_damage/%s.html" % mail_template)
-
-    from_email = 'no-reply@nelen-schuurmans.nl'
-    if not email:
-        # Default
-        to = scenario.email
-    else:
-        # In case of user provided email (errors)
-        to = email
-
-    logger.info("scenario: %s" % scenario)
-    logger.info("sending e-mail to: %s" % to)
-    msg = EmailMultiAlternatives(
-        subject, template_text.render(context), from_email, [to])
-    msg.attach_alternative(template_html.render(context), 'text/html')
-    msg.send()
-
-    scenario.status = scenario.SCENARIO_STATUS_SENT
-    scenario.save()
-
-    logger.info("e-mail has been successfully sent")
-    logger.info("url was {}".format(
-            reverse("lizard_damage_result", kwargs=dict(slug=scenario.slug))))
+    return emails.do_send_email(
+        scenario_id, username, taskname, loglevel,
+        mail_template, subject, email, scenario_type, extra_context)
 
 
 def call_calc_damage_for_waterlevel(
@@ -271,14 +199,14 @@ def calculate_damage(
             damage_scenario_id, username, taskname, loglevel)
     except:
         exc_info = sys.exc_info()
-
         tracebackbuf = StringIO.StringIO()
         traceback.print_exception(*exc_info, limit=None, file=tracebackbuf)
 
-        send_email_to_task(
+        emails.send_email_to_task(
             damage_scenario_id, 'email_exception',
             "WaterSchadeSchatter: berekening mislukt", username=username)
-        send_email_to_task(
+
+        emails.send_email_to_task(
             damage_scenario_id, 'email_exception_traceback',
             "WaterSchadeSchatter: berekening gecrasht", username=username,
             email=settings.LIZARD_DAMAGE_EXCEPTION_EMAIL, extra_context={
@@ -331,34 +259,12 @@ def real_calculate_damage(
     damage_scenario.save()
 
     if errors == 0:
-        # Send success mail
-        logger.info('STATS scenario type %s van %s is klaar in %r' % (
-                damage_scenario.scenario_type_str,
-                damage_scenario.email,
-                str(datetime.datetime.now() - start_dt)))
-        logger.info("creating email task for scenario %d" % damage_scenario.id)
-        subject = (
-            'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s '
-            % damage_scenario.name)
-        send_email_to_task(
-            damage_scenario.id, 'email_ready', subject, username=username)
-        logger.info("finished")
+        emails.send_damage_success_mail(
+            damage_scenario, username, logger, start_dt)
+        logger.info("finished successfully")
     else:
-        # Send error mail
-        logger.info('STATS scenario type %s van %s is mislukt in %r' % (
-                damage_scenario.scenario_type_str,
-                damage_scenario.email,
-                str(datetime.datetime.now() - start_dt)))
-        logger.info("there were errors in scenario %d" % damage_scenario.id)
-        logger.info("creating email task for error")
-        subject = (
-            'WaterSchadeSchatter: scenario %s heeft fouten'
-            % damage_scenario.name)
-        send_email_to_task(
-            damage_scenario.id, 'email_error', subject, username=username)
-        send_email_to_task(
-            damage_scenario.id, 'email_error', subject, username=username,
-            email='olivier.hoes@nelen-schuurmans.nl')
+        emails.send_damage_error_mail(
+            damage_scenario, username, logger, start_dt)
         logger.info("finished with errors")
         return 'failure'
 
@@ -397,7 +303,7 @@ def calculate_benefit(
         subject = (
             'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s '
             % benefit_scenario.name)
-        send_email_to_task(
+        emails.send_email_to_task(
             benefit_scenario.id, 'email_ready_benefit',
             subject, username=username,
             scenario_type='benefit',
@@ -412,13 +318,9 @@ def calculate_benefit(
         subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % (
             benefit_scenario.name,
         )
-        send_email_to_task(
+        emails.send_email_to_task(
             benefit_scenario.id, 'email_error', subject, username=username,
             scenario_type='benefit',
         )
-        #send_email_to_task(
-            #benefit_scenario.id, 'email_error', subject, username=username,
-            #email='olivier.hoes@nelen-schuurmans.nl', scenario_type='benefit',
-        #)
         logger.info("finished with errors")
         return 'failure'
