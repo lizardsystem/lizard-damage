@@ -147,7 +147,7 @@ def to_dataset(masked_array,
 
     # Create in memory array
     ds = gdal.GetDriverByName('MEM').Create(
-        '',  # No filename
+        b'',  # No filename
         masked_array.shape[1],
         masked_array.shape[0],
         1,  # number of bands
@@ -180,7 +180,7 @@ def reproject(ds_source, ds_match):
     """
     Accepts and returns gdal datasets. Creates a copy of ds_match.
     """
-    ds_dest = gdal.GetDriverByName(b'MEM').CreateCopy('', ds_match)
+    ds_dest = gdal.GetDriverByName(b'MEM').CreateCopy(b'', ds_match)
 
     gdal.ReprojectImage(
         ds_source,
@@ -229,7 +229,7 @@ def dms2dec(dms):
 
 def ds_empty_copy(ds, bands=1, datatype=gdalconst.GDT_Float64):
     empty = gdal.GetDriverByName(b'MEM').Create(
-        '',
+        b'',
         ds.RasterXSize,
         ds.RasterYSize,
         bands,
