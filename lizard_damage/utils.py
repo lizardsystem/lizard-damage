@@ -182,6 +182,10 @@ def reproject(ds_source, ds_match):
     """
     ds_dest = gdal.GetDriverByName(b'MEM').CreateCopy(b'', ds_match)
 
+    # Fill dest with NoData so that cells where no data is projected
+    # to are handled correctly
+    ds_dest.GetRasterBand(1).Fill(ds_dest.GetRasterBand(1).GetNoDataValue())
+
     gdal.ReprojectImage(
         ds_source,
         ds_dest,

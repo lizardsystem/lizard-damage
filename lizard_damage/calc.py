@@ -724,7 +724,7 @@ def calc_damage_for_waterlevel(
                         continue
 
                     (landuse, depth, geo, floodtime_px,
-                     ds_height, height) = alldata
+                     ds_height, height, landuse_orig) = alldata
                 except:
                     # Log this error and all previous normal logs,
                     # instead of hard crashing
