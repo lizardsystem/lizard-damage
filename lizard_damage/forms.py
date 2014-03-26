@@ -359,6 +359,7 @@ class FormStep1(forms.Form):
                     new_filename, dataset)
                 band = new_dataset.GetRasterBand(1)
                 band.WriteArray(translator.translate_grid(grid))
+                band.SetNoDataValue(translator.NODATA_VALUE)
                 del new_dataset
                 del dataset
                 os.remove(self.cleaned_data.get('customlanduse_file'))

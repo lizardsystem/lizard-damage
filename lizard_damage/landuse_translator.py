@@ -2,10 +2,14 @@
 # they can also optionally upload an Excel file that translates their
 # IDs to our IDs. This module checks, reads, and uses that Excel file.
 
+import logging
+
 import numpy as np
 import xlrd
 
 from . import table
+
+logger = logging.getLogger(__name__)
 
 
 class TranslatorException(Exception):
@@ -15,6 +19,8 @@ class TranslatorException(Exception):
 
 
 class LanduseTranslator(object):
+    NODATA_VALUE = 255
+
     def __init__(self, path):
         """Only sets path."""
         self.path = path
@@ -79,12 +85,15 @@ class LanduseTranslator(object):
                 "De landgebruiksdata is niet beschikbaar.")
 
         band = dataset.GetRasterBand(1)
+        nodatavalue = int(band.GetNoDataValue())
+        self.translate_dict[nodatavalue] = self.NODATA_VALUE
+
         grid = band.ReadAsArray()
 
         uniques = np.unique(grid)
 
         for value in uniques:
-            if value not in self.translate_dict:
+            if int(value) not in self.translate_dict:
                 raise TranslatorException(
                     "De vertaaltabel bevat geen waarde voor '{}'. "
                     "Die waarde komt wel voor op de landgebruikskaart."
@@ -94,6 +103,8 @@ class LanduseTranslator(object):
         damage_table = table.read_damage_table(None)[1]
         codes = set(damage_table.data)
         for value in sorted(self.translate_dict.values()):
+            if value == self.NODATA_VALUE:
+                continue  # Doesn't need to be in the damage table
             if value not in codes:
                 raise TranslatorException(
                     "De vertaaltabel heeft waarde {} in kolom B, "
