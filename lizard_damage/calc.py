@@ -625,7 +625,7 @@ def calc_damage_for_waterlevel(
                     'extent': e,
                     'path': image_result['filename_png'],
                 })
-                models.write_pgw(
+                models.write_extent_pgw(
                     name=image_result['filename_pgw'],
                     extent=e)
                 img_result.append(image_result)
