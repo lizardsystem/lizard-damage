@@ -18,9 +18,12 @@ from django.utils.encoding import force_unicode
 
 from .models import extent_from_dataset
 from .raster import extent_within_extent
+from .raster import get_area_with_data
 from .models import gdal_open
 from .models import DamageScenario
 from . import landuse_translator
+
+from lizard_damage.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -302,6 +305,15 @@ class FormStep1(forms.Form):
 
     def clean_waterlevel(self):
         self.save_uploaded_gdal_file_field('waterlevel')
+
+        ds = self.cleaned_data.get('waterlevel_dataset')
+        if ds:
+            if (get_area_with_data(ds) >
+                settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE):
+                self.add_field_error(
+                    'waterlevel',
+                    'Het waterstand bestand mag maximaal 20km2 beslaan.')
+
         return self.cleaned_data.get('waterlevel')
 
     def clean(self):

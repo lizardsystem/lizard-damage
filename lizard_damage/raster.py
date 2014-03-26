@@ -78,6 +78,18 @@ def get_area_per_pixel(ds):
     return area_per_pixel
 
 
+def get_area_with_data(ds):
+    """Return area of dataset in m2, not counting the nodata cells"""
+    band = ds.GetRasterBand(1)
+    nodatavalue = band.GetNoDataValue()
+    if nodatavalue is not None:
+        cells_with_data = (
+            band.ReadAsArray() != nodatavalue).sum()
+    else:
+        cells_with_data = ds.RasterXSize * ds.RasterYSize
+    return cells_with_data * get_area_per_pixel(ds)
+
+
 def get_geo(ds):
     """ Return tuple (projection, geotransform) """
     return ds.GetProjection(), ds.GetGeoTransform()
