@@ -72,7 +72,7 @@ def extent_from_dataset(ds):
     return (minx, miny, maxx, maxy)
 
 
-def write_pgw(name, extent):
+def write_extent_pgw(name, extent):
     """write pgw file:
 
     0.5
@@ -88,7 +88,15 @@ def write_pgw(name, extent):
     f.write('0.5\n0.000\n0.000\n-0.5\n')
     f.write('%f\n%f' % (min(extent[0], extent[2]), max(extent[1], extent[3])))
     f.close()
-    return
+
+
+def write_geotransform_pgw(name, geotransform):
+    """Write PGW based on geotransform"""
+    f = open(name, 'w')
+    x0, dxx, dxy, y0, dyx, dyy = geotransform
+    for gt in dxx, dxy, dyx, dyy, x0, y0:
+        f.write("{0}\n".format(gt))
+    f.close()
 
 
 def friendly_filesize(size):
@@ -627,14 +635,14 @@ class GeoImage(models.Model):
         from .calc import landuse_legend
         legend = landuse_legend()
 
-        extent = extent_from_dataset(dataset)
         data = dataset.GetRasterBand(1).ReadAsArray()
 
         return cls.from_data_with_legend(
-            slug, data, extent, legend)
+            slug, data, legend, geotransform=dataset.GetGeoTransform())
 
     @classmethod
-    def from_data_with_legend(cls, slug, data, extent, legend):
+    def from_data_with_legend(
+        cls, slug, data, legend, extent=None, geotransform=None):
         """
         Create GeoImage from slug and data.
 
@@ -646,7 +654,10 @@ class GeoImage(models.Model):
         colormap = mpl.colors.ListedColormap(legend, 'indexed')
         rgba = colormap(data, bytes=True)
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
-        write_pgw(tmp_base + '.pgw', extent)
+        if extent is not None:
+            write_extent_pgw(tmp_base + '.pgw', extent)
+        if geotransform is not None:
+            write_geotransform_pgw(tmp_base + '.pgw', geotransform)
 
         return cls._from_rd_png(tmp_base, slug, extent)
 
@@ -680,7 +691,7 @@ class GeoImage(models.Model):
 
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
 
-        write_pgw(tmp_base + '.pgw', extent)
+        write_extent_pgw(tmp_base + '.pgw', extent)
 
         return cls._from_rd_png(tmp_base, slug, extent)
 
