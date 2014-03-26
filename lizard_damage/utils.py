@@ -184,14 +184,19 @@ def reproject(ds_source, ds_match):
 
     # Fill dest with NoData so that cells where no data is projected
     # to are handled correctly
-    ds_dest.GetRasterBand(1).Fill(ds_dest.GetRasterBand(1).GetNoDataValue())
+    source_nodatavalue = ds_source.GetRasterBand(1).GetNoDataValue()
+
+    if source_nodatavalue is not None:
+        ds_dest.GetRasterBand(1).SetNoDataValue(source_nodatavalue)
+        ds_dest.GetRasterBand(1).Fill(
+            ds_dest.GetRasterBand(1).GetNoDataValue())
 
     gdal.ReprojectImage(
         ds_source,
         ds_dest,
         ds_source.GetProjection(),
         ds_dest.GetProjection(),
-        gdalconst.GRA_Cubic,  # Not sure if this is a good idea.
+        gdalconst.GRA_NearestNeighbour,
     )
 
     return ds_dest
