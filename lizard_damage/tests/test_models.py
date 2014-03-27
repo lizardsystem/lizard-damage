@@ -20,7 +20,7 @@ class TestGeoImage(TestCase):
         slug = 'some_random_slug'
 
         geo_image = models.GeoImage.from_data_with_legend(
-            slug, data, extent, landuse_legend)
+            slug, data, landuse_legend, extent=extent)
 
         image_path = os.path.join(
             settings.BUILDOUT_DIR, 'var', 'media',

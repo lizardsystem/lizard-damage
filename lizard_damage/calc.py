@@ -715,6 +715,8 @@ def calc_damage_for_waterlevel(
                         waterlevel_datasets=waterlevel_datasets,
                         floodtime=floodtime,
                         ahn_name=ahn_name,
+                alternative_heights_dataset=alternative_heights_dataset,
+                alternative_landuse_dataset=alternative_landuse_dataset,
                         logger=logger,
                     )
                     if alldata is None:
