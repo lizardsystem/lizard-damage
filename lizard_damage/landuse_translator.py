@@ -86,14 +86,17 @@ class LanduseTranslator(object):
                 "De landgebruiksdata is niet beschikbaar.")
 
         band = dataset.GetRasterBand(1)
-        nodatavalue = int(band.GetNoDataValue())
-        self.translate_dict[nodatavalue] = self.NODATA_VALUE
+
+        # self.nodatavalue is used while translating
+        self.nodatavalue = int(band.GetNoDataValue())
 
         grid = band.ReadAsArray()
 
         uniques = np.unique(grid)
 
         for value in uniques:
+            if value == self.nodatavalue:
+                continue
             if int(value) not in self.translate_dict:
                 raise TranslatorException(
                     "De vertaaltabel bevat geen waarde voor '{}'. "
@@ -104,8 +107,6 @@ class LanduseTranslator(object):
         damage_table = table.read_damage_table(None)[1]
         codes = set(damage_table.data)
         for value in sorted(self.translate_dict.values()):
-            if value == self.NODATA_VALUE:
-                continue  # Doesn't need to be in the damage table
             if value not in codes:
                 raise TranslatorException(
                     "De vertaaltabel heeft waarde {} in kolom B, "
@@ -118,6 +119,20 @@ class LanduseTranslator(object):
 
         # Build a numpy translation array
         maxvalue = max(self.translate_dict)
+
+        if self.nodatavalue is not None:
+            # Set all points where the grid is nodata
+            # to the first unused value; then put that in
+            # the translate dict, so that it will be
+            # translated to our NODATA. The reason is
+            # that the numpy magic we use below doesn't
+            # work with negative numbers.
+            grid[grid == self.nodatavalue] = maxvalue + 1
+            self.translate_dict[maxvalue + 1] = self.NODATA_VALUE
+
+            # Increment maxvalue because the max value is
+            # higher now.
+            maxvalue += 1
 
         translation = np.array([
                 # Translate each index to its to_value from
