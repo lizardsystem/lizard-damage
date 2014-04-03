@@ -39,9 +39,10 @@ class LanduseTranslator(object):
             raise TranslatorException(
                 "Kan Excelfile niet openen.")
 
-        if sheet.ncols != 2:
+        if sheet.ncols < 2:
             raise TranslatorException(
-                "Eerste sheet van de Excelfile moet 2 kolommen bevatten.")
+                "Eerste sheet van de Excelfile moet minstens 2 kolommen "
+                "bevatten.")
         if sheet.nrows <= 1:
             raise TranslatorException(
                "Eerste sheet van de Excelfile moet meer dan 1 regel bevatten.")
