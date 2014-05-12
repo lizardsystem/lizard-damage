@@ -16,6 +16,12 @@ Changelog of lizard-damage
 
 - Max size of a scenario is now set at 200km2.
 
+- With custom height and landuse maps, we don't require them to cover
+  the entire waterlevel area anymore, using the default maps to fill
+  in the rest (in fact, we always use the default maps, and project
+  the custom maps over them). This is more useful for users, and
+  actually less code.
+
 
 0.10.2 (2014-02-26)
 -------------------

@@ -317,28 +317,8 @@ class FormStep1(forms.Form):
         return self.cleaned_data.get('waterlevel')
 
     def clean(self):
-        """Check that optional custom datasets cover the right area."""
+        """Checks that apply to more than one field."""
         cleaned_data = super(FormStep1, self).clean()
-
-        customlanduse = cleaned_data.get('customlanduse_dataset')
-        customheights = cleaned_data.get('customheights_dataset')
-        waterlevel = cleaned_data.get('waterlevel_dataset')
-
-        if customlanduse and waterlevel:
-            water_extent = extent_from_dataset(waterlevel)
-            landuse_extent = extent_from_dataset(customlanduse)
-
-            if not extent_within_extent(
-                inner_extent=water_extent, outer_extent=landuse_extent):
-                self.add_field_error('customlanduse', "Not within extent")
-
-        if customheights and waterlevel:
-            water_extent = extent_from_dataset(waterlevel)
-            heights_extent = extent_from_dataset(customheights)
-
-            if not extent_within_extent(
-                inner_extent=water_extent, outer_extent=heights_extent):
-                self.add_field_error('customheights', "Not within extent")
 
         # Check the landuse Excel sheet
         translator = self.cleaned_data.get('customlanduseexcel_translator')
