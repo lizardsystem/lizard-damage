@@ -14,6 +14,9 @@ Changelog of lizard-damage
 - Send email if an exception occurs in a task (one to the user,
   one with a traceback to the servicedesk).
 
+- Max size of a scenario is now set at 200km2.
+
+
 0.10.2 (2014-02-26)
 -------------------
 

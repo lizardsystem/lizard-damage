@@ -312,7 +312,7 @@ class FormStep1(forms.Form):
                 settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE):
                 self.add_field_error(
                     'waterlevel',
-                    'Het waterstand bestand mag maximaal 20km2 beslaan.')
+                    'Het waterstand bestand mag maximaal 200km2 beslaan.')
 
         return self.cleaned_data.get('waterlevel')
 

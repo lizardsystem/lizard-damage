@@ -33,7 +33,7 @@ class MyAppConf(AppConf):
     # Where to find land use and height tiles on the local filesystem
     DATA_ROOT = os.path.join(settings.BUILDOUT_DIR, 'var', 'data')
 
-    MAX_WATERLEVEL_SIZE = 20000000  # 20 km2
+    MAX_WATERLEVEL_SIZE = 200 * 1000 * 1000  # 200 km2
 
 # Note that lizard_damage's emails also need settings for
 # EMAIL_USE_TLS, EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD and
