@@ -98,22 +98,22 @@ urlpatterns = patterns(
         name='lizard_damage_event_kml'
     ),
     url(
-        r'^geoimage/(?P<slugs>.*)/',
+        r'^geoimage/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
         views.GeoImageKML.as_view(),
         name='lizard_damage_geo_image_kml'
     ),
     url(
-        r'^geoimage_nolegend/(?P<slugs>.*)/',
+        r'^geoimage_nolegend/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
         views.GeoImageNoLegendKML.as_view(),
         name='lizard_damage_geo_image_no_legend_kml'
     ),
     url(
-        r'^geoimage_landuse/(?P<slugs>.*)/',
+        r'^geoimage_landuse/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
         views.GeoImageLandUseKML.as_view(),
         name='lizard_damage_geo_image_landuse_kml'
     ),
     url(
-        r'^geoimage_height/(?P<slugs>.*)/',
+        r'^geoimage_height/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
         views.GeoImageHeightKML.as_view(),
         name='lizard_damage_geo_image_height_kml'
     ),

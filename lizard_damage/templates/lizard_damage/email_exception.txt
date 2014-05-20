@@ -1,0 +1,11 @@
+{# template for error #}
+L.S.,
+
+    Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" met id {{ damage_scenario.id }} is fout gegaan. Contacteer beheerder.
+    De taak is gecrasht. Er is automatisch ook een email naar de servicedesk verstuurd.
+
+
+  --
+  waterschadeschatter.nl
+
+  Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

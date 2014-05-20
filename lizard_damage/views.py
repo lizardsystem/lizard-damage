@@ -4,15 +4,14 @@ from __future__ import unicode_literals
 from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-# from lizard_map.views import MapView
 from django.views.generic import TemplateView
 from django.views.generic import View
 from django.shortcuts import get_object_or_404
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
-from django.conf import settings
 
 from lizard_damage import tasks
+from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
@@ -22,6 +21,7 @@ from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 
 from zipfile import ZipFile
+import shutil
 import tempfile
 import os
 import re
@@ -74,6 +74,11 @@ def damage_scenario_from_type_0(all_form_data):
         name=all_form_data['name'], email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'])
+    damage_scenario.save()  # Move_files needs an existing ID
+    damage_scenario.move_files({
+            'customheights': all_form_data.get('customheights_file'),
+            'customlanduse': all_form_data.get('customlanduse_file')
+            })
     if all_form_data['damagetable']:
         damage_scenario.damagetable = all_form_data['damagetable']
     damage_scenario.save()
@@ -381,6 +386,7 @@ class Wizard(ViewContextMixin, SessionWizardView):
         if scenario_type in (0, 1, 2, 3, 4, 5):
             damage_scenario = (
                 self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data))
+            self.clean_temporary_directory(all_form_data)
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
             return HttpResponseRedirect(
@@ -393,6 +399,11 @@ class Wizard(ViewContextMixin, SessionWizardView):
             return HttpResponseRedirect(
                 reverse('lizard_damage_thank_you') +
                 '?benefit_scenario_id=%d' % benefit_scenario.id)
+
+    def clean_temporary_directory(self, all_form_data):
+        """This must be called after processing the saved files."""
+        if 'temporary_directory' in all_form_data:
+            shutil.rmtree(all_form_data['temporary_directory'])
 
 
 class DamageScenarioResult(ViewContextMixin, TemplateView):
@@ -450,7 +461,22 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
 class GeoImageKML(DamageEventKML):
     @property
+    def scenario(self):
+        scenario_type = self.kwargs['scenario_type']
+
+        if scenario_type == 'd':
+            return DamageScenario.objects.get(
+                pk=self.kwargs['scenario_id'])
+        elif scenario_type == 'b':
+            return BenefitScenario.objects.get(
+                pk=self.kwargs['scenario_id'])
+        return None
+
+    @property
     def events(self):
+        """HACK. Our superclass returns DamageEventResult instances,
+        but we return GeoImage instances that just happen to have the
+        same attributes so that they work in the template."""
         slugs = self.kwargs['slugs']
         # When multiple GeoImages have the same slug, just take first
         return GeoImage.objects.filter(slug__in=slugs.split(','))

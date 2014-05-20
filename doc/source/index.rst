@@ -1,13 +1,12 @@
 Overview
 ########
 
-TODO: Short one-paragraph intro.
+A little technical documentation of lizard-damage
 
 .. toctree::
    :maxdepth: 2
 
-   code
-   project
+   results
 
 
 .. include:: ../../README.rst

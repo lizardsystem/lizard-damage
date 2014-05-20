@@ -147,7 +147,7 @@ def to_dataset(masked_array,
 
     # Create in memory array
     ds = gdal.GetDriverByName('MEM').Create(
-        '',  # No filename
+        b'',  # No filename
         masked_array.shape[1],
         masked_array.shape[0],
         1,  # number of bands
@@ -180,14 +180,23 @@ def reproject(ds_source, ds_match):
     """
     Accepts and returns gdal datasets. Creates a copy of ds_match.
     """
-    ds_dest = gdal.GetDriverByName(b'MEM').CreateCopy('', ds_match)
+    ds_dest = gdal.GetDriverByName(b'MEM').CreateCopy(b'', ds_match)
+
+    # Fill dest with NoData so that cells where no data is projected
+    # to are handled correctly
+    source_nodatavalue = ds_source.GetRasterBand(1).GetNoDataValue()
+
+    if source_nodatavalue is not None:
+        ds_dest.GetRasterBand(1).SetNoDataValue(source_nodatavalue)
+        ds_dest.GetRasterBand(1).Fill(
+            ds_dest.GetRasterBand(1).GetNoDataValue())
 
     gdal.ReprojectImage(
         ds_source,
         ds_dest,
         ds_source.GetProjection(),
         ds_dest.GetProjection(),
-        gdalconst.GRA_Cubic,  # Not sure if this is a good idea.
+        gdalconst.GRA_NearestNeighbour,
     )
 
     return ds_dest
@@ -229,7 +238,7 @@ def dms2dec(dms):
 
 def ds_empty_copy(ds, bands=1, datatype=gdalconst.GDT_Float64):
     empty = gdal.GetDriverByName(b'MEM').Create(
-        '',
+        b'',
         ds.RasterXSize,
         ds.RasterYSize,
         bands,

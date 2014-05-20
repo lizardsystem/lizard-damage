@@ -7,6 +7,21 @@ Changelog of lizard-damage
 
 - Remove the obsolete AhnIndex model.
 
+- Save custom landuse map in a GeoImage, use only the scenario's
+  landuse map slug for the landuse KML if a custom map was uploaded
+  (so not tiled in that case).
+
+- Send email if an exception occurs in a task (one to the user,
+  one with a traceback to the servicedesk).
+
+- Max size of a scenario is now set at 200km2.
+
+- With custom height and landuse maps, we don't require them to cover
+  the entire waterlevel area anymore, using the default maps to fill
+  in the rest (in fact, we always use the default maps, and project
+  the custom maps over them). This is more useful for users, and
+  actually less code.
+
 
 0.10.2 (2014-02-26)
 -------------------

@@ -16,9 +16,11 @@ from osgeo import ogr
 from osgeo import osr
 
 from django.contrib.gis.geos import Polygon
-from django.conf import settings
 
-from lizard_damage import models
+from . import models
+from . import tiles
+from . import utils
+from .conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,18 @@ def get_area_per_pixel(ds):
     gs = ds.GetGeoTransform()
     area_per_pixel = abs(gs[1] * gs[5])
     return area_per_pixel
+
+
+def get_area_with_data(ds):
+    """Return area of dataset in m2, not counting the nodata cells"""
+    band = ds.GetRasterBand(1)
+    nodatavalue = band.GetNoDataValue()
+    if nodatavalue is not None:
+        cells_with_data = (
+            band.ReadAsArray() != nodatavalue).sum()
+    else:
+        cells_with_data = ds.RasterXSize * ds.RasterYSize
+    return cells_with_data * get_area_per_pixel(ds)
 
 
 def get_geo(ds):
@@ -135,7 +149,7 @@ def get_index_info(ds):
         x1, x2, y1, y2 = feature.geometry().GetEnvelope()
         return x1, y1, x2, y2
 
-    result = {feature['BLADNR']: feature2extent(feature)
+    result = {feature.GetField('BLADNR'): feature2extent(feature)
               for feature in index_layer}
     return result
 
@@ -180,30 +194,6 @@ def init_dataset(ds, nodatavalue=None):
     return result
 
 
-def reproject(ds_source, ds_match):
-    """
-    Reproject source to match the raster layout of match.
-
-    Accepts and resturns gdal datasets.
-    """
-    nodatavalue_source = ds_source.GetRasterBand(1).GetNoDataValue()
-
-    # Create destination dataset
-    ds_destination = init_dataset(ds_match, nodatavalue=nodatavalue_source)
-
-    # Do nearest neigbour interpolation to retain the nodata value
-    projection_source = ds_source.GetProjection()
-    projection_match = ds_match.GetProjection()
-
-    gdal.ReprojectImage(
-        ds_source, ds_destination,
-        projection_source, projection_match,
-        gdalconst.GRA_NearestNeighbour,
-    )
-
-    return ds_destination
-
-
 def export_dataset(filepath, ds, driver='AAIGrid'):
     """
     Save ds at filepath using driver.
@@ -213,40 +203,20 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
     gdal.GetDriverByName(driver).CreateCopy(str(filepath), ds)
 
 
-def get_ds_for_tile(ahn_name, logger=None):
-    """
-    Return datasets (waterlevel, height, landuse).
-
-    Input:
-        ahn_name: ahn subunit name
-    """
-    basepath = settings.DATA_ROOT
-    # ahn
-    ds_ahn_filename = os.path.join(
-        basepath, 'data_ahn', ahn_name[1:4], ahn_name + '.tif'
-    )
-    ds_ahn = gdal.Open(str(ds_ahn_filename))
-    if ds_ahn is None:
-        logger.warning('No height data for {}'.format(ahn_name))
-    # lgn
-    ds_lgn_filename = os.path.join(
-        basepath, 'data_lgn', ahn_name[1:4], ahn_name + '.tif'
-    )
-    ds_lgn = gdal.Open(str(ds_lgn_filename))
-    if ds_lgn is None:
-        logger.warning('No landuse data for {}'.format(ahn_name))
-
-    return ds_ahn, ds_lgn
-
-
-def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
+def get_calc_data(
+    waterlevel_datasets, floodtime, ahn_name, logger,
+    alternative_heights_dataset=None, alternative_landuse_dataset=None):
     """ Return a tuple with data. """
 
     logger.info('Reading datasets for %s' % ahn_name)
-    ds_height, ds_landuse = get_ds_for_tile(
+    ds_height, ds_landuse, ds_landuse_orig = tiles.get_datasets_for_tile(
         ahn_name=ahn_name, logger=logger,
+        alternative_heights_dataset=alternative_heights_dataset,
+        alternative_landuse_dataset=alternative_landuse_dataset
     )  # ds_height: part of result
+
     if ds_height is None or ds_landuse is None:
+        logger.info("ds_height or ds_landuse is None")
         return None
 
     logger.info('landuse, etc...')
@@ -255,13 +225,13 @@ def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
     logger.info('height to masked array...')
     height = to_masked_array(ds_height)
     if height.mask.any():
-        logger.warn(
-            '%s nodata pixels in height tile %s',
+        logger.warn('%s nodata pixels in height tile %s',
             height.mask.sum(), ahn_name,
         )
 
     logger.info('landuse to masked array...')
     landuse = to_masked_array(ds_landuse)  # part of result
+    landuse_orig = to_masked_array(ds_landuse_orig)
     if landuse.mask.any():
         logger.warn(
             '%s nodata pixels in landuse tile %s',
@@ -270,18 +240,24 @@ def get_calc_data(waterlevel_datasets, floodtime, ahn_name, logger):
 
     logger.info('Reprojecting waterlevels to height data %s' % ahn_name)
 
+    logger.info('Max of height data is {}'.
+                format(numpy.amax(height)))
     # Here all the datasets are read in one big array.
     # Mem reduction could be achieved here by incrementally read and update.
     depths = numpy.ma.array(
-        [to_masked_array(reproject(ds_waterlevel, ds_height))
+        [to_masked_array(utils.reproject(ds_waterlevel, ds_height))
          for ds_waterlevel in waterlevel_datasets],
     ) - height
 
+    logger.info('Max of depth data is {}'.
+                format(numpy.amax(depths)))
     depth = depths.max(0)  # part of result
     floodtime_px = floodtime * numpy.greater(depths, 0).sum(0)
     landuse.mask = depth.mask
 
-    return landuse, depth, geo, floodtime_px, ds_height, height
+    return (
+        landuse, depth, geo, floodtime_px, ds_height,
+        height, landuse_orig)
 
 
 def fill_dataset(ds, masked_array):
@@ -342,3 +318,12 @@ def get_mask(roads, shape, geo):
         # Rasterize and return
         gdal.RasterizeLayer(ds_road, (1,), layer, burn_values=(1,))
         return ds_road.GetRasterBand(1).ReadAsArray()
+
+
+def extent_within_extent(outer_extent, inner_extent):
+    ominx, ominy, omaxx, omaxy = outer_extent
+    iminx, iminy, imaxx, imaxy = inner_extent
+
+    return (
+        (ominx <= iminx <= imaxx <= omaxx) and
+        (ominy <= iminy <= imaxy <= omaxy))

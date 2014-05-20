@@ -15,8 +15,11 @@ install_requires = [
     'lizard-ui >= 4.0b5',
     'lizard-task',
     'openpyxl',
+    'xlrd',
     'Pillow',
     'pyproj',
+    'mock',
+    'django-appconf'
     ],
 
 tests_require = [

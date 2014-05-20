@@ -11,12 +11,10 @@ import numpy as np
 import collections
 import logging
 import os
-import shutil
 import tempfile
 import traceback
 import zipfile
 
-from django.conf import settings
 from lizard_damage import raster
 from lizard_damage import table
 from lizard_damage import tools
@@ -213,7 +211,7 @@ def get_roads_flooded_for_tile_and_code(code, depth, geo):
     return roads_flooded_for_tile_and_code
 
 
-def calculate(use, depth, geo,
+def calculate(landuse, depth, geo,
               calc_type, table,
               month, floodtime,
               repairtime_roads,
@@ -237,7 +235,7 @@ def calculate(use, depth, geo,
     area_per_pixel = raster.geo2cellsize(geo)
     default_repairtime = table.header.get_default_repairtime()
 
-    codes_in_use = np.unique(use.compressed())
+    codes_in_use = np.unique(landuse.compressed())
     for code, dr in table.data.items():
         if not code in codes_in_use:
             damage_area[code] = 0
@@ -250,8 +248,8 @@ def calculate(use, depth, geo,
             repairtime = default_repairtime
 
         index = np.logical_and(
-            np.equal(use.data, code),
-            ~use.mask,
+            np.equal(landuse.data, code),
+            ~landuse.mask,
         )
         count[code] = index.sum()
 
@@ -313,7 +311,8 @@ def write_result(name, ma_result, ds_template):
     )
 
 
-def write_table(name, damage, area, dt, meta=[], include_total=False):
+def write_table(
+    name, damage, area, damage_table, meta=[], include_total=False):
     """
     Write results in a csv table on disk.
 
@@ -347,7 +346,7 @@ def write_table(name, damage, area, dt, meta=[], include_total=False):
                     sum(damage.values()),
                 )
             )
-        for code, dr in dt.data.items():
+        for code, dr in damage_table.data.items():
             resultfile.write(
                 '%s,%s,%s,%s,%s\r\n' %
                 (
@@ -400,42 +399,6 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
-def correct_single_ascfile(ascpath):
-    """ Remove non-native headers in ascfile. """
-    asc_headers = [
-        'ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'nodata_value',
-    ]
-    ascfile = open(ascpath)
-    for i, line in enumerate(ascfile):
-        if line.split()[0].lower() in asc_headers:
-            if i == 0:
-            # File ok, nothing to do.
-                return
-            break
-
-    # Write the last (correct) line and remaining lines to tempfile
-    logger.warning('Correcting file: %s' % ascpath)
-    tempfd, temppath = tempfile.mkstemp()
-
-    with os.fdopen(tempfd, 'w') as asctempfile:
-        asctempfile.write(line)  # First good line
-        asctempfile.writelines(ascfile)  # Remaining lines
-    ascfile.close()
-
-    shutil.move(temppath, ascpath)
-
-
-def correct_ascfiles(input_list):
-    """
-    test ascfiles for known faulty behaviour and correct them if needed
-    """
-    for filename in input_list:
-        # Skip anything non-asc
-        if not os.path.splitext(filename)[-1].lower() == '.asc':
-            continue
-        correct_single_ascfile(ascpath=filename)
-
-
 def add_to_zip(output_zipfile, zip_result, logger):
     """
     Now zip all files listed in zip_result
@@ -457,15 +420,29 @@ def add_to_zip(output_zipfile, zip_result, logger):
                 os.remove(file_in_zip['filename'])
 
 
+CDICT_WATER_DEPTH = {
+    'red': ((0.0, 170. / 256, 170. / 256),
+            (0.5, 65. / 256, 65. / 256),
+            (1.0, 4. / 256, 4. / 256)),
+    'green': ((0.0, 200. / 256, 200. / 256),
+              (0.5, 120. / 256, 120. / 256),
+              (1.0, 65. / 256, 65. / 256)),
+    'blue': ((0.0, 255. / 256, 255. / 256),
+             (0.5, 221. / 256, 221. / 256),
+             (1.0, 176. / 256, 176. / 256)),
+    }
+
+
 def calc_damage_for_waterlevel(
-        repetition_time,
-        ds_wl_filenames,
-        dt_path=None,
-        month=9, floodtime=20 * 3600,
-        repairtime_roads=None, repairtime_buildings=None,
-        calc_type=CALC_TYPE_MAX,
-        logger=logger
-    ):
+    repetition_time,
+    waterlevel_ascfiles,
+    dt_path=None,
+    month=9, floodtime=20 * 3600,
+    repairtime_roads=None, repairtime_buildings=None,
+    calc_type=CALC_TYPE_MAX,
+    alternative_heights_dataset=None,
+    alternative_landuse_dataset=None,
+    logger=logger):
     """
     Calculate damage for provided waterlevel file.
 
@@ -488,17 +465,6 @@ def calc_damage_for_waterlevel(
     - schade_totaal.csv (see write_table)
 
     """
-    cdict_water_depth = {
-        'red': ((0.0, 170. / 256, 170. / 256),
-                (0.5, 65. / 256, 65. / 256),
-                (1.0, 4. / 256, 4. / 256)),
-        'green': ((0.0, 200. / 256, 200. / 256),
-                  (0.5, 120. / 256, 120. / 256),
-                  (1.0, 65. / 256, 65. / 256)),
-        'blue': ((0.0, 255. / 256, 255. / 256),
-                 (0.5, 221. / 256, 221. / 256),
-                 (1.0, 176. / 256, 176. / 256)),
-        }
 
     zip_result = []  # store all the file references for
                      # zipping. {'filename': .., 'arcname': ...}
@@ -507,11 +473,10 @@ def calc_damage_for_waterlevel(
     height_slugs = []  # slugs for height geo images
     depth_slugs = []  # slugs for depth geo images
 
-    logger.info('water level: %s' % ds_wl_filenames)
     logger.info('damage table: %s' % dt_path)
     output_zipfile = mkstemp_and_close()
-    waterlevel_ascfiles = ds_wl_filenames
-    correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
+
+    #correct_ascfiles(waterlevel_ascfiles)  # TODO: do it elsewhere
     waterlevel_datasets = [gdal.Open(str(p)) for p in waterlevel_ascfiles]
     logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
     logger.info('waterlevel_datasets: %r' % waterlevel_datasets)
@@ -521,11 +486,8 @@ def calc_damage_for_waterlevel(
                          ' please check %s' % fn)
             return
 
-    if dt_path is None:
-        damage_table_path = 'data/damagetable/dt.cfg'
-        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
-    with open(dt_path) as cfg:
-        dt = table.DamageTable.read_cfg(cfg)
+    # Read damage table
+    dt_path, damage_table = table.read_damage_table(dt_path)
     zip_result.append({'filename': dt_path, 'arcname': 'dt.cfg'})
 
     overall_area = collections.defaultdict(float)
@@ -533,8 +495,8 @@ def calc_damage_for_waterlevel(
     roads_flooded_global = {i: {} for i in ROAD_GRIDCODE}
     result_images = []  # Images to be modified for indirect road damage.
 
-    min_height = None
-    max_height = None
+    min_height = float('inf')
+    max_height = float('-inf')
     min_depth = 0.0  # Set defaults for testing... depth is always >= 0
     max_depth = 0.1
 
@@ -548,6 +510,8 @@ def calc_damage_for_waterlevel(
                 waterlevel_datasets=waterlevel_datasets,
                 floodtime=floodtime,
                 ahn_name=ahn_name,
+                alternative_heights_dataset=alternative_heights_dataset,
+                alternative_landuse_dataset=alternative_landuse_dataset,
                 logger=logger,
             )
             if alldata is None:
@@ -556,7 +520,8 @@ def calc_damage_for_waterlevel(
                 )
                 continue
 
-            landuse, depth, geo, floodtime_px, ds_height, height = alldata
+            (landuse, depth, geo, floodtime_px, ds_height, height,
+             landuse_orig) = alldata
         except:
             # Log this error and all previous normal logs, instead of
             # hard crashing
@@ -569,35 +534,31 @@ def calc_damage_for_waterlevel(
         extent = index_info[ahn_name]
 
         # For height map
-        new_min_height = np.amin(height)
-        if min_height is None or new_min_height < min_height:
-            min_height = new_min_height
-        new_max_height = np.amax(height)
-        if max_height is None or new_max_height < max_height:
-            max_height = new_max_height
+        min_height = min(min_height, np.amin(height))
+        max_height = max(max_height, np.amax(height))
 
         # For depth map
-        new_min_depth = np.amin(depth)
-        if min_depth is None or new_min_depth < min_depth:
-            min_depth = new_min_depth
-        new_max_depth = np.amax(depth)
-        if max_depth is None or new_max_depth < max_depth:
-            max_depth = new_max_depth
+        min_depth = min(min_depth, np.amin(depth))
+        max_depth = max(max_depth, np.amax(depth))
 
         # For landuse map
         landuse_slug = slug_for_landuse(ahn_name)
         landuse_slugs.append(landuse_slug)  # part of result
         # note: multiple objects with the same slug can exist if they
         # enter this function at the same time
+        # NOTE: Save with the data from _landuse_orig_! This is
+        #       basically a cache, and we don't want custom uploaded
+        #       landuse grids to end up in the generic cache.
         if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
             logger.info("Generating landuse GeoImage: %s" % landuse_slug)
             models.GeoImage.from_data_with_legend(
-                landuse_slug, landuse.data, extent, landuse_legend())
+                landuse_slug, landuse_orig.data, landuse_legend(),
+                extent=extent)
 
         # Result is a np array
         damage, count, area, result, roads_flooded_for_tile = calculate(
-            use=landuse, depth=depth, geo=geo, calc_type=calc_type,
-            table=dt, month=month, floodtime=floodtime_px,
+            landuse=landuse, depth=depth, geo=geo, calc_type=calc_type,
+            table=damage_table, month=month, floodtime=floodtime_px,
             repairtime_roads=repairtime_roads,
             repairtime_buildings=repairtime_buildings,
             logger=logger,
@@ -664,7 +625,7 @@ def calc_damage_for_waterlevel(
                     'extent': e,
                     'path': image_result['filename_png'],
                 })
-                models.write_pgw(
+                models.write_extent_pgw(
                     name=image_result['filename_pgw'],
                     extent=e)
                 img_result.append(image_result)
@@ -688,7 +649,7 @@ def calc_damage_for_waterlevel(
             name=csv_result['filename'],
             damage=damage,
             area=area,
-            dt=dt,
+            damage_table=damage_table,
             meta=meta,
         )
         zip_result.append(csv_result)
@@ -712,6 +673,18 @@ def calc_damage_for_waterlevel(
         """
         This is in a subroutine because it
         must be possible to not use it.
+
+        POSSIBLE BUG: All the height and depth tiles from different
+            scenarios (including scenarios with custom height grids,
+            but all scenarios have custom waterheights anyway so the
+            problem is with all scenarios) use the same slugs to save
+            their grids under. Meaning that it is possible that the
+            wrong data is shown for some scenario.
+
+            However, since the slugs have min and max values in them,
+            and difference heights will often lead to different
+            min/max values, this bug is unlikely to show up much in
+            practice. We currently choose to ignore it.
         """
         logger.info('Generating height and depth tiles...')
         logger.debug(
@@ -742,6 +715,8 @@ def calc_damage_for_waterlevel(
                         waterlevel_datasets=waterlevel_datasets,
                         floodtime=floodtime,
                         ahn_name=ahn_name,
+                alternative_heights_dataset=alternative_heights_dataset,
+                alternative_landuse_dataset=alternative_landuse_dataset,
                         logger=logger,
                     )
                     if alldata is None:
@@ -752,7 +727,7 @@ def calc_damage_for_waterlevel(
                         continue
 
                     (landuse, depth, geo, floodtime_px,
-                     ds_height, height) = alldata
+                     ds_height, height, landuse_orig) = alldata
                 except:
                     # Log this error and all previous normal logs,
                     # instead of hard crashing
@@ -776,36 +751,34 @@ def calc_damage_for_waterlevel(
                 try:
                     models.GeoImage.from_data_with_min_max(
                         depth_slug, depth, extent, min_depth, max_depth,
-                        cdict=cdict_water_depth)
+                        cdict=CDICT_WATER_DEPTH)
                     depth_slugs.append(depth_slug)  # part of result
                 except:
                     logger.info(
                         "Skipped depth GeoImage because of masked "
                         "only or unknown error")
 
-    if ((min_height is not None) and
-        (max_height is not None) and
-        (min_depth is not None) and
-        (max_depth is not None)):
+    if (min_height <= max_height):
         generate_height_tiles()
 
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
     roads_flooded_over_threshold = []
     for code, roads_flooded in roads_flooded_global.iteritems():
+        damage_data = damage_table.data[code]
         for road, info in roads_flooded.iteritems():
             if info['area'] >= 100:
                 roads_flooded_over_threshold.append(road)
                 indirect_road_damage = (
-                    dt.data[code].to_indirect_damage(CALC_TYPES[calc_type]) *
-                    dt.data[code].to_gamma_repairtime(repairtime_roads)
+                    damage_data.to_indirect_damage(CALC_TYPES[calc_type]) *
+                    damage_data.to_gamma_repairtime(repairtime_roads)
                 )
                 logger.debug(
                     '%s - %s - %s: %.2f ind' %
                     (
-                        dt.data[code].code,
-                        dt.data[code].source,
-                        dt.data[code].description,
+                        damage_data.code,
+                        damage_data.source,
+                        damage_data.description,
                         indirect_road_damage,
                     ),
                 )
@@ -878,7 +851,7 @@ def calc_damage_for_waterlevel(
         name=csv_result['filename'],
         damage=overall_damage,
         area=overall_area,
-        dt=dt,
+        damage_table=damage_table,
         meta=meta,
         include_total=True,
         )
@@ -886,12 +859,11 @@ def calc_damage_for_waterlevel(
         name=csv_result['filename'],
         damage=overall_damage,
         area=overall_area,
-        damage_table=dt
+        damage_table=damage_table
         )
     zip_result.append(csv_result)
 
     add_to_zip(output_zipfile, zip_result, logger)
-    zip_result = []
 
     logger.info('zipfile: %s' % output_zipfile)
 
