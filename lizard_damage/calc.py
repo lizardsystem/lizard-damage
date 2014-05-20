@@ -433,6 +433,46 @@ CDICT_WATER_DEPTH = {
     }
 
 
+def add_roads_to_image(roads, image_path, extent):
+    """ This function could be moved to top level. """
+
+    # Get old image that needs indirect road damage visualized
+    image = Image.open(image_path)
+
+    # Rasterize all roads that have indirect damage
+    size = image.size
+    geotransform = [
+        extent[0],
+        (extent[2] - extent[0]) / size[0],
+        0,
+        extent[3],
+        0,
+        (extent[1] - extent[3]) / size[1],
+        ]
+    roadgrid = raster.get_mask(
+        roads=roads,
+        shape=image.size[::-1],
+        geo=(b'', geotransform),
+        )
+
+    # Paste it into the old image and overwrite the image file
+    rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
+        roadgrid.shape[0], roadgrid.shape[1], 1
+        )
+    image_roads_rgb = Image.fromstring(
+        'RGB',
+        (rgba.shape[1], rgba.shape[0]),
+        rgba[:, :, 0:3].tostring(),
+        )
+    image_roads_mask = Image.fromstring(
+        'L',
+        (rgba.shape[1], rgba.shape[0]),
+        rgba[:, :, 3].tostring(),
+        )
+    image.paste(image_roads_rgb, None, image_roads_mask)
+    image.save(image_path)
+
+
 def calc_damage_for_waterlevel(
     repetition_time,
     waterlevel_ascfiles,
@@ -589,46 +629,28 @@ def calc_damage_for_waterlevel(
         zip_result.append(asc_result)
 
         # Generate image in .png
-        # Subdivide tiles
-        x_tiles = 1
-        y_tiles = 1
-        tile_x_size = (extent[2] - extent[0]) / x_tiles
-        tile_y_size = (extent[3] - extent[1]) / y_tiles
-        result_tile_size_x = result.shape[1] / x_tiles
-        result_tile_size_y = result.shape[0] / y_tiles
 
-        for tile_x in range(x_tiles):
-            for tile_y in range(y_tiles):
-                e = (
-                    extent[0] + tile_x * tile_x_size,
-                    extent[1] + tile_y * tile_y_size,
-                    extent[0] + (tile_x + 1) * tile_x_size,
-                    extent[1] + (tile_y + 1) * tile_y_size)
-                # We are writing a png + pgw now, but in the task a
-                # tiff will be created and uploaded
-                base_filename = mkstemp_and_close()
-                image_result = {
-                    'filename_tif': base_filename + '.tif',
-                    'filename_png': base_filename + '.png',
-                    'filename_pgw': base_filename + '.pgw',
-                    # %s is for the damage_event.slug
-                    'dstname': 'schade_%s_' + ahn_name + '.png',
-                    'extent': raster.transform_extent(e)}
-                write_image(
-                    name=image_result['filename_png'],
-                    values=result[
-                        (y_tiles - tile_y - 1) * result_tile_size_y:
-                            (y_tiles - tile_y) * result_tile_size_y,
-                        (tile_x) * result_tile_size_x:
-                            (tile_x + 1) * result_tile_size_x])
-                result_images.append({
-                    'extent': e,
-                    'path': image_result['filename_png'],
+        # We are writing a png + pgw now, but in the task a
+        # tiff will be created and uploaded
+        base_filename = mkstemp_and_close()
+        image_result = {
+            'filename_tif': base_filename + '.tif',
+            'filename_png': base_filename + '.png',
+            'filename_pgw': base_filename + '.pgw',
+            # %s is for the damage_event.slug
+            'dstname': 'schade_%s_' + ahn_name + '.png',
+            'extent': raster.transform_extent(extent)}
+        write_image(
+            name=image_result['filename_png'],
+            values=result)
+        result_images.append({
+                'extent': extent,
+                'path': image_result['filename_png'],
                 })
-                models.write_extent_pgw(
-                    name=image_result['filename_pgw'],
-                    extent=e)
-                img_result.append(image_result)
+        models.write_extent_pgw(
+            name=image_result['filename_pgw'],
+            extent=extent)
+        img_result.append(image_result)
 
         csv_result = {
             'filename': mkstemp_and_close(), 'arcname': arcname + '.csv',
@@ -655,24 +677,17 @@ def calc_damage_for_waterlevel(
         zip_result.append(csv_result)
 
         for k in damage.keys():
-            if k in overall_damage:
-                overall_damage[k] += damage[k]
-            else:
-                overall_damage[k] = damage[k]
+            overall_damage[k] += damage[k]
 
         for k in area.keys():
-            if k in overall_area:
-                overall_area[k] += area[k]
-            else:
-                overall_area[k] = area[k]
+            overall_area[k] += area[k]
 
         add_to_zip(output_zipfile, zip_result, logger)
         zip_result = []
 
-    def generate_height_tiles():
+    if (min_height <= max_height):
         """
-        This is in a subroutine because it
-        must be possible to not use it.
+        Generate height tiles.
 
         POSSIBLE BUG: All the height and depth tiles from different
             scenarios (including scenarios with custom height grids,
@@ -758,9 +773,6 @@ def calc_damage_for_waterlevel(
                         "Skipped depth GeoImage because of masked "
                         "only or unknown error")
 
-    if (min_height <= max_height):
-        generate_height_tiles()
-
     # Only after all tiles have been processed, calculate overall indirect
     # Road damage. This is not visible in the per-tile-damagetable.
     roads_flooded_over_threshold = []
@@ -784,45 +796,7 @@ def calc_damage_for_waterlevel(
                 )
                 overall_damage[code] += indirect_road_damage
 
-    def add_roads_to_image(roads, image_path, extent):
-        """ This function could be moved to top level. """
-
-        # Get old image that needs indirect road damage visualized
-        image = Image.open(result_image['path'])
-
-        # Rasterize all roads that have indirect damage
-        size = image.size
-        geotransform = [
-            extent[0],
-            (extent[2] - extent[0]) / size[0],
-            0,
-            extent[3],
-            0,
-            (extent[1] - extent[3]) / size[1],
-        ]
-        roadgrid = raster.get_mask(
-            roads=road_objects,
-            shape=image.size[::-1],
-            geo=(b'', geotransform),
-        )
-
-        # Paste it into the old image and overwrite the image file
-        rgba = np.uint8([[[0, 0, 0, 153]]]) * roadgrid.reshape(
-            roadgrid.shape[0], roadgrid.shape[1], 1
-        )
-        image_roads_rgb = Image.fromstring(
-            'RGB',
-            (rgba.shape[1], rgba.shape[0]),
-            rgba[:, :, 0:3].tostring(),
-        )
-        image_roads_mask = Image.fromstring(
-            'L',
-            (rgba.shape[1], rgba.shape[0]),
-            rgba[:, :, 3].tostring(),
-        )
-        image.paste(image_roads_rgb, None, image_roads_mask)
-        image.save(result_image['path'])
-
+    # Draw roads over images
     road_objects = models.Roads.objects.filter(
         pk__in=roads_flooded_over_threshold,
     )
