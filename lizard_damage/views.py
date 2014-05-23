@@ -361,8 +361,6 @@ class Wizard(ViewContextMixin, SessionWizardView):
         The Wizard is finished: create a new DamageScenario object and
         launch the calculation task associated to it.
         """
-        #import ipdb; ipdb.set_trace()
-        #do_something_with_the_form_data(form_list)
         scenario_type_name = {
             0: '1 Kaart met de max waterstand van 1 gebeurtenis',
             1: '1 Kaart met de waterstand voor een zekere herhalingstijd',
@@ -433,9 +431,6 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
 class DamageEventKML(ViewContextMixin, TemplateView):
     template_name = 'lizard_damage/event_result.kml'
 
-    # @property
-    # def legend_url(self):
-    #     # Url to an image, optional
     @property
     def legend_url(self):
         return self.root_url + '/static_media/lizard_damage/legend.png'
