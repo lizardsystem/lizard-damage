@@ -7,6 +7,7 @@ import traceback
 from celery.task import task
 
 from lizard_damage import calc
+from lizard_damage import models
 from lizard_damage import risk
 from lizard_damage import emails
 from lizard_damage.conf import settings
@@ -69,8 +70,9 @@ def calculate_damage(
     exception occurs.  Uncaught exceptions are usually problems in the
     code, not the input."""
     try:
-        return calc.real_calculate_damage(
-            damage_scenario_id, username, taskname, loglevel)
+        damage_scenario = models.DamageScenario.objects.get(
+            pk=damage_scenario_id)
+        damage_scenario.calculate(username, taskname, loglevel)
     except:
         exc_info = sys.exc_info()
         tracebackbuf = StringIO.StringIO()

@@ -17,7 +17,6 @@ import zipfile
 
 from matplotlib import colors
 from PIL import Image
-import datetime
 import json
 import subprocess
 
@@ -28,11 +27,8 @@ from lizard_damage import raster
 from lizard_damage import table
 from lizard_damage import tools
 from lizard_damage import models
-from lizard_damage import risk
-from lizard_damage import emails
 from lizard_damage.conf import settings
 from lizard_damage.models import DamageEventResult
-from lizard_damage.models import DamageScenario
 from lizard_damage.models import RD
 from lizard_damage.models import extent_from_geotiff
 
@@ -47,60 +43,6 @@ CALC_TYPES = {
     2: 'max',
     3: 'avg',
 }
-
-
-def real_calculate_damage(
-    damage_scenario_id, username=None, taskname=None, loglevel=20):
-    """
-    Main calculation task.
-    """
-    start_dt = datetime.datetime.now()
-    logger = logging.getLogger(taskname)
-    logger.info("calculate damage")
-    damage_scenario = DamageScenario.objects.get(pk=damage_scenario_id)
-    logger.info(
-        "scenario: %d, %s" % (damage_scenario.id, str(damage_scenario)))
-
-    logger.info("calculating...")
-
-    logger.info("scenario %s" % (damage_scenario.name))
-    damage_scenario.status = damage_scenario.SCENARIO_STATUS_INPROGRESS
-    damage_scenario.save()
-
-    errors = 0
-    for damage_event_index, damage_event in enumerate(
-        damage_scenario.damageevent_set.all(),
-    ):
-        result = call_calc_damage_for_waterlevel(
-            logger, damage_event,
-            damage_scenario.damagetable,
-            damage_scenario.calc_type,
-            damage_scenario.alternative_heights_dataset,
-            damage_scenario.alternative_landuse_dataset)
-        if result:
-            errors += process_result(
-                logger, damage_event, damage_event_index,
-                result, damage_scenario.name)
-        else:
-            errors += 1
-
-    # Calculate risk maps
-    if damage_scenario.scenario_type == 4:
-        risk.create_risk_map(damage_scenario=damage_scenario, logger=logger)
-
-    # Roundup
-    damage_scenario.status = damage_scenario.SCENARIO_STATUS_DONE
-    damage_scenario.save()
-
-    if errors == 0:
-        emails.send_damage_success_mail(
-            damage_scenario, username, logger, start_dt)
-        logger.info("finished successfully")
-    else:
-        emails.send_damage_error_mail(
-            damage_scenario, username, logger, start_dt)
-        logger.info("finished with errors")
-        return 'failure'
 
 
 def convert_tif_to_png(filename_tif, filename_png):
