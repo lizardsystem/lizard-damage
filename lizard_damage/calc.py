@@ -281,23 +281,7 @@ def get_colorizer(max_damage):
 
     return colorize
 
-# {landuse-code: gridcode} mapping for roads
-ROAD_GRIDCODE = {32: 20, 22: 21, 23: 22}
 BUILDING_SOURCES = ('BAG', )
-
-
-def get_roads_flooded_for_tile_and_code(code, depth, geo):
-    """ Return dict {road: flooded_m2}. """
-    area_per_pixel = raster.geo2cellsize(geo)
-    roads_flooded_for_tile_and_code = {}
-    roads = raster.get_roads(ROAD_GRIDCODE[code], geo, depth.shape)
-    for road in roads:
-        mask = raster.get_mask([road], depth.shape, geo)
-        flooded_m2 = (mask * area_per_pixel * np.greater(depth, 0)).sum()
-        if flooded_m2:
-            roads_flooded_for_tile_and_code[road.pk] = flooded_m2
-
-    return roads_flooded_for_tile_and_code
 
 
 def calculate(landuse, depth, geo,
@@ -350,12 +334,13 @@ def calculate(landuse, depth, geo,
             dr.to_gamma_month(month)
         )
 
-        if code in ROAD_GRIDCODE:
+        from lizard_damage.models import Roads
+        if code in Roads.ROAD_GRIDCODE:
             # Here only the roads involved in this ahn are recorded, indirect
             # damage will be added to overall results.
-            roads_flooded_for_tile[code] = get_roads_flooded_for_tile_and_code(
-                code=code, depth=depth, geo=geo,
-            )
+            roads_flooded_for_tile[code] = (
+                Roads.get_roads_flooded_for_tile_and_code(
+                code=code, depth=depth, geo=geo))
             partial_result_indirect = np.array(0)
         else:
             partial_result_indirect = (

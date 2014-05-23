@@ -11,14 +11,14 @@ import ConfigParser
 import openpyxl
 import logging
 import numpy
-import os
 
 from django.utils import simplejson as json
 
-from lizard_damage.conf import settings
 from lizard_damage import (
     utils,
 )
+
+DEFAULT_DAMAGE_TABLE = 'data/damagetable/dt.cfg'
 
 CFG_HEADER_SECTION = 'algemeen'
 CFG_HEADER_FLOODTIME = 'inundatieduur'
@@ -179,18 +179,19 @@ class DamageTable(object):
     XLSX_TYPE = 1
     CFG_TYPE = 2
 
-    def __init__(self, from_type, from_filename):
-        from lizard_damage import models
-        self._units = dict((u.name, u) for u in models.Unit.objects.all())
+    def __init__(self, from_type, from_filename, units):
+        self._units = dict((u.name, u) for u in units)
         self.importers[from_type](self, from_filename)
 
     @classmethod
-    def read_xlsx(cls, filename):
-        return cls(from_type=cls.XLSX_TYPE, from_filename=filename)
+    def read_xlsx(cls, filename, units):
+        return cls(
+            from_type=cls.XLSX_TYPE, from_filename=filename, units=units)
 
     @classmethod
-    def read_cfg(cls, filename):
-        return cls(from_type=cls.CFG_TYPE, from_filename=filename)
+    def read_cfg(cls, filename, units):
+        return cls(
+            from_type=cls.CFG_TYPE, from_filename=filename, units=units)
 
     def write_cfg(self, file_object):
         logger.debug('Writing damage table %s.', file_object.name)
@@ -305,13 +306,3 @@ class DamageTable(object):
         XLSX_TYPE: _import_from_xlsx,
         CFG_TYPE: _import_from_cfg,
     }
-
-
-def read_damage_table(dt_path):
-    """Returns possibly changed dt_path and damage table"""
-    if dt_path is None:
-        damage_table_path = 'data/damagetable/dt.cfg'
-        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
-    with open(dt_path) as cfg:
-        dt = DamageTable.read_cfg(cfg)
-        return dt_path, dt

@@ -129,6 +129,9 @@ class Roads(models.Model):
     When using postgis2, shp2pgsql must take care of the table creation
     since django doesn't handle postgis2 very well currently.
     """
+    # {landuse-code: gridcode} mapping for roads
+    ROAD_GRIDCODE = {32: 20, 22: 21, 23: 22}
+
     gid = models.IntegerField(primary_key=True)
     typeinfr_1 = models.CharField(max_length=25, blank=True)
     typeweg = models.CharField(max_length=120, blank=True)
@@ -138,6 +141,29 @@ class Roads(models.Model):
 
     class Meta:
         db_table = 'data_roads'
+
+    @classmethod
+    def get_by_geo(cls, gridcode, geo, shape):
+        """ Return roads contained by dataset with gridcode gridcode. """
+        polygon = raster.get_polygon_from_geo_and_shape(geo, shape)
+
+        return cls.objects.filter(
+            the_geom__intersects=polygon, gridcode=gridcode)
+
+    @classmethod
+    def get_roads_flooded_for_tile_and_code(cls, code, depth, geo):
+        """ Return dict {road: flooded_m2}. """
+        area_per_pixel = raster.geo2cellsize(geo)
+        roads_flooded_for_tile_and_code = {}
+
+        roads = cls.get_by_geo(cls.ROAD_GRIDCODE[code], geo, depth.shape)
+        for road in roads:
+            mask = raster.get_mask([road], depth.shape, geo)
+            flooded_m2 = (mask * area_per_pixel * np.greater(depth, 0)).sum()
+            if flooded_m2:
+                roads_flooded_for_tile_and_code[road.pk] = flooded_m2
+
+        return roads_flooded_for_tile_and_code
 
 
 class Unit(models.Model):
@@ -256,6 +282,25 @@ class DamageScenario(models.Model):
         if not os.path.exists(workdir):
             os.makedirs(workdir)
         return workdir
+
+    @property
+    def damage_table_path(self):
+        if self.damagetable:
+            return self.damagetable.path
+        else:
+            return None
+
+    def read_damage_table(self):
+        """Returns damage table from dt_path, or data/damagetable/dt.cfg
+        if not given."""
+        dt_path = self.damage_table_path
+        if dt_path is None:
+            damage_table_path = table.DEFAULT_DAMAGE_TABLE
+        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
+
+        with open(dt_path) as cfg:
+            return dt_path, table.DamageTable.read_cfg(
+                cfg, units=Unit.objects.all())
 
     @property
     def display_status(self):
@@ -513,12 +558,6 @@ class DamageEvent(models.Model):
         logger.info("event %s" % (self,))
         logger.info(" - month %s, floodtime %s" % (
                 self.floodmonth, self.floodtime))
-        if self.scenario.damagetable:
-            dt_path = self.scenario.damagetable.path
-        else:
-            # Default
-            dt_path = os.path.join(
-                settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
 
         zip_result = []  # store all the file references for
                          # zipping. {'filename': .., 'arcname': ...}
@@ -527,7 +566,6 @@ class DamageEvent(models.Model):
         height_slugs = []  # slugs for height geo images
         depth_slugs = []  # slugs for depth geo images
 
-        logger.info('damage table: %s' % dt_path)
         output_zipfile = calc.mkstemp_and_close()
 
         waterlevel_datasets = [gdal.Open(str(p)) for p in waterlevel_ascfiles]
@@ -540,7 +578,8 @@ class DamageEvent(models.Model):
                 return
 
         # Read damage table
-        dt_path, damage_table = table.read_damage_table(dt_path)
+        dt_path, damage_table = self.scenario.read_damage_table()
+        logger.info('damage table: %s' % dt_path)
         zip_result.append({'filename': dt_path, 'arcname': 'dt.cfg'})
 
         overall_area = collections.defaultdict(float)
