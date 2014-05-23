@@ -113,7 +113,7 @@ def send_damage_success_mail(damage_scenario, logger, start_dt):
         'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s '
         % damage_scenario.name)
     send_email_to_task(
-        damage_scenario.id, 'email_ready', subject, username='mail')
+        damage_scenario.id, 'email_ready', subject)
 
 
 def send_damage_error_mail(damage_scenario, logger, start_dt):
@@ -128,7 +128,7 @@ def send_damage_error_mail(damage_scenario, logger, start_dt):
         'WaterSchadeSchatter: scenario %s heeft fouten'
         % damage_scenario.name)
     send_email_to_task(
-        damage_scenario.id, 'email_error', subject, username='mail')
+        damage_scenario.id, 'email_error', subject)
     send_email_to_task(
-        damage_scenario.id, 'email_error', subject, username='mail',
+        damage_scenario.id, 'email_error', subject,
         email='olivier.hoes@nelen-schuurmans.nl')
