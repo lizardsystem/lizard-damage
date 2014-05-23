@@ -25,7 +25,7 @@ from . import models
 
 
 def send_email_to_task(
-    scenario_id, mail_template, subject, username='admin',
+    scenario_id, mail_template, subject,
     email="", scenario_type='damage', extra_context=None):
     """
     Create a task for sending email
@@ -53,7 +53,7 @@ def send_email_to_task(
     email_task.kwargs = task_kwargs
     email_task.task = 'lizard_damage.tasks.send_email'
     email_task.save()
-    email_task.send_task(username=username)
+    email_task.send_task(username='mail')
 
 
 def do_send_email(
@@ -69,7 +69,6 @@ def do_send_email(
         damage=models.DamageScenario, benefit=models.BenefitScenario,
     )[scenario_type].objects.get(pk=scenario_id)
 
-    #subject = 'Schademodule: Scenario "%s" ontvangen' % damage_scenario.name
     try:
         root_url = 'http://%s' % Site.objects.all()[0].domain
     except:
@@ -85,17 +84,12 @@ def do_send_email(
         "lizard_damage/%s.html" % mail_template)
 
     from_email = 'no-reply@nelen-schuurmans.nl'
-    if not email:
-        # Default
-        to = scenario.email
-    else:
-        # In case of user provided email (errors)
-        to = email
+    to_email = email or scenario.email
 
     logger.info("scenario: %s" % scenario)
-    logger.info("sending e-mail to: %s" % to)
+    logger.info("sending e-mail to: %s" % to_email)
     msg = mail.EmailMultiAlternatives(
-        subject, template_text.render(context), from_email, [to])
+        subject, template_text.render(context), from_email, [to_email])
     msg.attach_alternative(template_html.render(context), 'text/html')
     msg.send()
 
@@ -108,7 +102,7 @@ def do_send_email(
                 "lizard_damage_result", kwargs=dict(slug=scenario.slug))))
 
 
-def send_damage_success_mail(damage_scenario, username, logger, start_dt):
+def send_damage_success_mail(damage_scenario, logger, start_dt):
     """Send success mail"""
     logger.info('STATS scenario type %s van %s is klaar in %r' % (
             damage_scenario.scenario_type_str,
@@ -119,10 +113,10 @@ def send_damage_success_mail(damage_scenario, username, logger, start_dt):
         'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s '
         % damage_scenario.name)
     send_email_to_task(
-        damage_scenario.id, 'email_ready', subject, username=username)
+        damage_scenario.id, 'email_ready', subject, username='mail')
 
 
-def send_damage_error_mail(damage_scenario, username, logger, start_dt):
+def send_damage_error_mail(damage_scenario, logger, start_dt):
     # Send error mail
     logger.info('STATS scenario type %s van %s is mislukt in %r' % (
             damage_scenario.scenario_type_str,
@@ -134,7 +128,7 @@ def send_damage_error_mail(damage_scenario, username, logger, start_dt):
         'WaterSchadeSchatter: scenario %s heeft fouten'
         % damage_scenario.name)
     send_email_to_task(
-        damage_scenario.id, 'email_error', subject, username=username)
+        damage_scenario.id, 'email_error', subject, username='mail')
     send_email_to_task(
-        damage_scenario.id, 'email_error', subject, username=username,
+        damage_scenario.id, 'email_error', subject, username='mail',
         email='olivier.hoes@nelen-schuurmans.nl')

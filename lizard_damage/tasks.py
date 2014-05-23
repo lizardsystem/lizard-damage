@@ -70,9 +70,10 @@ def calculate_damage(
     exception occurs.  Uncaught exceptions are usually problems in the
     code, not the input."""
     try:
+        logger = logging.getLogger(taskname)
         damage_scenario = models.DamageScenario.objects.get(
             pk=damage_scenario_id)
-        damage_scenario.calculate(username, taskname, loglevel)
+        damage_scenario.calculate(logger)
     except:
         exc_info = sys.exc_info()
         tracebackbuf = StringIO.StringIO()
@@ -80,11 +81,11 @@ def calculate_damage(
 
         emails.send_email_to_task(
             damage_scenario_id, 'email_exception',
-            "WaterSchadeSchatter: berekening mislukt", username=username)
+            "WaterSchadeSchatter: berekening mislukt")
 
         emails.send_email_to_task(
             damage_scenario_id, 'email_exception_traceback',
-            "WaterSchadeSchatter: berekening gecrasht", username=username,
+            "WaterSchadeSchatter: berekening gecrasht",
             email=settings.LIZARD_DAMAGE_EXCEPTION_EMAIL, extra_context={
                 'exception': "{}: {}".format(exc_info[0], exc_info[1]),
                 'traceback': tracebackbuf.getvalue()
