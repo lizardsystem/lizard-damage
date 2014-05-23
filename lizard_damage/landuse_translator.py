@@ -104,7 +104,10 @@ class LanduseTranslator(object):
                     .format(value))
 
         # Check if all values are in the default damage table
-        damage_table = table.read_damage_table(None)[1]
+        from lizard_damage.models import Unit
+        damage_table = table.DamageTable.read_cfg(
+            open(table.DEFAULT_DAMAGE_TABLE), units=Unit.objects.all())
+
         codes = set(damage_table.data)
         for value in sorted(self.translate_dict.values()):
             if value not in codes:

@@ -153,16 +153,6 @@ def get_index_info(ds):
     return result
 
 
-def get_roads(gridcode, geo, shape):
-    """ Return roads contained by dataset with gridcode gridcode. """
-    polygon = get_polygon_from_geo_and_shape(geo, shape)
-    from . import models
-    roads = models.Roads.objects.filter(
-        the_geom__intersects=polygon, gridcode=gridcode,
-    )
-    return roads
-
-
 def init_dataset(ds, nodatavalue=None):
     """
     Return new dataset with same geometry and datatype as ds.
