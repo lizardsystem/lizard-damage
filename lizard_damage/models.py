@@ -334,12 +334,18 @@ class DamageScenario(models.Model):
 
         for damage_event_index, damage_event in enumerate(
             self.damageevent_set.all()):
-            result = calc.call_calc_damage_for_waterlevel(
-                logger, damage_event,
+            result = calc.calc_damage_for_waterlevel(
+                damage_event.repetition_time,
+                damage_event,
                 self.damagetable,
+                damage_event.floodmonth,
+                damage_event.floodtime,
+                damage_event.repairtime_roads,
+                damage_event.repairtime_buildings,
                 self.calc_type,
                 self.alternative_heights_dataset,
-                self.alternative_landuse_dataset)
+                self.alternative_landuse_dataset,
+                logger)
             if result:
                 errors += calc.process_result(
                     logger, damage_event, damage_event_index,

@@ -50,35 +50,6 @@ def convert_tif_to_png(filename_tif, filename_png):
     im.save(filename_png, 'PNG')
 
 
-def call_calc_damage_for_waterlevel(
-    logger, damage_event, damagetable, calc_type,
-    alternative_heights_dataset, alternative_landuse_dataset):
-    waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
-                       damage_event.damageeventwaterlevel_set.all()]
-    logger.info("event %s" % (damage_event))
-    logger.info(" - month %s, floodtime %s" % (
-            damage_event.floodmonth, damage_event.floodtime))
-    if damagetable:
-        dt_path = damagetable.path
-    else:
-        # Default
-        dt_path = os.path.join(
-            settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
-
-    return calc_damage_for_waterlevel(
-        repetition_time=damage_event.repetition_time,
-        waterlevel_ascfiles=waterlevel_ascfiles,
-        dt_path=dt_path,
-        month=damage_event.floodmonth,
-        floodtime=damage_event.floodtime,
-        repairtime_roads=damage_event.repairtime_roads,
-        repairtime_buildings=damage_event.repairtime_buildings,
-        calc_type=calc_type,
-        alternative_landuse_dataset=alternative_landuse_dataset,
-        alternative_heights_dataset=alternative_heights_dataset,
-        logger=logger)
-
-
 def process_result(
     logger, damage_event, damage_event_index, result, scenario_name):
     errors = 0
@@ -599,8 +570,8 @@ def add_roads_to_image(roads, image_path, extent):
 
 def calc_damage_for_waterlevel(
     repetition_time,
-    waterlevel_ascfiles,
-    dt_path=None,
+    damage_event,
+    damagetable,
     month=9, floodtime=20 * 3600,
     repairtime_roads=None, repairtime_buildings=None,
     calc_type=CALC_TYPE_MAX,
@@ -629,6 +600,18 @@ def calc_damage_for_waterlevel(
     - schade_totaal.csv (see write_table)
 
     """
+
+    waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
+                       damage_event.damageeventwaterlevel_set.all()]
+    logger.info("event %s" % (damage_event))
+    logger.info(" - month %s, floodtime %s" % (
+            damage_event.floodmonth, damage_event.floodtime))
+    if damagetable:
+        dt_path = damagetable.path
+    else:
+        # Default
+        dt_path = os.path.join(
+            settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
 
     zip_result = []  # store all the file references for
                      # zipping. {'filename': .., 'arcname': ...}
