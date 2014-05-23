@@ -308,14 +308,13 @@ class DamageScenario(models.Model):
         # Return a comma-separated list of a single slug, aka the slug itself
         return self.customlandusegeoimage.slug
 
-    def calculate(self, username=None, taskname=None, loglevel=20):
+    def calculate(self, logger):
         """
         Calculate this DamageScenario. Called from task.
 
         Returns 'failure' on failure, None on success.
         """
         start_dt = datetime.datetime.now()
-        logger = logging.getLogger(taskname)
         logger.info("calculate damage")
 
         logger.info("scenario: %d, %s" % (self.id, str(self)))
@@ -357,14 +356,11 @@ class DamageScenario(models.Model):
         self.save()
 
         if errors == 0:
-            emails.send_damage_success_mail(
-                self, username, logger, start_dt)
+            emails.send_damage_success_mail(self, logger, start_dt)
             logger.info("finished successfully")
         else:
-            emails.send_damage_error_mail(
-                self, username, logger, start_dt)
+            emails.send_damage_error_mail(self, logger, start_dt)
             logger.info("finished with errors")
-            return 'failure'
 
 
 class DamageEvent(models.Model):
