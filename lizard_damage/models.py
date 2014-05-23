@@ -435,9 +435,6 @@ class DamageEventResult(models.Model):
     Normally a Damage Event has multiple tiles
     """
 
-    #table = models.TextField()
-    #raster = models.FileField(upload_to='scenario/result')
-
     damage_event = models.ForeignKey(DamageEvent)
     image = models.FileField(upload_to='scenario/image')
 
