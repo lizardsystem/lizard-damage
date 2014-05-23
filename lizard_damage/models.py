@@ -308,6 +308,64 @@ class DamageScenario(models.Model):
         # Return a comma-separated list of a single slug, aka the slug itself
         return self.customlandusegeoimage.slug
 
+    def calculate(self, username=None, taskname=None, loglevel=20):
+        """
+        Calculate this DamageScenario. Called from task.
+
+        Returns 'failure' on failure, None on success.
+        """
+        start_dt = datetime.datetime.now()
+        logger = logging.getLogger(taskname)
+        logger.info("calculate damage")
+
+        logger.info("scenario: %d, %s" % (self.id, str(self)))
+        logger.info("calculating...")
+
+        logger.info("scenario %s" % (self.name))
+
+        self.status = self.SCENARIO_STATUS_INPROGRESS
+        self.save()
+
+        errors = 0
+
+        # Use local imports while we are refactoring
+        from lizard_damage import calc
+        from lizard_damage import risk
+        from lizard_damage import emails
+
+        for damage_event_index, damage_event in enumerate(
+            self.damageevent_set.all()):
+            result = calc.call_calc_damage_for_waterlevel(
+                logger, damage_event,
+                self.damagetable,
+                self.calc_type,
+                self.alternative_heights_dataset,
+                self.alternative_landuse_dataset)
+            if result:
+                errors += calc.process_result(
+                    logger, damage_event, damage_event_index,
+                    result, self.name)
+            else:
+                errors += 1
+
+        # Calculate risk maps
+        if self.scenario_type == 4:
+            risk.create_risk_map(damage_scenario=self, logger=logger)
+
+        # Roundup
+        self.status = self.SCENARIO_STATUS_DONE
+        self.save()
+
+        if errors == 0:
+            emails.send_damage_success_mail(
+                self, username, logger, start_dt)
+            logger.info("finished successfully")
+        else:
+            emails.send_damage_error_mail(
+                self, username, logger, start_dt)
+            logger.info("finished with errors")
+            return 'failure'
+
 
 class DamageEvent(models.Model):
     """
