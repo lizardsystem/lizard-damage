@@ -7,6 +7,7 @@ from __future__ import (
   division,
 )
 
+import collections
 import datetime
 import json
 import logging
@@ -17,6 +18,7 @@ import shutil
 import string
 import subprocess
 import tempfile
+import traceback
 import zipfile
 
 from PIL import Image
@@ -31,6 +33,9 @@ from django.core.files import File
 
 from lizard_damage.conf import settings
 from lizard_damage import utils
+from lizard_damage import raster
+from lizard_damage import table
+from lizard_damage import tools
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +339,7 @@ class DamageScenario(models.Model):
 
         for damage_event_index, damage_event in enumerate(
             self.damageevent_set.all()):
-            result = calc.calc_damage_for_waterlevel(
+            result = damage_event.calculate(
                 damage_event.repetition_time,
                 damage_event,
                 self.damagetable,
@@ -487,6 +492,402 @@ class DamageEvent(models.Model):
         self.landuse_slugs = self.scenario.landuse_slugs or landuse_slugs
         self.height_slugs = height_slugs
         self.depth_slugs = depth_slugs
+
+    def calculate(
+        self,
+        repetition_time,
+        damage_event,
+        damagetable,
+        month=9, floodtime=20 * 3600,
+        repairtime_roads=None, repairtime_buildings=None,
+        calc_type=None,
+        alternative_heights_dataset=None,
+        alternative_landuse_dataset=None,
+        logger=logger):
+        """
+        Calculate damage for provided waterlevel file.
+
+        in:
+
+        - waterlevel file (provided by user)
+
+        - damage table (optionally provided by user, else default)
+
+        - AHN: models.AhnIndex refer to ahn tiles available on
+        <settings.DATA_ROOT>/...
+
+        - month, floodtime (s), repairtime_roads/buildings (s): provided
+        by user, used by calc.calculate
+
+        out:
+
+        - per ahn tile an .asc and .csv (see write_result and write_table)
+
+        - schade_totaal.csv (see write_table)
+
+        """
+        # Use local imports while refactoring
+        from lizard_damage import calc
+
+        if calc_type is None:
+            calc_type = calc.CALC_TYPE_MAX
+
+        waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
+                               damage_event.damageeventwaterlevel_set.all()]
+        logger.info("event %s" % (damage_event))
+        logger.info(" - month %s, floodtime %s" % (
+                damage_event.floodmonth, damage_event.floodtime))
+        if damagetable:
+            dt_path = damagetable.path
+        else:
+            # Default
+            dt_path = os.path.join(
+                settings.BUILDOUT_DIR, 'data/damagetable/dt.cfg')
+
+        zip_result = []  # store all the file references for
+                         # zipping. {'filename': .., 'arcname': ...}
+        img_result = []
+        landuse_slugs = []  # slugs for landuse geo images
+        height_slugs = []  # slugs for height geo images
+        depth_slugs = []  # slugs for depth geo images
+
+        logger.info('damage table: %s' % dt_path)
+        output_zipfile = calc.mkstemp_and_close()
+
+        waterlevel_datasets = [gdal.Open(str(p)) for p in waterlevel_ascfiles]
+        logger.info('waterlevel_ascfiles: %r' % waterlevel_ascfiles)
+        logger.info('waterlevel_datasets: %r' % waterlevel_datasets)
+        for fn, ds in zip(waterlevel_ascfiles, waterlevel_datasets):
+            if ds is None:
+                logger.error('data source is not available,'
+                             ' please check %s' % fn)
+                return
+
+        # Read damage table
+        dt_path, damage_table = table.read_damage_table(dt_path)
+        zip_result.append({'filename': dt_path, 'arcname': 'dt.cfg'})
+
+        overall_area = collections.defaultdict(float)
+        overall_damage = collections.defaultdict(float)
+        roads_flooded_global = {i: {} for i in calc.ROAD_GRIDCODE}
+        result_images = []  # Images to be modified for indirect road damage.
+
+        min_height = float('inf')
+        max_height = float('-inf')
+        min_depth = 0.0  # Set defaults for testing... depth is always >= 0
+        max_depth = 0.1
+
+        index_info = raster.get_index_info(waterlevel_datasets[0])
+        for ahn_name in index_info:
+            logger.info("Preparing calculation for tile %s..." % ahn_name)
+
+            # Prepare data for calculation
+            try:
+                alldata = raster.get_calc_data(
+                    waterlevel_datasets=waterlevel_datasets,
+                    floodtime=floodtime,
+                    ahn_name=ahn_name,
+                    alternative_heights_dataset=alternative_heights_dataset,
+                    alternative_landuse_dataset=alternative_landuse_dataset,
+                    logger=logger,
+                    )
+                if alldata is None:
+                    logger.warning(
+                        'Skipping damage calculation for {}'.format(ahn_name),
+                        )
+                    continue
+
+                (landuse, depth, geo, floodtime_px, ds_height, height,
+                 landuse_orig) = alldata
+            except:
+                # Log this error and all previous normal logs, instead of
+                # hard crashing
+                logger.error('Exception')
+                for exception_line in traceback.format_exc().split('\n'):
+                    logger.error(exception_line)
+                return
+
+            # 1000x1250 meters = 2000x2500 pixels
+            extent = index_info[ahn_name]
+
+            # For height map
+            min_height = min(min_height, np.amin(height))
+            max_height = max(max_height, np.amax(height))
+
+            # For depth map
+            min_depth = min(min_depth, np.amin(depth))
+            max_depth = max(max_depth, np.amax(depth))
+
+            # For landuse map
+            landuse_slug = calc.slug_for_landuse(ahn_name)
+            landuse_slugs.append(landuse_slug)  # part of result
+            # note: multiple objects with the same slug can exist if they
+            # enter this function at the same time
+            # NOTE: Save with the data from _landuse_orig_! This is
+            #       basically a cache, and we don't want custom uploaded
+            #       landuse grids to end up in the generic cache.
+            if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
+                logger.info("Generating landuse GeoImage: %s" % landuse_slug)
+                models.GeoImage.from_data_with_legend(
+                    landuse_slug, landuse_orig.data, calc.landuse_legend(),
+                    extent=extent)
+
+            # Result is a np array
+            damage, count, area, result, roads_flooded_for_tile = (
+                calc.calculate(
+                landuse=landuse, depth=depth, geo=geo, calc_type=calc_type,
+                table=damage_table, month=month, floodtime=floodtime_px,
+                repairtime_roads=repairtime_roads,
+                repairtime_buildings=repairtime_buildings,
+                logger=logger))
+
+            for code, roads_flooded in roads_flooded_for_tile.iteritems():
+                for road, flooded_m2 in roads_flooded.iteritems():
+                    if road in roads_flooded_global[code]:
+                        roads_flooded_global[code][road]['area'] += flooded_m2
+                    else:
+                        roads_flooded_global[code][road] = dict(
+                            shape=depth.shape,
+                            area=flooded_m2,
+                            geo=geo,
+                            )
+
+            logger.debug("result sum: %f" % result.sum())
+            arcname = 'schade_{}'.format(ahn_name)
+            if repetition_time:
+                arcname += '_T%.1f' % repetition_time
+            asc_result = {
+                'filename': calc.mkstemp_and_close(),
+                'arcname': arcname + '.asc',
+                'delete_after': True}
+            calc.write_result(
+                name=asc_result['filename'],
+                ma_result=result,
+                ds_template=ds_height,
+                )
+            zip_result.append(asc_result)
+
+            # Generate image in .png
+
+            # We are writing a png + pgw now, but in the task a
+            # tiff will be created and uploaded
+            base_filename = calc.mkstemp_and_close()
+            image_result = {
+                'filename_tif': base_filename + '.tif',
+                'filename_png': base_filename + '.png',
+                'filename_pgw': base_filename + '.pgw',
+                # %s is for the damage_event.slug
+                'dstname': 'schade_%s_' + ahn_name + '.png',
+                'extent': raster.transform_extent(extent)}
+            calc.write_image(
+                name=image_result['filename_png'],
+                values=result)
+            result_images.append({
+                    'extent': extent,
+                    'path': image_result['filename_png'],
+                    })
+            models.write_extent_pgw(
+                name=image_result['filename_pgw'],
+                extent=extent)
+            img_result.append(image_result)
+
+            csv_result = {
+                'filename': calc.mkstemp_and_close(),
+                'arcname': arcname + '.csv',
+                'delete_after': True}
+            meta = [
+                ['schade module versie', tools.version()],
+                ['waterlevel', waterlevel_ascfiles[0]],
+                ['damage table', dt_path],
+                ['maand', str(month)],
+                ['duur overstroming (s)', str(floodtime)],
+                ['hersteltijd wegen (s)', str(repairtime_roads)],
+                ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+                ['berekening',
+                 {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+                ['ahn_name', ahn_name],
+                ]
+            calc.write_table(
+                name=csv_result['filename'],
+                damage=damage,
+                area=area,
+                damage_table=damage_table,
+                meta=meta,
+                )
+            zip_result.append(csv_result)
+
+            for k in damage.keys():
+                overall_damage[k] += damage[k]
+
+            for k in area.keys():
+                overall_area[k] += area[k]
+
+            calc.add_to_zip(output_zipfile, zip_result, logger)
+            zip_result = []
+
+        if (min_height <= max_height):
+            """
+            Generate height tiles.
+
+            POSSIBLE BUG: All the height and depth tiles from
+            different scenarios (including scenarios with custom
+            height grids, but all scenarios have custom waterheights
+            anyway so the problem is with all scenarios) use the same
+            slugs to save their grids under. Meaning that it is
+            possible that the wrong data is shown for some scenario.
+
+            However, since the slugs have min and max values in them,
+            and difference heights will often lead to different
+            min/max values, this bug is unlikely to show up much in
+            practice. We currently choose to ignore it.
+            """
+            logger.info('Generating height and depth tiles...')
+            logger.debug(
+                'height min max=%f, %f, depth min max=%f, %f' %
+                (min_height, max_height, min_depth, max_depth),
+                )
+            for ahn_name in index_info:
+                height_slug = calc.slug_for_height(
+                    ahn_name, min_height, max_height)
+                height_slugs.append(height_slug)  # part of result
+                geo_image_depth_count = -1
+                try:
+                    depth_slug = calc.slug_for_depth(
+                        ahn_name, min_depth, max_depth)
+                    depth_slugs.append(depth_slug)  # part of result
+                    geo_image_depth_count = models.GeoImage.objects.filter(
+                        slug=depth_slug,
+                        ).count()
+                except:
+                    logger.warning(
+                        'GeoImage for depth failed because of fully masked')
+
+                geo_image_height_count = models.GeoImage.objects.filter(
+                    slug=height_slug,
+                    ).count()
+                if (geo_image_height_count == 0 or geo_image_depth_count == 0):
+                    # Copied from above
+                    try:
+                        alldata = raster.get_calc_data(
+                            waterlevel_datasets=waterlevel_datasets,
+                            floodtime=floodtime,
+                            ahn_name=ahn_name,
+                      alternative_heights_dataset=alternative_heights_dataset,
+                      alternative_landuse_dataset=alternative_landuse_dataset,
+                            logger=logger,
+                            )
+                        if alldata is None:
+                            logger.warning(
+                                'Skipping height tiles generation for {}'
+                                .format(ahn_name),
+                                )
+                            continue
+
+                        (landuse, depth, geo, floodtime_px,
+                         ds_height, height, landuse_orig) = alldata
+                    except:
+                        # Log this error and all previous normal logs,
+                        # instead of hard crashing
+                        logger.error('Exception')
+                        for exception_line in (
+                            traceback.format_exc().split('\n')):
+                            logger.error(exception_line)
+                        return
+
+                if geo_image_height_count == 0:
+                    # 1000x1250 meters = 2000x2500 pixels
+                    extent = index_info[ahn_name]
+                    # Actually create tile
+                    logger.info("Generating height GeoImage: %s" % height_slug)
+                    models.GeoImage.from_data_with_min_max(
+                        height_slug, height, extent, min_height, max_height)
+                if geo_image_depth_count == 0:
+                    # 1000x1250 meters = 2000x2500 pixels
+                    extent = index_info[ahn_name]
+                    # Actually create tile
+                    logger.info("Generating depth GeoImage: %s" % depth_slug)
+                    try:
+                        models.GeoImage.from_data_with_min_max(
+                            depth_slug, depth, extent, min_depth, max_depth,
+                            cdict=calc.CDICT_WATER_DEPTH)
+                        depth_slugs.append(depth_slug)  # part of result
+                    except:
+                        logger.info(
+                            "Skipped depth GeoImage because of masked "
+                            "only or unknown error")
+
+        # Only after all tiles have been processed, calculate overall indirect
+        # Road damage. This is not visible in the per-tile-damagetable.
+        roads_flooded_over_threshold = []
+        for code, roads_flooded in roads_flooded_global.iteritems():
+            damage_data = damage_table.data[code]
+            for road, info in roads_flooded.iteritems():
+                if info['area'] >= 100:
+                    roads_flooded_over_threshold.append(road)
+                    indirect_road_damage = (
+                        damage_data.to_indirect_damage(
+                            calc.CALC_TYPES[calc_type]) *
+                        damage_data.to_gamma_repairtime(repairtime_roads)
+                        )
+                    logger.debug(
+                        '%s - %s - %s: %.2f ind' %
+                        (
+                            damage_data.code,
+                            damage_data.source,
+                            damage_data.description,
+                            indirect_road_damage,
+                            ),
+                        )
+                    overall_damage[code] += indirect_road_damage
+
+        # Draw roads over images
+        road_objects = models.Roads.objects.filter(
+            pk__in=roads_flooded_over_threshold,
+            )
+        for result_image in result_images:
+            calc.add_roads_to_image(
+                roads=road_objects,
+                image_path=result_image['path'],
+                extent=result_image['extent'],
+                )
+
+        csv_result = {
+            'filename': calc.mkstemp_and_close(),
+            'arcname': 'schade_totaal.csv',
+            'delete_after': True}
+        meta = [
+            ['schade module versie', tools.version()],
+            ['waterlevel', waterlevel_ascfiles[0]],
+            ['damage table', dt_path],
+            ['maand', str(month)],
+            ['duur overstroming (s)', str(floodtime)],
+            ['hersteltijd wegen (s)', str(repairtime_roads)],
+            ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+            ['berekening',
+             {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
+            ]
+        calc.write_table(
+            name=csv_result['filename'],
+            damage=overall_damage,
+            area=overall_area,
+            damage_table=damage_table,
+            meta=meta,
+            include_total=True,
+            )
+        result_table = calc.result_as_dict(
+            name=csv_result['filename'],
+            damage=overall_damage,
+            area=overall_area,
+            damage_table=damage_table
+            )
+        zip_result.append(csv_result)
+
+        calc.add_to_zip(output_zipfile, zip_result, logger)
+
+        logger.info('zipfile: %s' % output_zipfile)
+
+        return (output_zipfile, img_result, result_table,
+                landuse_slugs, height_slugs, depth_slugs)
 
 
 class DamageEventResult(models.Model):
