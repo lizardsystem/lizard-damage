@@ -316,8 +316,6 @@ class DamageScenario(models.Model):
     def calculate(self, logger):
         """
         Calculate this DamageScenario. Called from task.
-
-        Returns 'failure' on failure, None on success.
         """
         start_dt = datetime.datetime.now()
         logger.info("calculate damage")
@@ -339,18 +337,7 @@ class DamageScenario(models.Model):
 
         for damage_event_index, damage_event in enumerate(
             self.damageevent_set.all()):
-            result = damage_event.calculate(
-                damage_event.repetition_time,
-                damage_event,
-                self.damagetable,
-                damage_event.floodmonth,
-                damage_event.floodtime,
-                damage_event.repairtime_roads,
-                damage_event.repairtime_buildings,
-                self.calc_type,
-                self.alternative_heights_dataset,
-                self.alternative_landuse_dataset,
-                logger)
+            result = damage_event.calculate(logger)
             if result:
                 errors += calc.process_result(
                     logger, damage_event, damage_event_index,
@@ -493,17 +480,7 @@ class DamageEvent(models.Model):
         self.height_slugs = height_slugs
         self.depth_slugs = depth_slugs
 
-    def calculate(
-        self,
-        repetition_time,
-        damage_event,
-        damagetable,
-        month=9, floodtime=20 * 3600,
-        repairtime_roads=None, repairtime_buildings=None,
-        calc_type=None,
-        alternative_heights_dataset=None,
-        alternative_landuse_dataset=None,
-        logger=logger):
+    def calculate(self, logger):
         """
         Calculate damage for provided waterlevel file.
 
@@ -529,16 +506,15 @@ class DamageEvent(models.Model):
         # Use local imports while refactoring
         from lizard_damage import calc
 
-        if calc_type is None:
-            calc_type = calc.CALC_TYPE_MAX
+        calc_type = self.scenario.calc_type or calc.CALC_TYPE_MAX
 
         waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
-                               damage_event.damageeventwaterlevel_set.all()]
-        logger.info("event %s" % (damage_event))
+                               self.damageeventwaterlevel_set.all()]
+        logger.info("event %s" % (self,))
         logger.info(" - month %s, floodtime %s" % (
-                damage_event.floodmonth, damage_event.floodtime))
-        if damagetable:
-            dt_path = damagetable.path
+                self.floodmonth, self.floodtime))
+        if self.scenario.damagetable:
+            dt_path = self.scenario.damagetable.path
         else:
             # Default
             dt_path = os.path.join(
@@ -585,10 +561,12 @@ class DamageEvent(models.Model):
             try:
                 alldata = raster.get_calc_data(
                     waterlevel_datasets=waterlevel_datasets,
-                    floodtime=floodtime,
+                    floodtime=self.floodtime,
                     ahn_name=ahn_name,
-                    alternative_heights_dataset=alternative_heights_dataset,
-                    alternative_landuse_dataset=alternative_landuse_dataset,
+                    alternative_heights_dataset=(
+                        self.scenario.alternative_heights_dataset),
+                    alternative_landuse_dataset=(
+                        self.scenario.alternative_landuse_dataset),
                     logger=logger,
                     )
                 if alldata is None:
@@ -626,9 +604,9 @@ class DamageEvent(models.Model):
             # NOTE: Save with the data from _landuse_orig_! This is
             #       basically a cache, and we don't want custom uploaded
             #       landuse grids to end up in the generic cache.
-            if models.GeoImage.objects.filter(slug=landuse_slug).count() == 0:
+            if GeoImage.objects.filter(slug=landuse_slug).count() == 0:
                 logger.info("Generating landuse GeoImage: %s" % landuse_slug)
-                models.GeoImage.from_data_with_legend(
+                GeoImage.from_data_with_legend(
                     landuse_slug, landuse_orig.data, calc.landuse_legend(),
                     extent=extent)
 
@@ -636,9 +614,10 @@ class DamageEvent(models.Model):
             damage, count, area, result, roads_flooded_for_tile = (
                 calc.calculate(
                 landuse=landuse, depth=depth, geo=geo, calc_type=calc_type,
-                table=damage_table, month=month, floodtime=floodtime_px,
-                repairtime_roads=repairtime_roads,
-                repairtime_buildings=repairtime_buildings,
+                table=damage_table, month=self.floodmonth,
+                floodtime=floodtime_px,
+                repairtime_roads=self.repairtime_roads,
+                repairtime_buildings=self.repairtime_buildings,
                 logger=logger))
 
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
@@ -654,8 +633,8 @@ class DamageEvent(models.Model):
 
             logger.debug("result sum: %f" % result.sum())
             arcname = 'schade_{}'.format(ahn_name)
-            if repetition_time:
-                arcname += '_T%.1f' % repetition_time
+            if self.repetition_time:
+                arcname += '_T%.1f' % self.repetition_time
             asc_result = {
                 'filename': calc.mkstemp_and_close(),
                 'arcname': arcname + '.asc',
@@ -686,7 +665,7 @@ class DamageEvent(models.Model):
                     'extent': extent,
                     'path': image_result['filename_png'],
                     })
-            models.write_extent_pgw(
+            write_extent_pgw(
                 name=image_result['filename_pgw'],
                 extent=extent)
             img_result.append(image_result)
@@ -699,10 +678,10 @@ class DamageEvent(models.Model):
                 ['schade module versie', tools.version()],
                 ['waterlevel', waterlevel_ascfiles[0]],
                 ['damage table', dt_path],
-                ['maand', str(month)],
-                ['duur overstroming (s)', str(floodtime)],
-                ['hersteltijd wegen (s)', str(repairtime_roads)],
-                ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+                ['maand', str(self.floodmonth)],
+                ['duur overstroming (s)', str(self.floodtime)],
+                ['hersteltijd wegen (s)', str(self.repairtime_roads)],
+                ['hersteltijd bebouwing (s)', str(self.repairtime_buildings)],
                 ['berekening',
                  {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
                 ['ahn_name', ahn_name],
@@ -755,14 +734,14 @@ class DamageEvent(models.Model):
                     depth_slug = calc.slug_for_depth(
                         ahn_name, min_depth, max_depth)
                     depth_slugs.append(depth_slug)  # part of result
-                    geo_image_depth_count = models.GeoImage.objects.filter(
+                    geo_image_depth_count = GeoImage.objects.filter(
                         slug=depth_slug,
                         ).count()
                 except:
                     logger.warning(
                         'GeoImage for depth failed because of fully masked')
 
-                geo_image_height_count = models.GeoImage.objects.filter(
+                geo_image_height_count = GeoImage.objects.filter(
                     slug=height_slug,
                     ).count()
                 if (geo_image_height_count == 0 or geo_image_depth_count == 0):
@@ -770,10 +749,12 @@ class DamageEvent(models.Model):
                     try:
                         alldata = raster.get_calc_data(
                             waterlevel_datasets=waterlevel_datasets,
-                            floodtime=floodtime,
+                            floodtime=self.floodtime,
                             ahn_name=ahn_name,
-                      alternative_heights_dataset=alternative_heights_dataset,
-                      alternative_landuse_dataset=alternative_landuse_dataset,
+                            alternative_heights_dataset=(
+                                self.scenario.alternative_heights_dataset),
+                            alternative_landuse_dataset=(
+                                self.scenario.alternative_landuse_dataset),
                             logger=logger,
                             )
                         if alldata is None:
@@ -799,7 +780,7 @@ class DamageEvent(models.Model):
                     extent = index_info[ahn_name]
                     # Actually create tile
                     logger.info("Generating height GeoImage: %s" % height_slug)
-                    models.GeoImage.from_data_with_min_max(
+                    GeoImage.from_data_with_min_max(
                         height_slug, height, extent, min_height, max_height)
                 if geo_image_depth_count == 0:
                     # 1000x1250 meters = 2000x2500 pixels
@@ -807,7 +788,7 @@ class DamageEvent(models.Model):
                     # Actually create tile
                     logger.info("Generating depth GeoImage: %s" % depth_slug)
                     try:
-                        models.GeoImage.from_data_with_min_max(
+                        GeoImage.from_data_with_min_max(
                             depth_slug, depth, extent, min_depth, max_depth,
                             cdict=calc.CDICT_WATER_DEPTH)
                         depth_slugs.append(depth_slug)  # part of result
@@ -827,7 +808,7 @@ class DamageEvent(models.Model):
                     indirect_road_damage = (
                         damage_data.to_indirect_damage(
                             calc.CALC_TYPES[calc_type]) *
-                        damage_data.to_gamma_repairtime(repairtime_roads)
+                        damage_data.to_gamma_repairtime(self.repairtime_roads)
                         )
                     logger.debug(
                         '%s - %s - %s: %.2f ind' %
@@ -841,7 +822,7 @@ class DamageEvent(models.Model):
                     overall_damage[code] += indirect_road_damage
 
         # Draw roads over images
-        road_objects = models.Roads.objects.filter(
+        road_objects = Roads.objects.filter(
             pk__in=roads_flooded_over_threshold,
             )
         for result_image in result_images:
@@ -859,10 +840,10 @@ class DamageEvent(models.Model):
             ['schade module versie', tools.version()],
             ['waterlevel', waterlevel_ascfiles[0]],
             ['damage table', dt_path],
-            ['maand', str(month)],
-            ['duur overstroming (s)', str(floodtime)],
-            ['hersteltijd wegen (s)', str(repairtime_roads)],
-            ['hersteltijd bebouwing (s)', str(repairtime_buildings)],
+            ['maand', str(self.floodmonth)],
+            ['duur overstroming (s)', str(self.floodtime)],
+            ['hersteltijd wegen (s)', str(self.repairtime_roads)],
+            ['hersteltijd bebouwing (s)', str(self.repairtime_buildings)],
             ['berekening',
              {1: 'Minimum', 2: 'Maximum', 3: 'Gemiddelde'}[calc_type]],
             ]

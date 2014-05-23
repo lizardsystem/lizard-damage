@@ -17,7 +17,6 @@ from django.utils import simplejson as json
 
 from lizard_damage.conf import settings
 from lizard_damage import (
-    models,
     utils,
 )
 
@@ -181,6 +180,7 @@ class DamageTable(object):
     CFG_TYPE = 2
 
     def __init__(self, from_type, from_filename):
+        from lizard_damage import models
         self._units = dict((u.name, u) for u in models.Unit.objects.all())
         self.importers[from_type](self, from_filename)
 

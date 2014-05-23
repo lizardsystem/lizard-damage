@@ -17,7 +17,6 @@ from osgeo import osr
 
 from django.contrib.gis.geos import Polygon
 
-from . import models
 from . import tiles
 from . import utils
 from .conf import settings
@@ -157,6 +156,7 @@ def get_index_info(ds):
 def get_roads(gridcode, geo, shape):
     """ Return roads contained by dataset with gridcode gridcode. """
     polygon = get_polygon_from_geo_and_shape(geo, shape)
+    from . import models
     roads = models.Roads.objects.filter(
         the_geom__intersects=polygon, gridcode=gridcode,
     )
