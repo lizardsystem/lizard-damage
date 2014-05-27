@@ -165,6 +165,9 @@ class Roads(models.Model):
 
         return roads_flooded_for_tile_and_code
 
+    def __unicode__(self):
+        return 'road({}): {} {}'.format(self.gid, self.typeweg, self.gridcode)
+
 
 class Unit(models.Model):
     name = models.CharField(
@@ -849,7 +852,7 @@ class DamageEvent(models.Model):
                             calc.CALC_TYPES[calc_type]) *
                         damage_data.to_gamma_repairtime(self.repairtime_roads)
                         )
-                    logger.debug(
+                    logger.info(
                         '%s - %s - %s: %.2f ind' %
                         (
                             damage_data.code,
@@ -858,6 +861,9 @@ class DamageEvent(models.Model):
                             indirect_road_damage,
                             ),
                         )
+                    logger.info('track indirect road damage: {}, {}'.format(
+                        road, indirect_road_damage,
+                    ))
                     overall_damage[code] += indirect_road_damage
 
         # Draw roads over images
