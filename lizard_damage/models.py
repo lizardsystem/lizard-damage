@@ -587,7 +587,7 @@ class DamageEvent(models.Model):
 
         overall_area = collections.defaultdict(float)
         overall_damage = collections.defaultdict(float)
-        roads_flooded_global = {i: {} for i in calc.ROAD_GRIDCODE}
+        roads_flooded_global = {i: {} for i in Roads.ROAD_GRIDCODE}
         result_images = []  # Images to be modified for indirect road damage.
 
         min_height = float('inf')
