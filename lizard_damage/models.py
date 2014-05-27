@@ -861,8 +861,10 @@ class DamageEvent(models.Model):
                             indirect_road_damage,
                             ),
                         )
-                    logger.info('track indirect road damage: {}, {}'.format(
-                        road, indirect_road_damage,
+                    logger.info(
+                        ('track indirect road damage: scenario slug {}, ' +
+                        'roadid {}, damage {}').format(
+                            self.scenario.slug, road, indirect_road_damage,
                     ))
                     overall_damage[code] += indirect_road_damage
 
