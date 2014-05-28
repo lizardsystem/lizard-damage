@@ -28,16 +28,6 @@ from lizard_damage.models import extent_from_geotiff
 
 logger = logging.getLogger(__name__)
 
-CALC_TYPE_MIN = 1
-CALC_TYPE_MAX = 2
-CALC_TYPE_AVG = 3
-
-CALC_TYPES = {
-    1: 'min',
-    2: 'max',
-    3: 'avg',
-}
-
 
 def convert_tif_to_png(filename_tif, filename_png):
     im = Image.open(filename_tif)
@@ -280,100 +270,6 @@ def get_colorizer(max_damage):
         return colormap(normalize(data), bytes=True)
 
     return colorize
-
-BUILDING_SOURCES = ('BAG', )
-
-
-def calculate(landuse, depth, geo,
-              calc_type, table,
-              month, floodtime,
-              repairtime_roads,
-              repairtime_buildings,
-              logger=logger):
-    """
-    Calculate damage for an area.
-
-    Input: land use, water depth, area_per_pixel, damage table, month
-    of flooding, flood time and repair time.
-    """
-    logger.info('Calculating damage')
-    result = np.ma.zeros(depth.shape)
-    result.mask = depth.mask
-    roads_flooded_for_tile = {}
-
-    count = {}
-    damage = {}
-    damage_area = {}
-
-    area_per_pixel = raster.geo2cellsize(geo)
-    default_repairtime = table.header.get_default_repairtime()
-
-    codes_in_use = np.unique(landuse.compressed())
-    for code, dr in table.data.items():
-        if not code in codes_in_use:
-            damage_area[code] = 0
-            damage[code] = 0
-            continue
-
-        if dr.source in BUILDING_SOURCES:
-            repairtime = repairtime_buildings
-        else:
-            repairtime = default_repairtime
-
-        index = np.logical_and(
-            np.equal(landuse.data, code),
-            ~landuse.mask,
-        )
-        count[code] = index.sum()
-
-        partial_result_direct = (
-            area_per_pixel *
-            dr.to_direct_damage(CALC_TYPES[calc_type]) *
-            dr.to_gamma_depth(depth[index]) *
-            dr.to_gamma_floodtime(floodtime[index]) *
-            dr.to_gamma_month(month)
-        )
-
-        from lizard_damage.models import Roads
-        if code in Roads.ROAD_GRIDCODE:
-            # Here only the roads involved in this ahn are recorded, indirect
-            # damage will be added to overall results.
-            roads_flooded_for_tile[code] = (
-                Roads.get_roads_flooded_for_tile_and_code(
-                code=code, depth=depth, geo=geo))
-            partial_result_indirect = np.array(0)
-        else:
-            partial_result_indirect = (
-                area_per_pixel *
-                dr.to_gamma_repairtime(repairtime) *
-                dr.to_indirect_damage(CALC_TYPES[calc_type])
-            ) * np.greater(depth[index], 0)  # True evaluates to 1
-
-        result[index] = partial_result_direct + partial_result_indirect
-
-        damage_area[code] = np.where(
-            np.greater(result[index], 0), area_per_pixel, 0,
-        ).sum()
-
-        # The sum of an empty masked array is 'masked', so check that.
-        if count[code] > 0:
-            damage[code] = result[index].sum()
-        else:
-            damage[code] = 0.
-
-        logger.debug(
-            '%s - %s - %s: %.2f dir + %.2f ind = %.2f tot' %
-            (
-                dr.code,
-                dr.source,
-                dr.description,
-                partial_result_direct.sum(),
-                partial_result_indirect.sum(),
-                damage[code],
-            ),
-        )
-
-    return damage, count, damage_area, result, roads_flooded_for_tile
 
 
 def write_result(name, ma_result, ds_template):

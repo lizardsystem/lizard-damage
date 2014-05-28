@@ -36,6 +36,7 @@ from lizard_damage import utils
 from lizard_damage import raster
 from lizard_damage import table
 from lizard_damage import tools
+from lizard_damage import calculation
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,7 @@ class Roads(models.Model):
 
     @classmethod
     def get_roads_flooded_for_tile_and_code(cls, code, depth, geo):
-        """ Return dict {road: flooded_m2}. """
+        """ Return dict {road-pk: flooded_m2}. """
         area_per_pixel = raster.geo2cellsize(geo)
         roads_flooded_for_tile_and_code = {}
 
@@ -652,16 +653,25 @@ class DamageEvent(models.Model):
                     landuse_slug, landuse_orig.data, calc.landuse_legend(),
                     extent=extent)
 
-            # Result is a np array
-            damage, count, area, result, roads_flooded_for_tile = (
-                calc.calculate(
-                landuse=landuse, depth=depth, geo=geo, calc_type=calc_type,
-                table=damage_table, month=self.floodmonth,
-                floodtime=floodtime_px,
-                repairtime_roads=self.repairtime_roads,
-                repairtime_buildings=self.repairtime_buildings,
-                logger=logger))
+            # Result is a np array, damage, area and roads_flooded_for_tile
+            # are dictionaries with landuse codes as keys
+            damage, area, result, roads_flooded_for_tile = (
+                calculation.calculate(
+                    landuse=landuse,
+                    depth=depth,
+                    geo_transform=geo,
+                    calc_type=calc_type,
+                    table=damage_table,
+                    month=self.floodmonth,
+                    floodtime=floodtime_px,
+                    repairtime_roads=self.repairtime_roads,
+                    repairtime_buildings=self.repairtime_buildings,
+                    road_grid_codes=Roads.GRID_CODES,
+                    get_roads_flooded_for_tile_and_code=(
+                        Roads.get_roads_flooded_for_tile_and_code),
+                    logger=logger))
 
+            # Keep track of flooded roads
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
                 for road, flooded_m2 in roads_flooded.iteritems():
                     if road in roads_flooded_global[code]:
