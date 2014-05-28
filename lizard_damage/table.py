@@ -8,15 +8,10 @@ from __future__ import (
 )
 
 import ConfigParser
-import openpyxl
 import logging
 import numpy
+import json
 
-from django.utils import simplejson as json
-
-from lizard_damage import (
-    utils,
-)
 
 DEFAULT_DAMAGE_TABLE = 'data/damagetable/dt.cfg'
 
@@ -24,9 +19,6 @@ CFG_HEADER_SECTION = 'algemeen'
 CFG_HEADER_FLOODTIME = 'inundatieduur'
 CFG_HEADER_REPAIRTIME = 'herstelperiode'
 CFG_HEADER_DEPTH = 'inundatiediepte'
-#CFG_HEADER_DEFAULT_FLOODTIME = 'standaard_inundatieduur'
-#CFG_HEADER_DEFAULT_REPAIRTIME = 'standaard_herstelperiode'
-#CFG_HEADER_DEFAULT_MONTH = 'standaard_maand'
 
 CFG_ROW_SOURCE = 'bron'
 CFG_ROW_DESCRIPTION = 'omschrijving'
@@ -176,17 +168,11 @@ class DamageTable(object):
             dt = table.DamageTable.read_cfg(cfg)
     """
 
-    XLSX_TYPE = 1
     CFG_TYPE = 2
 
     def __init__(self, from_type, from_filename, units):
         self._units = dict((u.name, u) for u in units)
         self.importers[from_type](self, from_filename)
-
-    @classmethod
-    def read_xlsx(cls, filename, units):
-        return cls(
-            from_type=cls.XLSX_TYPE, from_filename=filename, units=units)
 
     @classmethod
     def read_cfg(cls, filename, units):
@@ -206,15 +192,6 @@ class DamageTable(object):
         c.set(CFG_HEADER_SECTION, CFG_HEADER_REPAIRTIME,
             json.dumps(self.header.repairtime)
         )
-        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_FLOODTIME,
-            #self.header.default_floodtime
-        #)
-        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_REPAIRTIME,
-            #self.header.default_repairtime
-        #)
-        #c.set(CFG_HEADER_SECTION, CFG_HEADER_DEFAULT_MONTH,
-            #self.header.default_month
-        #)
 
         for code, dr in self.data.items():
             section = unicode(code)
@@ -237,19 +214,6 @@ class DamageTable(object):
 
         c.write(file_object)
 
-    def _import_from_xlsx(self, file_object):
-        logger.debug('Reading damage table %s.', file_object.name)
-        workbook = openpyxl.reader.excel.load_workbook(file_object)
-        worksheet = utils.DamageWorksheet(workbook.get_active_sheet())
-
-        self.data = {}
-        self.header = DamageHeader(units=self._units, **worksheet.get_header())
-        for row in worksheet.get_rows():
-            damage_row = DamageRow(
-                header=self.header, units=self._units, **row
-            )
-            self.data[damage_row.code] = damage_row
-
     def _import_from_cfg(self, file_object):
         logger.debug('Reading damage table %s.', file_object.name)
         self.data = {}
@@ -264,12 +228,6 @@ class DamageTable(object):
                                          CFG_HEADER_FLOODTIME)),
                     repairtime=json.loads(cp.get(section,
                                          CFG_HEADER_REPAIRTIME)),
-                    #default_floodtime=(cp.get(section,
-                                       #CFG_HEADER_DEFAULT_FLOODTIME)),
-                    #default_repairtime=(cp.get(section,
-                                       #CFG_HEADER_DEFAULT_REPAIRTIME)),
-                    #default_month=(cp.get(section,
-                                       #CFG_HEADER_DEFAULT_MONTH)),
                 )
             else:
                 code = int(section)
@@ -303,6 +261,5 @@ class DamageTable(object):
 
     # Here the importers are registered.
     importers = {
-        XLSX_TYPE: _import_from_xlsx,
         CFG_TYPE: _import_from_cfg,
     }
