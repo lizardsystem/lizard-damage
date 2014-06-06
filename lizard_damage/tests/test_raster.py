@@ -12,7 +12,7 @@ class TestGetAreaWithData(TestCase):
             '', 10, 10, 1, gdal.GDT_Byte,
             )
         dataset.SetGeoTransform([
-                126000.0, 25.0, 0.0, 503749.0, 0.0, -25.0])
+            126000.0, 25.0, 0.0, 503749.0, 0.0, -25.0])
 
         dataset.GetRasterBand(1).Fill(1)
         self.assertEquals(

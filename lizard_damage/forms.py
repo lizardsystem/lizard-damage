@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import (
-  print_function,
-  unicode_literals,
-  absolute_import,
-  division,
+    print_function,
+    unicode_literals,
+    absolute_import,
+    division,
 )
 
 from django import forms
@@ -16,8 +16,6 @@ import os
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
-from .models import extent_from_dataset
-from .raster import extent_within_extent
 from .raster import get_area_with_data
 from .models import gdal_open
 from .models import DamageScenario
@@ -43,8 +41,8 @@ class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
         return self.my_render()
 
     def original_render(self):
-        return mark_safe(u'<ul>\n%s\n</ul>' % u'\n'.join([u'<li>%s</li>'
-            % force_unicode(w) for w in self]))
+        return mark_safe(u'<ul>\n%s\n</ul>' % u'\n'.join([
+            u'<li>%s</li>' % force_unicode(w) for w in self]))
 
     def my_render(self):
         """My render function
@@ -53,8 +51,7 @@ class CustomRadioSelectRenderer(forms.RadioSelect.renderer):
         """
         midList = []
         for x, wid in enumerate(self):
-            #print(wid)
-            if self.actives[x] == False:
+            if not self.actives[x]:
                 wid.attrs['disabled'] = True
             if self.help_texts[x]:
                 help_text = (
@@ -287,8 +284,8 @@ class FormStep1(forms.Form):
         return self.cleaned_data.get('customlanduse')
 
     def clean_customlanduseexcel(self):
-        if (self.cleaned_data['customlanduseexcel'] and not
-            self.cleaned_data['customlanduse']):
+        if self.cleaned_data['customlanduseexcel'] and \
+           not self.cleaned_data['customlanduse']:
             self.add_field_error(
                 'customlanduseexcel',
                 "Uploaden van een vertaaltabelbestand heeft "
@@ -308,8 +305,8 @@ class FormStep1(forms.Form):
 
         ds = self.cleaned_data.get('waterlevel_dataset')
         if ds:
-            if (get_area_with_data(ds) >
-                settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE):
+            if get_area_with_data(ds) > \
+               settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE:
                 self.add_field_error(
                     'waterlevel',
                     'Het waterstand bestand mag maximaal 200km2 beslaan.')

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import (
-  print_function,
-  unicode_literals,
-  absolute_import,
-  division,
+    print_function,
+    unicode_literals,
+    absolute_import,
+    division,
 )
 
 import collections
@@ -43,10 +43,10 @@ logger = logging.getLogger(__name__)
 # from django.utils.translation import ugettext_lazy as _
 
 RD = str(
-"+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908"
-" +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,"
-"50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,"
-"4.0812 +no_defs <>"
+    "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.999908"
+    " +x_0=155000 +y_0=463000 +ellps=bessel +units=m +towgs84=565.2369,"
+    "50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,"
+    "4.0812 +no_defs <>"
 )
 
 WGS84 = str('+proj=latlong +datum=WGS84')
@@ -385,7 +385,7 @@ class DamageScenario(models.Model):
         from lizard_damage import emails
 
         for damage_event_index, damage_event in enumerate(
-            self.damageevent_set.all()):
+                self.damageevent_set.all()):
             result = damage_event.calculate(logger)
             if result:
                 errors += calc.process_result(
@@ -444,7 +444,7 @@ class DamageEvent(models.Model):
     floodmonth = models.IntegerField(default=9)
 
     repetition_time = models.FloatField(blank=True, null=True,
-        help_text='In years!')
+                                        help_text='In years!')
 
     # Result
     table = models.TextField(null=True, blank=True, help_text='in json format')
@@ -561,7 +561,7 @@ class DamageEvent(models.Model):
                                self.damageeventwaterlevel_set.all()]
         logger.info("event %s" % (self,))
         logger.info(" - month %s, floodtime %s" % (
-                self.floodmonth, self.floodtime))
+            self.floodmonth, self.floodtime))
 
         zip_result = []  # store all the file references for
                          # zipping. {'filename': .., 'arcname': ...}
@@ -714,9 +714,9 @@ class DamageEvent(models.Model):
                 name=image_result['filename_png'],
                 values=result)
             result_images.append({
-                    'extent': extent,
-                    'path': image_result['filename_png'],
-                    })
+                'extent': extent,
+                'path': image_result['filename_png'],
+            })
             write_extent_pgw(
                 name=image_result['filename_pgw'],
                 extent=extent)
@@ -823,7 +823,7 @@ class DamageEvent(models.Model):
                         # instead of hard crashing
                         logger.error('Exception')
                         for exception_line in (
-                            traceback.format_exc().split('\n')):
+                                traceback.format_exc().split('\n')):
                             logger.error(exception_line)
                         return
 
@@ -873,9 +873,9 @@ class DamageEvent(models.Model):
                         )
                     logger.info(
                         ('track indirect road damage: scenario slug {}, ' +
-                        'roadid {}, damage {}').format(
+                         'roadid {}, damage {}').format(
                             self.scenario.slug, road, indirect_road_damage,
-                    ))
+                        ))
                     overall_damage[code] += indirect_road_damage
 
         # Draw roads over images
@@ -1138,7 +1138,7 @@ class GeoImage(models.Model):
 
     @classmethod
     def from_data_with_legend(
-        cls, slug, data, legend, extent=None, geotransform=None):
+            cls, slug, data, legend, extent=None, geotransform=None):
         """
         Create GeoImage from slug and data.
 
@@ -1159,7 +1159,7 @@ class GeoImage(models.Model):
 
     @classmethod
     def from_data_with_min_max(
-        cls, slug, data, extent, min_value, max_value, cdict=None):
+            cls, slug, data, extent, min_value, max_value, cdict=None):
         """
         Create GeoImage from slug and data.
         """
@@ -1207,8 +1207,8 @@ class GeoImage(models.Model):
         # Step 2: warp using gdalwarp to lon/lat in .tif
         # Warp png file, output is tif.
         subprocess.call([
-                'gdalwarp', tmp_base + '.png', tmp_base + '.tif',
-                '-t_srs', "+proj=latlong +datum=WGS84", '-s_srs', RD.strip()])
+            'gdalwarp', tmp_base + '.png', tmp_base + '.tif',
+            '-t_srs', "+proj=latlong +datum=WGS84", '-s_srs', RD.strip()])
 
         result_extent = extent_from_geotiff(tmp_base + '.tif')
 

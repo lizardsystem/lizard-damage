@@ -195,7 +195,7 @@ def export_dataset(filepath, ds, driver='AAIGrid'):
 
 def get_calc_data(
     waterlevel_datasets, floodtime, ahn_name, logger,
-    alternative_heights_dataset=None, alternative_landuse_dataset=None):
+        alternative_heights_dataset=None, alternative_landuse_dataset=None):
     """ Return a tuple with data. """
 
     logger.info('Reading datasets for %s' % ahn_name)
@@ -216,8 +216,7 @@ def get_calc_data(
     height = to_masked_array(ds_height)
     if height.mask.any():
         logger.warn('%s nodata pixels in height tile %s',
-            height.mask.sum(), ahn_name,
-        )
+                    height.mask.sum(), ahn_name)
 
     logger.info('landuse to masked array...')
     landuse = to_masked_array(ds_landuse)  # part of result

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import (
-  print_function,
-  unicode_literals,
-  absolute_import,
-  division,
+    print_function,
+    unicode_literals,
+    absolute_import,
+    division,
 )
 
 from django.core.management.base import BaseCommand
@@ -128,8 +128,7 @@ class Main(object):
 
         sed_command = shlex.split(
             '''sed "s/'{name}');$/'{name}_new');/"'''.format(
-            name=os.path.basename(path),
-        ))
+                name=os.path.basename(path)))
         p2 = subprocess.Popen(sed_command, stdin=p1.stdout, stdout=destination)
 
         return p2
@@ -155,8 +154,7 @@ class Main(object):
 
             if filename in existing_records:
                 logger.debug('%s already in %s' %
-                    (filename, self.table),
-                )
+                             (filename, self.table))
                 # continue
             self._save(action=APPEND, path=path, number=i)
 
@@ -164,16 +162,18 @@ class Main(object):
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         optparse.make_option('-i', '--ignore',
-            action='store_true',
-            dest='ignore_aux_xml_files',
-            default=False,
-            help='Ignore *.aux.xml files'),
-        optparse.make_option('-z', '--zipfile',
+                             action='store_true',
+                             dest='ignore_aux_xml_files',
+                             default=False,
+                             help='Ignore *.aux.xml files'),
+        optparse.make_option(
+            '-z', '--zipfile',
             action='store_true',
             dest='save_as_zip',
             default=False,
             help='Save as zipped sql instead of loading in database'),
-        optparse.make_option('-s', '--stdin',
+        optparse.make_option(
+            '-s', '--stdin',
             action='store_true',
             dest='use_stdin',
             default=False,

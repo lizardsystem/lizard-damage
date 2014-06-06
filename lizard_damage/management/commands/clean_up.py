@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import (
-  print_function,
-#  unicode_literals,
-  absolute_import,
-  division,
+    print_function,
+    absolute_import,
+    division,
 )
 
 from django.core.management.base import BaseCommand
@@ -26,7 +25,7 @@ class Command(BaseCommand):
         logger.info("Cleaning up scenarios which are expired...")
         now = datetime.datetime.now()
         for damage_scenario in models.DamageScenario.objects.filter(
-            expiration_date__lte=now):
+                expiration_date__lte=now):
 
             logger.info(
                 "Deleting scenario %d (%s), tasks, events and results..." % (
@@ -37,7 +36,7 @@ class Command(BaseCommand):
 
             for damage_event in damage_scenario.damageevent_set.all():
                 for damage_event_result in (
-                    damage_event.damageeventresult_set.all()):
+                        damage_event.damageeventresult_set.all()):
                     if damage_event_result.image:
                         damage_event_result.image.delete()
                     damage_event_result.delete()

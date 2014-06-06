@@ -76,9 +76,9 @@ def damage_scenario_from_type_0(all_form_data):
         calc_type=all_form_data['calc_type'])
     damage_scenario.save()  # Move_files needs an existing ID
     damage_scenario.move_files({
-            'customheights': all_form_data.get('customheights_file'),
-            'customlanduse': all_form_data.get('customlanduse_file')
-            })
+        'customheights': all_form_data.get('customheights_file'),
+        'customlanduse': all_form_data.get('customlanduse_file')
+    })
     if all_form_data['damagetable']:
         damage_scenario.damagetable = all_form_data['damagetable']
     damage_scenario.save()
@@ -200,7 +200,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                     water_level_filenames = [line[1], ]
 
                 for index, water_level_filename in enumerate(
-                    water_level_filenames):
+                        water_level_filenames):
                     water_level_tempdir = tempfile.mkdtemp()
                     myzip.extract(water_level_filename, water_level_tempdir)
                     tempfilename = os.path.join(
@@ -349,7 +349,7 @@ class Wizard(ViewContextMixin, SessionWizardView):
             except:
                 return {
                     'zip_content':
-                        'analyse gefaald, batenkaart bestanden zijn niet goed'
+                    'analyse gefaald, batenkaart bestanden zijn niet goed'
                     }
         return super(Wizard, self).get_form_initial(step)
 
@@ -503,7 +503,7 @@ class GeoImageHeightKML(GeoImageKML):
             min_height = 0
             max_height = 1000
         return self.root_url + reverse('lizard_damage_legend_height', kwargs={
-                'min_height': min_height, 'max_height': max_height})
+            'min_height': min_height, 'max_height': max_height})
 
 
 class LegendHeight(View):

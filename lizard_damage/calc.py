@@ -35,7 +35,7 @@ def convert_tif_to_png(filename_tif, filename_png):
 
 
 def process_result(
-    logger, damage_event, damage_event_index, result, scenario_name):
+        logger, damage_event, damage_event_index, result, scenario_name):
     errors = 0
     # result[0] is the result zip file name in temp dir.
     with open(result[0], 'rb') as doc_file:
@@ -73,7 +73,7 @@ def process_result(
         if damage_event.damageeventresult_set.count() >= 0:
             logger.warning("Removing old images...")
             for damage_event_result in (
-                damage_event.damageeventresult_set.all()):
+                    damage_event.damageeventresult_set.all()):
                 damage_event_result.image.delete()
                 damage_event_result.delete()
         for img in result[1]:
@@ -88,9 +88,9 @@ def process_result(
             logger.info(command)
             # Warp png file, output is tif.
             subprocess.call([
-                    'gdalwarp', img['filename_png'], img['filename_tif'],
-                    '-t_srs', "+proj=latlong +datum=WGS84",
-                    '-s_srs', RD.strip()])
+                'gdalwarp', img['filename_png'], img['filename_tif'],
+                '-t_srs', "+proj=latlong +datum=WGS84",
+                '-s_srs', RD.strip()])
 
             img['extent'] = extent_from_geotiff(img['filename_tif'])
             # Convert it back to png
@@ -282,7 +282,7 @@ def write_result(name, ma_result, ds_template):
 
 
 def write_table(
-    name, damage, area, damage_table, meta=[], include_total=False):
+        name, damage, area, damage_table, meta=[], include_total=False):
     """
     Write results in a csv table on disk.
 

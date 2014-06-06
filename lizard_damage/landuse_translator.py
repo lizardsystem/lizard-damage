@@ -45,7 +45,8 @@ class LanduseTranslator(object):
                 "bevatten.")
         if sheet.nrows <= 1:
             raise TranslatorException(
-               "Eerste sheet van de Excelfile moet meer dan 1 regel bevatten.")
+                "Eerste sheet van de Excelfile moet meer dan 1 " +
+                "regel bevatten.")
 
         translate_dict = {}
 
@@ -138,11 +139,11 @@ class LanduseTranslator(object):
             maxvalue += 1
 
         translation = np.array([
-                # Translate each index to its to_value from
-                # the translate dict, or 0 if it's not
-                # in there (shouldn't happen).
-                self.translate_dict.get(i, 0)
-                for i in range(maxvalue + 1)])
+            # Translate each index to its to_value from
+            # the translate dict, or 0 if it's not
+            # in there (shouldn't happen).
+            self.translate_dict.get(i, 0)
+            for i in range(maxvalue + 1)])
 
         # Numpy magic
         return translation[grid]

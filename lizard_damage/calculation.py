@@ -20,9 +20,9 @@ CALC_TYPES = {
 
 
 def calculate(
-    landuse, depth, geo_transform, calc_type, table, month, floodtime,
-    repairtime_roads, repairtime_buildings, road_grid_codes,
-    get_roads_flooded_for_tile_and_code, logger):
+        landuse, depth, geo_transform, calc_type, table, month, floodtime,
+        repairtime_roads, repairtime_buildings, road_grid_codes,
+        get_roads_flooded_for_tile_and_code, logger):
     """
     Calculate damage for an area.
 

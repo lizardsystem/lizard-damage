@@ -6,7 +6,6 @@ import traceback
 
 from celery.task import task
 
-from lizard_damage import calc
 from lizard_damage import models
 from lizard_damage import risk
 from lizard_damage import emails
@@ -23,7 +22,7 @@ def damage_scenario_to_task(damage_scenario, username="admin"):
     task_name = 'Scenario (%05d) calculate damage' % damage_scenario.id
     task_kwargs = (
         '{"username": "%s", "taskname": "%s", "damage_scenario_id": "%d"}' % (
-        username, task_name, damage_scenario.id))
+            username, task_name, damage_scenario.id))
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
             'kwargs': task_kwargs,
@@ -41,7 +40,7 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
     task_name = 'Scenario ({}) calculate benefit'.format(benefit_scenario.id)
     task_kwargs = (
         '{"username": "%s", "taskname": "%s", "benefit_scenario_id": "%d"}' % (
-        username, task_name, benefit_scenario.id))
+            username, task_name, benefit_scenario.id))
     calc_damage_task, created = SecuredPeriodicTask.objects.get_or_create(
         name=task_name, defaults={
             'kwargs': task_kwargs,
@@ -65,7 +64,7 @@ def send_email(scenario_id, username=None, taskname=None, loglevel=20,
 @task
 @task_logging
 def calculate_damage(
-    damage_scenario_id, username=None, taskname=None, loglevel=20):
+        damage_scenario_id, username=None, taskname=None, loglevel=20):
     """Call real_calculate_damage, send emails if an uncaught
     exception occurs.  Uncaught exceptions are usually problems in the
     code, not the input."""
@@ -95,7 +94,7 @@ def calculate_damage(
 @task
 @task_logging
 def calculate_benefit(
-    benefit_scenario_id, username=None, taskname=None, loglevel=20):
+        benefit_scenario_id, username=None, taskname=None, loglevel=20):
     start_dt = datetime.datetime.now()
     logger = logging.getLogger(taskname)
     logger.info("calculate benefit")
@@ -119,8 +118,8 @@ def calculate_benefit(
 
     if errors == 0:
         logger.info('STATS benefit van %s is klaar in %r' % (
-                benefit_scenario.email,
-                str(datetime.datetime.now() - start_dt)))
+            benefit_scenario.email,
+            str(datetime.datetime.now() - start_dt)))
         logger.info(
             "creating email task for scenario %d" % benefit_scenario.id)
         subject = (
@@ -134,8 +133,8 @@ def calculate_benefit(
         logger.info("finished")
     else:
         logger.info('STATS benefit van %s is mislukt in %r' % (
-                benefit_scenario.email,
-                str(datetime.datetime.now() - start_dt)))
+            benefit_scenario.email,
+            str(datetime.datetime.now() - start_dt)))
         logger.info("there were errors in scenario %d" % benefit_scenario.id)
         logger.info("creating email task for error")
         subject = 'WaterSchadeSchatter: scenario %s heeft fouten' % (

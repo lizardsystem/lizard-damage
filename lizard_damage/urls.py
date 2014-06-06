@@ -70,8 +70,7 @@ urlpatterns = patterns(
     url(r'^disclaimer$',
         views.Disclaimer.as_view(
             template_name="lizard_damage/disclaimer.html"),
-        name='lizard_damage_disclaimer'
-    ),
+        name='lizard_damage_disclaimer'),
     url(
         r'^result/(?P<slug>.*)/$',
         views.DamageScenarioResult.as_view(),
@@ -98,22 +97,26 @@ urlpatterns = patterns(
         name='lizard_damage_event_kml'
     ),
     url(
-        r'^geoimage/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
+        r'^geoimage/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/' +
+        '(?P<slugs>.*)/',
         views.GeoImageKML.as_view(),
         name='lizard_damage_geo_image_kml'
     ),
     url(
-        r'^geoimage_nolegend/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
+        r'^geoimage_nolegend/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/' +
+        '(?P<slugs>.*)/',
         views.GeoImageNoLegendKML.as_view(),
         name='lizard_damage_geo_image_no_legend_kml'
     ),
     url(
-        r'^geoimage_landuse/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
+        r'^geoimage_landuse/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/' +
+        '(?P<slugs>.*)/',
         views.GeoImageLandUseKML.as_view(),
         name='lizard_damage_geo_image_landuse_kml'
     ),
     url(
-        r'^geoimage_height/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/(?P<slugs>.*)/',
+        r'^geoimage_height/(?P<scenario_type>[db])/(?P<scenario_id>\d+)/' +
+        '(?P<slugs>.*)/',
         views.GeoImageHeightKML.as_view(),
         name='lizard_damage_geo_image_height_kml'
     ),
@@ -129,7 +132,6 @@ urlpatterns = patterns(
         ),
     url(r'^test$',
         TemplateView.as_view(template_name="lizard_damage/openlayers.html"),
-        name='lizard_damage_test'
-    ),
+        name='lizard_damage_test'),
 )
 urlpatterns += debugmode_urlpatterns()

@@ -14,7 +14,6 @@ install_requires = [
     'django-nose',
     'lizard-ui >= 4.0b5',
     'lizard-task',
-    'openpyxl',
     'xlrd',
     'Pillow',
     'pyproj',

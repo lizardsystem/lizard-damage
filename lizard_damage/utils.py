@@ -251,7 +251,7 @@ def ds_empty_copy(ds, bands=1, datatype=gdalconst.GDT_Float64):
 
 def get_geo(ds):
     """ Return tuple (projection, geotransform) """
-    return  ds.GetProjection(), ds.GetGeoTransform()
+    return ds.GetProjection(), ds.GetGeoTransform()
 
 
 def set_geo(ds, geo):

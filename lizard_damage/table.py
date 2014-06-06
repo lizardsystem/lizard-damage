@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import (
-  print_function,
-  unicode_literals,
-  absolute_import,
-  division,
+    print_function,
+    unicode_literals,
+    absolute_import,
+    division,
 )
 
 import ConfigParser
@@ -60,7 +60,7 @@ class DamageHeader(object):
 
         self.repairtime = repairtime
         self._repairtime_in_seconds = [self._to_seconds(t)
-                                      for t in self.repairtime]
+                                       for t in self.repairtime]
 
         self.default_floodtime = default_floodtime
         self._default_floodtime_in_seconds = self._to_seconds(
@@ -184,14 +184,11 @@ class DamageTable(object):
         c = ConfigParser.ConfigParser()
         c.add_section(CFG_HEADER_SECTION)
         c.set(CFG_HEADER_SECTION, CFG_HEADER_DEPTH,
-            json.dumps(self.header.depth),
-        )
+              json.dumps(self.header.depth))
         c.set(CFG_HEADER_SECTION, CFG_HEADER_FLOODTIME,
-            json.dumps(self.header.floodtime)
-        )
+              json.dumps(self.header.floodtime))
         c.set(CFG_HEADER_SECTION, CFG_HEADER_REPAIRTIME,
-            json.dumps(self.header.repairtime)
-        )
+              json.dumps(self.header.repairtime))
 
         for code, dr in self.data.items():
             section = unicode(code)
@@ -209,7 +206,7 @@ class DamageTable(object):
             c.set(section, CFG_ROW_G_DEPTH, json.dumps(dr.gamma_depth))
             c.set(section, CFG_ROW_G_FLOODTIME, json.dumps(dr.gamma_floodtime))
             c.set(section, CFG_ROW_G_REPAIRTIME, json.dumps(
-                    dr.gamma_repairtime))
+                dr.gamma_repairtime))
             c.set(section, CFG_ROW_G_MONTH, json.dumps(dr.gamma_month))
 
         c.write(file_object)
@@ -227,7 +224,7 @@ class DamageTable(object):
                     floodtime=json.loads(cp.get(section,
                                          CFG_HEADER_FLOODTIME)),
                     repairtime=json.loads(cp.get(section,
-                                         CFG_HEADER_REPAIRTIME)),
+                                                 CFG_HEADER_REPAIRTIME)),
                 )
             else:
                 code = int(section)
@@ -252,9 +249,9 @@ class DamageTable(object):
                     gamma_depth=json.loads(cp.get(section,
                                                   CFG_ROW_G_DEPTH)),
                     gamma_floodtime=json.loads(cp.get(section,
-                                                 CFG_ROW_G_FLOODTIME)),
+                                                      CFG_ROW_G_FLOODTIME)),
                     gamma_repairtime=json.loads(cp.get(section,
-                                                 CFG_ROW_G_REPAIRTIME)),
+                                                       CFG_ROW_G_REPAIRTIME)),
                     gamma_month=json.loads(cp.get(section,
                                                   CFG_ROW_G_MONTH)),
                 )

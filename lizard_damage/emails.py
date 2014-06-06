@@ -25,8 +25,8 @@ from . import models
 
 
 def send_email_to_task(
-    scenario_id, mail_template, subject,
-    email="", scenario_type='damage', extra_context=None):
+        scenario_id, mail_template, subject,
+        email="", scenario_type='damage', extra_context=None):
     """
     Create a task for sending email
     """
@@ -57,9 +57,9 @@ def send_email_to_task(
 
 
 def do_send_email(
-    scenario_id, username=None, taskname=None, loglevel=20,
-    mail_template='email_received', subject='Onderwerp', email='',
-    scenario_type='damage', extra_context={}):
+        scenario_id, username=None, taskname=None, loglevel=20,
+        mail_template='email_received', subject='Onderwerp', email='',
+        scenario_type='damage', extra_context={}):
     """Called from the send_email task to actually send it."""
 
     logger = logging.getLogger(taskname)
@@ -98,16 +98,16 @@ def do_send_email(
 
     logger.info("e-mail has been successfully sent")
     logger.info("url was {}".format(
-            urlresolvers.reverse(
-                "lizard_damage_result", kwargs=dict(slug=scenario.slug))))
+        urlresolvers.reverse(
+            "lizard_damage_result", kwargs=dict(slug=scenario.slug))))
 
 
 def send_damage_success_mail(damage_scenario, logger, start_dt):
     """Send success mail"""
     logger.info('STATS scenario type %s van %s is klaar in %r' % (
-            damage_scenario.scenario_type_str,
-            damage_scenario.email,
-            str(datetime.datetime.now() - start_dt)))
+        damage_scenario.scenario_type_str,
+        damage_scenario.email,
+        str(datetime.datetime.now() - start_dt)))
     logger.info("creating email task for scenario %d" % damage_scenario.id)
     subject = (
         'WaterSchadeSchatter: Resultaten beschikbaar voor scenario %s '
@@ -119,9 +119,9 @@ def send_damage_success_mail(damage_scenario, logger, start_dt):
 def send_damage_error_mail(damage_scenario, logger, start_dt):
     # Send error mail
     logger.info('STATS scenario type %s van %s is mislukt in %r' % (
-            damage_scenario.scenario_type_str,
-            damage_scenario.email,
-            str(datetime.datetime.now() - start_dt)))
+        damage_scenario.scenario_type_str,
+        damage_scenario.email,
+        str(datetime.datetime.now() - start_dt)))
     logger.info("there were errors in scenario %d" % damage_scenario.id)
     logger.info("creating email task for error")
     subject = (
