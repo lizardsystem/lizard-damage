@@ -27,42 +27,45 @@ def calculate(
     Calculate damage for an area.
 
     Input: landuse, depth and floodtime are numpy arrays of the same shape.
+    depth must be a masked array.
     """
     logger.info('Calculating damage')
 
     # Initialize result array
-    result = np.ma.zeros(depth.shape)
-    result.mask = depth.mask
+    result_ma = np.ma.zeros(depth.shape)
+    result_ma.mask = depth.mask
 
     # Track results so far
     roads_flooded_for_tile = {}  # {road-pk: flooded-m2}
-    damage = {}                  # {landuse_code: damage}
-    damage_area = {}             # {landuse_code: m2}
+    damage_sum_per_code = {}     # {landuse_code: damage}
+    damage_area_per_code = {}    # {landuse_code: m2}
 
     area_per_pixel = raster.geo2cellsize(geo_transform)
     default_repairtime = table.header.get_default_repairtime()
 
     codes_in_use = np.unique(landuse.compressed())
 
-    for code, damage_row in table.data.items():
-        damage_area[code] = 0  # Defaults, in case we continue below
-        damage[code] = 0
-
+    for code, damage_row in table:
         if code not in codes_in_use:
+            damage_sum_per_code[code] = 0
+            damage_area_per_code[code] = 0
             continue
 
         # Where in the landuse grid does this code occur?
         # Note: never empty, because code is in codes_in_use
         index = np.ma.where(landuse, code)
 
+        depth_for_code = depth[index]
+        floodtime_for_code = floodtime[index]
+
         # Compute direct damage.
         partial_result_direct = (
             area_per_pixel *
-            damage_row.to_direct_damage(CALC_TYPES[calc_type]) *
-            damage_row.to_gamma_depth(depth[index]) *
-            damage_row.to_gamma_floodtime(floodtime[index]) *
-            damage_row.to_gamma_month(month)
-        )
+            damage_row.direct_damage_per_pixel(
+                CALC_TYPES[calc_type],
+                depth_for_code,
+                floodtime_for_code,
+                month))
 
         # Compute indirect damage, which is different for roads.
         if code in road_grid_codes:
@@ -88,26 +91,24 @@ def calculate(
                 area_per_pixel *
                 damage_row.to_gamma_repairtime(repairtime) *
                 damage_row.to_indirect_damage(CALC_TYPES[calc_type])
-            ) * np.greater(depth[index], 0)  # True evaluates to 1
+            ) * np.greater(depth_for_code, 0)  # True evaluates to 1
 
         # Set damage in the result grid. Indirect road damage not included!
-        result[index] = partial_result_direct + partial_result_indirect
+        partial_result = partial_result_direct + partial_result_indirect
+        result_ma[index] = partial_result
 
-        damage_area[code] = np.where(
-            np.greater(result[index], 0), area_per_pixel, 0,
-        ).sum()
-        damage[code] = result[index].sum()
+        damage_sum_per_code[code] = partial_result.sum()
+        damage_area_per_code[code] = (
+            np.greater(partial_result, 0).sum() * area_per_pixel)
 
         logger.debug(
             '%s - %s - %s: %.2f dir + %.2f ind = %.2f tot' %
-            (
-                damage_row.code,
-                damage_row.source,
-                damage_row.description,
-                partial_result_direct.sum(),
-                partial_result_indirect.sum(),
-                damage[code],
-            ),
-        )
+            (damage_row.code,
+             damage_row.source,
+             damage_row.description,
+             partial_result_direct.sum(),
+             partial_result_indirect.sum(),
+             damage_sum_per_code[code]))
 
-    return damage, damage_area, result, roads_flooded_for_tile
+    return (damage_sum_per_code, damage_area_per_code,
+            result_ma, roads_flooded_for_tile)

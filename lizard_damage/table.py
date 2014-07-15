@@ -4,8 +4,7 @@ from __future__ import (
     print_function,
     unicode_literals,
     absolute_import,
-    division,
-)
+    division)
 
 import ConfigParser
 import logging
@@ -152,6 +151,14 @@ class DamageRow(object):
         damage_unit = self._units[self.indirect_damage.unit]
         return damage_unit.to_si(getattr(self.indirect_damage, damage))
 
+    def direct_damage_per_pixel(
+            self, calc_type, depth_grid, floodtime_grid, month):
+        return (
+            self.to_direct_damage(calc_type) *
+            self.to_gamma_depth(depth_grid) *
+            self.to_gamma_floodtime(floodtime_grid) *
+            self.to_gamma_month(month))
+
     def __repr__(self):
         return '<' + self.__class__.__name__ + ': ' + self.description + '>'
 
@@ -174,6 +181,10 @@ class DamageTable(object):
         self._units = dict((u.name, u) for u in units)
         self.importers[from_type](self, from_filename)
 
+    def __iter__(self):
+        """Yields (code, damagerow) tuples."""
+        return self.data.iteritems()
+
     @classmethod
     def read_cfg(cls, filename, units):
         return cls(
@@ -187,10 +198,12 @@ class DamageTable(object):
               json.dumps(self.header.depth))
         c.set(CFG_HEADER_SECTION, CFG_HEADER_FLOODTIME,
               json.dumps(self.header.floodtime))
+        c.set(CFG_HEADER_SECTION, CFG_HEADER_FLOODTIME,
+              json.dumps(self.header.floodtime))
         c.set(CFG_HEADER_SECTION, CFG_HEADER_REPAIRTIME,
               json.dumps(self.header.repairtime))
 
-        for code, dr in self.data.items():
+        for code, dr in self:
             section = unicode(code)
             c.add_section(section)
             c.set(section, CFG_ROW_SOURCE, dr.source)
