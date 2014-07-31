@@ -5,7 +5,7 @@ Changelog of lizard-damage
 1.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Update version string to "mei 2014".
 
 
 1.0 (2014-07-15)
