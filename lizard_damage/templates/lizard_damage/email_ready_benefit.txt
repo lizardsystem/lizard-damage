@@ -3,7 +3,7 @@ L.S.,
 
 Het WaterSchadeSchatter scenario "{{ damage_scenario.name }}" is uitgerekend. Klik onderstaande link om te resultaten te bekijken. <br/><br/>
 
-Resultaten "{{ damage_scenario.name }}": {{ ROOT_URL }}{% url lizard_damage_benefit_result slug=damage_scenario.slug %}
+Resultaten "{{ damage_scenario.name }}": {{ ROOT_URL }}{% url "lizard_damage_benefit_result" slug=damage_scenario.slug %}
 
 --
 waterschadeschatter.nl

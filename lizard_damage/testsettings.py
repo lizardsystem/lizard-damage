@@ -42,7 +42,7 @@ SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
     'lizard_damage',
     'lizard_ui',
-    'staticfiles',
+    'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_nose',
@@ -79,6 +79,12 @@ STATICFILES_FINDERS = STATICFILES_FINDERS
 
 # Forn AHN, LGN tiles
 DATA_ROOT = os.path.join(BUILDOUT_DIR, 'data')
+
+# Pickle serializer is less secure (if an attacker can poison the session
+# contents, arbitrary code can be run). But as of now, lizard_map still
+# stores datetimes in the session, and that's not compatible with
+# the more secure JsonSerializer.
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 try:
     # Import local settings that aren't stored in svn/git.

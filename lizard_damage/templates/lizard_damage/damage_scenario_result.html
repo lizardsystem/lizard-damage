@@ -21,7 +21,7 @@
     <dd>{{ view.damage_scenario.damageevent_set.count }}</dd>
   </dl>
   <div>
-    <a href="{% url lizard_damage_form %}">Ga naar beginscherm</a>
+    <a href="{% url "lizard_damage_form" %}">Ga naar beginscherm</a>
   </div>
   <div>
     {{ view.version }}
@@ -41,13 +41,13 @@ Risicokaart downloaden
 {% for event in view.damage_scenario.damageevent_set.all %}
 <h3>Gebeurtenis {{ event }}</h3>
 <div>
-  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_event_kml slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;
+  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" slug=event.slug %}" target="_blank" alt="bekijken in Google Maps">bekijken</a>&nbsp;
   {% if event.result %}<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>
   {% else %}geen resultaat{% endif %}&nbsp;
-  <a href="{% url lizard_damage_event_kml slug=event.slug %}">kml</a>&nbsp;
-  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_landuse_kml scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.landuse_slugs %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;
-  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_height_kml scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.height_slugs %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>&nbsp;
-  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url lizard_damage_geo_image_no_legend_kml scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.depth_slugs %}" target="_blank" alt="dieptekaart bekijken in Google Maps">diepte</a>
+  <a href="{% url "lizard_damage_event_kml" slug=event.slug %}">kml</a>&nbsp;
+  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_geo_image_landuse_kml" scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.landuse_slugs %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;
+  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_geo_image_height_kml" scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.height_slugs %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>&nbsp;
+  <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_geo_image_no_legend_kml" scenario_type="d" scenario_id=view.damage_scenario.id slugs=event.depth_slugs %}" target="_blank" alt="dieptekaart bekijken in Google Maps">diepte</a>
 
 <dl>
   <dt>Waterstand</dt>
