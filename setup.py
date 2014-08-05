@@ -12,7 +12,7 @@ install_requires = [
     'Django >= 1.4, < 1.7',
     'django-extensions',
     'django-nose',
-    'lizard-task',
+    'lizard-task >= 0.16',
     'lizard-map >= 4.40, < 5.0',
     'lizard-ui >= 4.40, < 5.0',
     'xlrd',
