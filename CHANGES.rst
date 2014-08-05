@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-1.1 (unreleased)
+1.1 (2014-08-05)
 ----------------
 
 - Make lizard-damage compatible with Django 1.6.5.
