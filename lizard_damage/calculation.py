@@ -4,7 +4,6 @@ This module _can not_ import other modules from lizard_damage.
 """
 
 import numpy as np
-from . import raster
 
 BUILDING_SOURCES = ('BAG', )
 
@@ -40,7 +39,7 @@ def calculate(
     damage_sum_per_code = {}     # {landuse_code: damage}
     damage_area_per_code = {}    # {landuse_code: m2}
 
-    area_per_pixel = raster.geo2cellsize(geo_transform)
+    area_per_pixel = geo2cellsize(geo_transform)
     default_repairtime = table.header.get_default_repairtime()
 
     codes_in_use = np.unique(landuse.compressed())
@@ -112,3 +111,8 @@ def calculate(
 
     return (damage_sum_per_code, damage_area_per_code,
             result_ma, roads_flooded_for_tile)
+
+
+def geo2cellsize(geo):
+    """ Return cell size. """
+    return abs(geo[1][1] * geo[1][5])
