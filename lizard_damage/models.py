@@ -616,7 +616,7 @@ class DamageEvent(models.Model):
 
         calc_type = self.scenario.calc_type or calc.CALC_TYPE_MAX
 
-        waterlevel_ascfiles = [dewl.waterlevel.path for dewl in
+        waterlevel_ascfiles = [dewl.waterlevel_path for dewl in
                                self.damageeventwaterlevel_set.all()]
         logger.info("event %s" % (self,))
         logger.info(" - month %s, floodtime %s" % (

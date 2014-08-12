@@ -283,14 +283,6 @@ class Wizard(ViewContextMixin, SessionWizardView):
     template_name = 'lizard_damage/base_form.html'
     file_storage = temp_storage
 
-    SCENARIO_TYPE_FUNCTIONS = {
-        0: damage_scenario_from_type_0,
-        1: damage_scenario_from_type_0,
-        2: damage_scenario_from_zip_type,
-        3: damage_scenario_from_zip_type,
-        4: damage_scenario_from_zip_type,
-    }
-
     def get_form_initial(self, step):
         # For batch processing
         if step == '8':
