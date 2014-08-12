@@ -19,6 +19,7 @@ install_requires = [
     'Pillow',
     'pyproj',
     'mock',
+    'factory-boy',
     'django-appconf'
     ],
 

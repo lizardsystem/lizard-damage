@@ -30,6 +30,7 @@ import numpy as np
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from django.core.files import File
+from django.core.files.uploadedfile import UploadedFile
 
 from lizard_damage.conf import settings
 from lizard_damage import utils
@@ -118,6 +119,30 @@ def friendly_filesize(size):
     if size > 1024:
         return '%0.1fKB' % (float(size) / (1024))
     return str(size)
+
+
+def copy(uploadedfile, targetdir):
+    """Copy the file given by uploadedfile to targetdir, with the same name.
+    Creates targetdir and parent dirs if they don't already exist.
+
+    If uploadedfile is a path to a file, copy it. If it is an UploadedFile
+    object, save its chunks.
+
+    Returns new path."""
+    if not os.path.exists(targetdir):
+        os.makedirs(targetdir)
+
+    if isinstance(uploadedfile, UploadedFile):
+        target = os.path.join(targetdir, uploadedfile.name)
+        with open(target, 'wb') as f:
+            for chunk in uploadedfile.chunks():
+                f.write(chunk)
+    else:
+        # Assume it's a string
+        target = os.path.join(targetdir, os.path.basename(uploadedfile))
+        shutil.copyfile(uploadedfile, target)
+
+    return target
 
 
 class Roads(models.Model):
@@ -245,13 +270,6 @@ class DamageScenario(models.Model):
     datetime_created = models.DateTimeField(auto_now=True)
     expiration_date = models.DateTimeField()
 
-    damagetable = models.FileField(
-        upload_to='scenario/damage_table',
-        null=True, blank=True,
-        help_text='Optionele schadetabel, indien niet ingevuld '
-        'wordt de default gebruikt'
-        )
-
     calc_type = models.IntegerField(
         choices=CALC_TYPE_CHOICES, default=CALC_TYPE_MAX)
 
@@ -262,8 +280,38 @@ class DamageScenario(models.Model):
         max_length=200, null=True, blank=True)
     customlanduse = models.FilePathField(
         max_length=200, null=True, blank=True)
+    damagetable_file = models.FilePathField(
+        max_length=200, null=True, blank=True,
+        help_text='Optionele schadetabel, indien niet ingevuld '
+        'wordt de default gebruikt')
     customlandusegeoimage = models.ForeignKey(
         'GeoImage', null=True, blank=True)
+
+    @classmethod
+    def setup(
+            cls, name, email, scenario_type, calc_type, customheights,
+            customlanduse, damagetable, damage_events):
+        """Create and setup a DamageScenario. Handles all types."""
+
+        scenario = cls.objects.create(
+            name=name, email=email, scenario_type=scenario_type,
+            calc_type=calc_type)
+
+        files_to_move = dict()
+        if customheights:
+            files_to_move['customheights'] = customheights
+        if customlanduse:
+            files_to_move['customlanduse'] = customlanduse
+        if damagetable:
+            files_to_move['damagetable_file'] = damagetable
+
+        scenario.move_files(files_to_move)
+        scenario.save()
+
+        for damage_event_data in damage_events:
+            DamageEvent.setup(scenario, **damage_event_data)
+
+        return scenario
 
     def __unicode__(self):
         return self.name
@@ -281,26 +329,14 @@ class DamageScenario(models.Model):
         """The workdir must be located inside MEDIA_ROOT, because
         that's the directory that's mounted on both the webserver and
         the taskserver."""
-        workdir = os.path.join(
+        return os.path.join(
             settings.MEDIA_ROOT, 'damagescenario', str(self.id))
-        if not os.path.exists(workdir):
-            os.makedirs(workdir)
-        return workdir
-
-    @property
-    def damage_table_path(self):
-        if self.damagetable:
-            return self.damagetable.path
-        else:
-            return None
 
     def read_damage_table(self):
         """Returns damage table from dt_path, or data/damagetable/dt.cfg
         if not given."""
-        dt_path = self.damage_table_path
-        if dt_path is None:
-            damage_table_path = table.DEFAULT_DAMAGE_TABLE
-        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
+        dt_path = self.damagetable_file or os.path.join(
+            settings.BUILDOUT_DIR, table.DEFAULT_DAMAGE_TABLE)
 
         with open(dt_path) as cfg:
             return dt_path, table.DamageTable.read_cfg(
@@ -334,16 +370,15 @@ class DamageScenario(models.Model):
                     settings.MEDIA_ROOT, self.customlanduse))
 
     def move_files(self, file_dict):
-        """file_dict has keys like 'customheights_file', and paths to
+        """file_dict has keys like 'customheights', and paths to
         these files as values. The files are moved to
         var/wss/damagescenario/<id>/filename and those new paths are saved
-        to this objects."""
+        to this object. Instead of a path, actual UploadedFile instances
+        are also acceptable."""
         for field, path in file_dict.items():
             if path is None:
                 continue
-            target = os.path.join(self.workdir, os.path.basename(path))
-            shutil.copyfile(path, target)
-            setattr(self, field, target)
+            setattr(self, field, copy(path, self.workdir))
 
     @property
     def landuse_slugs(self):
@@ -464,6 +499,22 @@ class DamageEvent(models.Model):
     min_height = models.FloatField(null=True, blank=True)
     max_height = models.FloatField(null=True, blank=True)
 
+    @classmethod
+    def setup(cls, scenario, floodtime_hours, repairtime_roads_days,
+              repairtime_buildings_days, floodmonth, repetition_time,
+              waterlevels):
+        damage_event = cls.objects.create(
+            scenario=scenario,
+            floodtime=float(floodtime_hours) * 3600,
+            repairtime_roads=float(repairtime_roads_days) * 3600 * 24,
+            repairtime_buildings=float(repairtime_buildings_days) * 3600 * 24,
+            floodmonth=floodmonth)
+
+        for waterlevel_data in waterlevels:
+            DamageEventWaterlevel.setup(damage_event, **waterlevel_data)
+
+        return damage_event
+
     def __unicode__(self):
         if self.name:
             return self.name
@@ -471,6 +522,14 @@ class DamageEvent(models.Model):
         if dew:
             return ', '.join([str(d) for d in dew])
         return 'id: %d' % self.id
+
+    @property
+    def workdir(self):
+        """The workdir is below this scenario's workdir, and has
+        the DamageEvent's primary key in its name. So this doesn't
+        work on unsaved DamageEvents."""
+        return os.path.join(
+            self.scenario.workdir, 'damage_events', str(self.id))
 
     @property
     def result_display(self):
@@ -962,12 +1021,39 @@ class DamageEventWaterlevel(models.Model):
     """
     One waterlevel file to be used for a timeseries of waterlevels.
     """
-    waterlevel = models.FileField(upload_to='scenario/waterlevel')
     event = models.ForeignKey(DamageEvent)
     index = models.IntegerField(default=100)
+    waterlevel_path = models.FilePathField(
+        max_length=200, null=True, blank=True)
 
     class Meta:
         ordering = ('index', )
+
+    @classmethod
+    def setup(cls, damage_event, waterlevel, index=None):
+        # Create damageeventwaterlevel instance
+        damageeventwaterlevel = cls.objects.create(event=damage_event)
+
+        # Set index if given
+        if index is not None:
+            damageeventwaterlevel.index = index
+
+        # Move provided file to workdir
+        damageeventwaterlevel.waterlevel_path = copy(
+            waterlevel, damageeventwaterlevel.workdir)
+
+        # Save and return
+        damageeventwaterlevel.save()
+        return damageeventwaterlevel
+
+    @property
+    def workdir(self):
+        """The workdir is below this event's workdir, and has the
+        DamageEventWaterlevel's primary key in its name. So this
+        doesn't work on unsaved DamageEventsWaterlevels.
+        """
+        return os.path.join(
+            self.event.workdir, 'waterlevels', str(self.id))
 
     def __unicode__(self):
         return os.path.basename(self.waterlevel.path)

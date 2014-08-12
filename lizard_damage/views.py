@@ -70,55 +70,23 @@ DamageScenario types:
 
 
 def damage_scenario_from_type_0(all_form_data):
-    damage_scenario = DamageScenario(
-        name=all_form_data['name'], email=all_form_data['email'],
+    return DamageScenario.setup(
+        name=all_form_data['name'],
+        email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
-        calc_type=all_form_data['calc_type'])
-    damage_scenario.save()  # Move_files needs an existing ID
-    damage_scenario.move_files({
-        'customheights': all_form_data.get('customheights_file'),
-        'customlanduse': all_form_data.get('customlanduse_file')
-    })
-    if all_form_data['damagetable']:
-        damage_scenario.damagetable = all_form_data['damagetable']
-    damage_scenario.save()
-    repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(
-        all_form_data['repairtime_buildings']) * 3600 * 24
-    damage_event = damage_scenario.damageevent_set.create(
-        floodtime=all_form_data['floodtime'] * 3600,
-        repairtime_roads=repairtime_roads,
-        repairtime_buildings=repairtime_buildings,
-        floodmonth=all_form_data['floodmonth'])
-    damage_event.damageeventwaterlevel_set.create(
-        waterlevel=all_form_data['waterlevel'],
-        index=1
-        )
-    return damage_scenario
-
-
-def damage_scenario_from_type_1(all_form_data):
-    damage_scenario = DamageScenario(
-        name=all_form_data['name'], email=all_form_data['email'],
-        scenario_type=all_form_data['scenario_type'],
-        calc_type=all_form_data['calc_type'])
-    if all_form_data['damagetable']:
-        damage_scenario.damagetable = all_form_data['damagetable']
-    damage_scenario.save()
-    repairtime_roads = float(all_form_data['repairtime_roads']) * 3600 * 24
-    repairtime_buildings = float(
-        all_form_data['repairtime_buildings']) * 3600 * 24
-    damage_event = damage_scenario.damageevent_set.create(
-        repetition_time=all_form_data['repetition_time'],  # Difference is here
-        floodtime=all_form_data['floodtime'] * 3600,
-        repairtime_roads=repairtime_roads,
-        repairtime_buildings=repairtime_buildings,
-        floodmonth=all_form_data['floodmonth'])
-    damage_event.damageeventwaterlevel_set.create(
-        waterlevel=all_form_data['waterlevel'],
-        index=1
-        )
-    return damage_scenario
+        calc_type=all_form_data['calc_type'],
+        customheights=all_form_data.get('customheights_file'),
+        customlanduse=all_form_data.get('customlanduse_file'),
+        damagetable=all_form_data.get('damagetable'),
+        damage_events=[dict(
+            floodtime_hours=all_form_data['floodtime'],
+            repairtime_roads_days=all_form_data['repairtime_roads'],
+            repairtime_buildings_days=all_form_data['repairtime_buildings'],
+            floodmonth=all_form_data['floodmonth'],
+            repetition_time=all_form_data.get('repetition_time'),
+            waterlevels=[dict(
+                waterlevel=all_form_data['waterlevel'],
+                index=1)])])
 
 
 def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
@@ -317,11 +285,10 @@ class Wizard(ViewContextMixin, SessionWizardView):
 
     SCENARIO_TYPE_FUNCTIONS = {
         0: damage_scenario_from_type_0,
-        1: damage_scenario_from_type_1,
+        1: damage_scenario_from_type_0,
         2: damage_scenario_from_zip_type,
         3: damage_scenario_from_zip_type,
         4: damage_scenario_from_zip_type,
-        # 5: damage_scenario_from_zip_type,
     }
 
     def get_form_initial(self, step):
@@ -381,9 +348,16 @@ class Wizard(ViewContextMixin, SessionWizardView):
             'STATS scenario aangemaakt door %s: %s, %r' % (
                 all_form_data['email'],
                 scenario_type_name[scenario_type], all_form_data))
-        if scenario_type in (0, 1, 2, 3, 4, 5):
-            damage_scenario = (
-                self.SCENARIO_TYPE_FUNCTIONS[scenario_type](all_form_data))
+        if scenario_type in (0, 1):
+            damage_scenario = damage_scenario_from_type_0(all_form_data)
+            self.clean_temporary_directory(all_form_data)
+            # launch task
+            tasks.damage_scenario_to_task(damage_scenario, username="web")
+            return HttpResponseRedirect(
+                reverse('lizard_damage_thank_you') +
+                '?damage_scenario_id=%d' % damage_scenario.id)
+        if scenario_type in (2, 3, 4):
+            damage_scenario = damage_scenario_from_zip_type(all_form_data)
             self.clean_temporary_directory(all_form_data)
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
