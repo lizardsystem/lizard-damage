@@ -32,12 +32,12 @@ from django.core.urlresolvers import reverse
 from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 
-from lizard_damage.conf import settings
-from lizard_damage import utils
 from lizard_damage import raster
-from lizard_damage import table
 from lizard_damage import tools
-from lizard_damage import calculation
+from lizard_damage import utils
+from lizard_damage.conf import settings
+from lizard_damage_calculation import calculation
+from lizard_damage_calculation import table
 
 logger = logging.getLogger(__name__)
 
@@ -502,13 +502,17 @@ class DamageEvent(models.Model):
     @classmethod
     def setup(cls, scenario, floodtime_hours, repairtime_roads_days,
               repairtime_buildings_days, floodmonth, repetition_time,
-              waterlevels):
+              waterlevels, name=None):
         damage_event = cls.objects.create(
             scenario=scenario,
             floodtime=float(floodtime_hours) * 3600,
             repairtime_roads=float(repairtime_roads_days) * 3600 * 24,
             repairtime_buildings=float(repairtime_buildings_days) * 3600 * 24,
             floodmonth=floodmonth)
+
+        if repetition_time is not None:
+            damage_event.repetition_time = float(repetition_time)
+            damage_event.save()
 
         for waterlevel_data in waterlevels:
             DamageEventWaterlevel.setup(damage_event, **waterlevel_data)
@@ -1056,7 +1060,7 @@ class DamageEventWaterlevel(models.Model):
             self.event.workdir, 'waterlevels', str(self.id))
 
     def __unicode__(self):
-        return os.path.basename(self.waterlevel.path)
+        return os.path.basename(self.waterlevel_path)
 
 
 class RiskResult(models.Model):

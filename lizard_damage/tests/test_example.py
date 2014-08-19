@@ -2,7 +2,7 @@
 
 from django.test import TestCase
 
-from lizard_damage import table
+from lizard_damage_calculation import table
 
 import numpy
 

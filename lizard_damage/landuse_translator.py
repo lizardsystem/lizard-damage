@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import xlrd
 
-from . import table
+from lizard_damage_calculation import table
 
 logger = logging.getLogger(__name__)
 

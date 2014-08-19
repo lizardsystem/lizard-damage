@@ -96,20 +96,26 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
     TODO: make a class for index.csv
     (so we can use it in analyze_zip_file as well)
     """
+
+    zip_temp = tempfile.mkdtemp()
     with ZipFile(zipfile, 'r') as myzip:
         index = myzip.read('index.csv')
         index_data = [
             line.strip().split(',')
             for line in index.split('\n') if line.strip()]
 
-        scenario_data = {}
-        if scenario_name:
-            scenario_data['name'] = scenario_name
-        if scenario_email:
-            scenario_data['email'] = scenario_email
-        damage_table = None
+        scenario_data = {
+            'name': scenario_name,
+            'email': scenario_email,
+            'scenario_type': None,
+            'calc_type': None,
+            'customheights': None,
+            'customlanduse': None,
+            'damagetable': None,
+            'damage_events': []
+        }
+
         for line in index_data:
-            #print '%r' % line[0]
             if line[0] == 'scenario_name':
                 if not scenario_data['name']:
                     scenario_data['name'] = line[1]
@@ -123,34 +129,27 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                     'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
             elif line[0] == 'scenario_damage_table':
                 if line[1]:
-                    zip_temp = tempfile.mkdtemp()
                     myzip.extract(line[1], zip_temp)  # extract to temp dir
-                    damage_table = os.path.join(zip_temp, line[1])
+                    scenario_data['damagetable'] = os.path.join(
+                        zip_temp, line[1])
             elif line[0] == 'event_name':
-                # Header for second part: create damage_scenario object
-                logger.info(
-                    'Create a damage scenario using %r' % scenario_data)
-                damage_scenario = DamageScenario(**scenario_data)
-                damage_scenario.save()
-                if damage_table:
-                    logger.info('adding damage table...')
-                    with open(damage_table) as damage_table_file:
-                        damage_scenario.damagetable.save(
-                            os.path.basename(damage_table),
-                            File(damage_table_file), save=True)
+                # Header for second part: don't do anything yet
+                pass
             else:
                 # This is an event
-                damage_event = DamageEvent(
-                    name=line[0],
-                    scenario=damage_scenario,
-                    floodtime=float(line[2]) * 3600,
-                    repairtime_roads=float(line[3]) * 3600 * 24,
-                    repairtime_buildings=float(line[4]) * 3600 * 24,
-                    floodmonth=line[5]
-                    )
+                damage_event = {
+                    'name': line[0],
+                    'floodtime_hours': line[2],
+                    'repairtime_roads_days': line[3],
+                    'repairtime_buildings_days': line[4],
+                    'floodmonth': line[5],
+                    'waterlevels': [],
+                    'repetition_time': None  # Default
+                    }
+                scenario_data['damage_events'].append(damage_event)
+
                 if line[6]:
-                    damage_event.repetition_time = line[6]
-                damage_event.save()
+                    damage_event['repetition_time'] = line[6]
 
                 if scenario_data['scenario_type'] == 2:
                     zip_file_names = myzip.namelist()
@@ -169,18 +168,17 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
 
                 for index, water_level_filename in enumerate(
                         water_level_filenames):
-                    water_level_tempdir = tempfile.mkdtemp()
-                    myzip.extract(water_level_filename, water_level_tempdir)
+                    myzip.extract(water_level_filename, zip_temp)
                     tempfilename = os.path.join(
-                        water_level_tempdir, water_level_filename)
-                    with open(tempfilename) as water_level_tempfile:
-                        damage_event_waterlevel = DamageEventWaterlevel(
-                            event=damage_event, index=index)
-                        damage_event_waterlevel.waterlevel.save(
-                            water_level_filename,
-                            File(water_level_tempfile), save=True)
-                        damage_event_waterlevel.save()
-                    os.remove(tempfilename)
+                        zip_temp, water_level_filename)
+                    damage_event['waterlevels'].append({
+                        'waterlevel': tempfilename,
+                        'index': index
+                        })
+        damage_scenario = DamageScenario.setup(**scenario_data)
+
+    shutil.rmtree(zip_temp)
+
     return damage_scenario
 
 
