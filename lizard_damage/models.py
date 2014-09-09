@@ -666,7 +666,7 @@ class DamageEvent(models.Model):
                     floodtime=floodtime_px,
                     repairtime_roads=self.repairtime_roads,
                     repairtime_buildings=self.repairtime_buildings,
-                    road_grid_codes=Roads.GRID_CODES,
+                    road_grid_codes=Roads.ROAD_GRIDCODE,
                     get_roads_flooded_for_tile_and_code=(
                         Roads.get_roads_flooded_for_tile_and_code),
                     logger=logger))
