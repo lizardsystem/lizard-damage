@@ -859,7 +859,7 @@ class DamageEvent(models.Model):
                     roads_flooded_over_threshold.append(road)
                     indirect_road_damage = (
                         damage_data.to_indirect_damage(
-                            calc.CALC_TYPES[calc_type]) *
+                            calculation.CALC_TYPES[calc_type]) *
                         damage_data.to_gamma_repairtime(self.repairtime_roads)
                         )
                     logger.info(
