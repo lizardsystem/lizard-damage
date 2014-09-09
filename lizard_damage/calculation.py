@@ -53,7 +53,7 @@ def calculate(
 
         # Where in the landuse grid does this code occur?
         # Note: never empty, because code is in codes_in_use
-        index = np.ma.where(landuse, code)
+        index = np.ma.where(landuse == code)
 
         depth_for_code = depth[index]
         floodtime_for_code = floodtime[index]
