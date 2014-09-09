@@ -52,7 +52,7 @@ def benefit_scenario_to_task(benefit_scenario, username="admin"):
 
 
 @task
-@task_logging
+#@task_logging
 def send_email(scenario_id, username=None, taskname=None, loglevel=20,
                mail_template='email_received', subject='Onderwerp', email='',
                scenario_type='damage', extra_context={}):
@@ -62,7 +62,7 @@ def send_email(scenario_id, username=None, taskname=None, loglevel=20,
 
 
 @task
-@task_logging
+#@task_logging
 def calculate_damage(
         damage_scenario_id, username=None, taskname=None, loglevel=20):
     """Call real_calculate_damage, send emails if an uncaught
@@ -92,7 +92,7 @@ def calculate_damage(
 
 
 @task
-@task_logging
+#@task_logging
 def calculate_benefit(
         benefit_scenario_id, username=None, taskname=None, loglevel=20):
     start_dt = datetime.datetime.now()
