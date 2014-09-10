@@ -647,11 +647,10 @@ class DamageEvent(models.Model):
             # NOTE: Save with the data from _landuse_orig_! This is
             #       basically a cache, and we don't want custom uploaded
             #       landuse grids to end up in the generic cache.
-            if GeoImage.objects.filter(slug=landuse_slug).count() == 0:
-                logger.info("Generating landuse GeoImage: %s" % landuse_slug)
-                GeoImage.from_data_with_legend(
-                    landuse_slug, landuse_orig.data, calc.landuse_legend(),
-                    extent=extent)
+            logger.info("Generating landuse GeoImage: %s" % landuse_slug)
+            GeoImage.from_data_with_legend(
+                landuse_slug, landuse_orig.data, calc.landuse_legend(),
+                extent=extent)
 
             # Result is a np array, damage, area and roads_flooded_for_tile
             # are dictionaries with landuse codes as keys
@@ -1126,8 +1125,27 @@ class GeoImage(models.Model):
         return self.slug
 
     @classmethod
+    def check_existence(cls, slug):
+        try:
+            geoimage = cls.objects.get(slug=slug)
+        except cls.DoesNotExist:
+            return False
+
+        if geoimage.image and os.path.exists(os.path.join(
+                settings.MEDIA_ROOT, geoimage.image.name)):
+            return geoimage
+
+        # Otherwise delete it, outdated
+        geoimage.delete()
+        return False
+
+    @classmethod
     def from_landuse_dataset(cls, dataset, slug):
         """Create GeoImage from a dataset containing landuse data."""
+        geoimage = cls.check_existence(slug)
+        if geoimage:
+            return geoimage
+
         from .calc import landuse_legend
         legend = landuse_legend()
 
@@ -1146,6 +1164,10 @@ class GeoImage(models.Model):
 
         Extent is list/tuple of the form (west, south, east, north).
         """
+        geoimage = cls.check_existence(slug)
+        if geoimage:
+            return geoimage
+
         tmp_base = tempfile.mktemp()
         colormap = mpl.colors.ListedColormap(legend, 'indexed')
         rgba = colormap(data, bytes=True)
@@ -1163,6 +1185,10 @@ class GeoImage(models.Model):
         """
         Create GeoImage from slug and data.
         """
+        geoimage = cls.check_existence(slug)
+        if geoimage:
+            return geoimage
+
         tmp_base = tempfile.mktemp()
         if cdict is None:
             cdict = {
