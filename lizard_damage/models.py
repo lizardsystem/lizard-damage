@@ -1126,17 +1126,17 @@ class GeoImage(models.Model):
 
     @classmethod
     def check_existence(cls, slug):
-        try:
-            geoimage = cls.objects.get(slug=slug)
-        except cls.DoesNotExist:
+        geoimages = cls.objects.filter(slug=slug)
+        if geoimages.count() == 0:
             return False
 
-        if geoimage.image and os.path.exists(os.path.join(
-                settings.MEDIA_ROOT, geoimage.image.name)):
-            return geoimage
+        for geoimage in geoimages:
+            if geoimage.image and os.path.exists(os.path.join(
+                    settings.MEDIA_ROOT, geoimage.image.name)):
+                return geoimage
+            else:
+                geoimage.delete()
 
-        # Otherwise delete it, outdated
-        geoimage.delete()
         return False
 
     @classmethod
