@@ -35,7 +35,7 @@ DATABASES = {
         'PASSWORD': 'buildout',
         'HOST': '',  # empty string for localhost.
         'PORT': '',  # empty string for default.
-        }
+        },
     }
 SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
@@ -85,6 +85,8 @@ DATA_ROOT = os.path.join(BUILDOUT_DIR, 'data')
 # stores datetimes in the session, and that's not compatible with
 # the more secure JsonSerializer.
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+
+SOUTH_TESTS_MIGRATE = False
 
 try:
     # Import local settings that aren't stored in svn/git.

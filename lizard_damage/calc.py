@@ -11,7 +11,6 @@ import logging
 import os
 import tempfile
 import traceback
-import zipfile
 
 from matplotlib import colors
 from PIL import Image
@@ -367,27 +366,6 @@ def write_image(name, values):
     rgba = colorize(values)
     rgba[:, :, 3] = np.where(rgba[:, :, 0], 153, 0)
     Image.fromarray(rgba).save(name, 'PNG')
-
-
-def add_to_zip(output_zipfile, zip_result, logger):
-    """
-    Now zip all files listed in zip_result
-
-    zip_result is a list with keys:
-    - filename: filename on disc
-    - arcname: target filename in archive
-    - delete_after: set this to remove file from file system after zipping
-    """
-    logger.info('zipping result into %s' % output_zipfile)
-    with zipfile.ZipFile(output_zipfile, 'a', zipfile.ZIP_DEFLATED) as myzip:
-        for file_in_zip in zip_result:
-            logger.info('zipping %s...' % file_in_zip['arcname'])
-            myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
-            if file_in_zip.get('delete_after', False):
-                logger.info(
-                    'removing %r (%s in arc)'
-                    % (file_in_zip['filename'], file_in_zip['arcname']))
-                os.remove(file_in_zip['filename'])
 
 
 CDICT_WATER_DEPTH = {

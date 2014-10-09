@@ -1,8 +1,7 @@
+import logging
 import os
 import shutil
 import tempfile
-
-import mock
 
 from django.conf import settings
 from django.test import TestCase
@@ -13,6 +12,11 @@ from lizard_damage import calc
 import numpy as np
 
 from . import factories
+
+
+logger = logging.getLogger(__name__)
+
+TESTDATA_DIR = os.path.join(settings.BUILDOUT_DIR, 'testdata')
 
 
 class TestDamageScenario(TestCase):
@@ -37,8 +41,23 @@ class TestDamageScenario(TestCase):
 
 
 class TestDamageEvent(TestCase):
-    def test_factory(self):
-        factories.DamageEventFactory.create()
+
+    def setUp(self):
+        models.Unit.fill_units_table()
+
+    def test_calculation(self):
+        scenario = factories.DamageScenarioFactory(
+            damagetable_file=os.path.join(
+                TESTDATA_DIR, 'dt.cfg'))
+
+        event = factories.DamageEventFactory.create(scenario=scenario)
+
+        models.DamageEventWaterlevel.objects.create(
+            event=event, waterlevel_path=os.path.join(
+                TESTDATA_DIR, 'wl.asc'))
+
+        with self.settings(LIZARD_DAMAGE_DATA_ROOT=TESTDATA_DIR):
+            event.calculate(logger)
 
 
 class TestDamageEventWaterlevel(TestCase):
