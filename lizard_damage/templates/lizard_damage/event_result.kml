@@ -5,37 +5,37 @@
     <description>Resultaat {{ view.damage_event }} (beschikbaar tot {{ view.damage_event.scenario.expiration_date|date:"d-m-y" }})
     </description>
     {% for damage_event_result in view.events %}
-    {% comment %}
-      Note that these "damage_event_result"s may also be GeoImage instances,
-      or a dictionary...
-    {% endcomment %}
-    <GroundOverlay>
-      <name>{{ damage_event_result.image.name }}</name>
-      <description>{{ damage_event_result.image.name }}</description>
-      <Icon>
-        <href>{{ view.root_url }}{{ damage_event_result.image.url }}</href>
-      </Icon>
-      <LatLonBox>
-        <north>{{ damage_event_result.north }}</north>
-        <south>{{ damage_event_result.south }}</south>
-        <east>{{ damage_event_result.east }}</east>
-        <west>{{ damage_event_result.west }}</west>
-        <rotation>{{ damage_event_result.rotation }}</rotation>
-      </LatLonBox>
-    </GroundOverlay>
+      {% comment %}
+        Note that these "damage_event_result"s may also be GeoImage instances,
+        or a dictionary...
+      {% endcomment %}
+      <GroundOverlay>
+        <name>{{ damage_event_result.name }}</name>
+        <description>{{ damage_event_result.name }}</description>
+        <Icon>
+          <href>{{ view.root_url }}{{ damage_event_result.url }}</href>
+        </Icon>
+        <LatLonBox>
+          <north>{{ damage_event_result.north }}</north>
+          <south>{{ damage_event_result.south }}</south>
+          <east>{{ damage_event_result.east }}</east>
+          <west>{{ damage_event_result.west }}</west>
+          <rotation>{{ damage_event_result.rotation }}</rotation>
+        </LatLonBox>
+      </GroundOverlay>
     {% endfor %}
     {% if view.legend_url %}
-    <ScreenOverlay>
-      <name>Legenda</name>
-      <visibility>1</visibility>
-      <Icon>
-        <href>{{ view.legend_url }}</href>
-      </Icon>
-      <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
-      <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>
-      <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
-      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
-    </ScreenOverlay>
+      <ScreenOverlay>
+        <name>Legenda</name>
+        <visibility>1</visibility>
+        <Icon>
+          <href>{{ view.legend_url }}</href>
+        </Icon>
+        <overlayXY x="1" y="-1" xunits="fraction" yunits="fraction"/>
+        <screenXY x="1" y="0" xunits="fraction" yunits="fraction"/>
+        <rotationXY x="0" y="0" xunits="fraction" yunits="fraction"/>
+        <size x="0" y="0" xunits="fraction" yunits="fraction"/>
+      </ScreenOverlay>
     {% endif %}
   </Folder>
 </kml>

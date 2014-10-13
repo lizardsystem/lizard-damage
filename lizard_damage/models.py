@@ -26,6 +26,7 @@ from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
 
+from django.contrib.sites.models import Site
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from django.core.files import File
@@ -546,12 +547,9 @@ class DamageEvent(models.Model):
     def result_url(self):
         """Return URL to result.zip in the workdir."""
         path = os.path.join(self.workdir, results.ZIP_FILENAME)
-        logger.warn("Looking for {}...".format(path))
         if os.path.exists(path):
-            logger.warn("Exists")
             return '/'.join((self.directory_url, results.ZIP_FILENAME))
         else:
-            logger.warn("Doesn't exist.")
             return None
 
     @property
@@ -775,6 +773,7 @@ class DamageEvent(models.Model):
         self.save()
 
         result_collector.finalize()
+        DamageEventResult.create_from_result_collector(self, result_collector)
 
         # return (output_zipfile, img_result, result_table,
         #         landuse_slugs, height_slugs, depth_slugs)
@@ -788,7 +787,9 @@ class DamageEventResult(models.Model):
     """
 
     damage_event = models.ForeignKey(DamageEvent)
-    image = models.FileField(upload_to='scenario/image')
+
+    # Relative to the damage event's workdir
+    relative_path = models.CharField(max_length=100)
 
     north = models.FloatField()
     south = models.FloatField()
@@ -798,6 +799,11 @@ class DamageEventResult(models.Model):
     def __unicode__(self):
         return '%s - %s' % (self.damage_event, self.image)
 
+    def url(self):
+        return "{}{}".format(
+            self.damage_event.directory_url,
+            self.relative_path)
+
     def rotation(self):
         # somethings wrong with google maps projection, see also AhnIndex
         # test show that for north = 51.797214 -> rotation = 0.9
@@ -805,6 +811,24 @@ class DamageEventResult(models.Model):
         #fraction = (self.north - 51.797214) / (52.835332 - 51.797214)
         #return 0.9 - 0.6 * fraction
         return 0
+
+    @property
+    def name(self):
+        return os.path.splitext(self.relative_path.split('/')[-1])[0]
+
+    @classmethod
+    def create_from_result_collector(cls, damage_event, result_collector):
+        # Delete old results
+        cls.objects.filter(damage_event=damage_event).delete()
+
+        results = [
+            cls(
+                damage_event=damage_event, relative_path=relative_path,
+                north=north, south=south, east=east, west=west)
+            for (relative_path, (west, south, east, north)) in
+            result_collector.all_images()]
+
+        cls.objects.bulk_create(results)
 
 
 class DamageEventWaterlevel(models.Model):
