@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+"""What is left in here is a pretty random collection of helper functions."""
+
 import numpy as np
 
 import logging
@@ -129,10 +131,8 @@ def mkstemp_and_close():
 
 
 def landuse_legend():
-    result = []
     # defaults
-    for i in range(100):
-        result.append('#dddddd')
+    result = ['#dddddd'] * 100
 
     # specifics
     result[2] = '#cc0000'  # Woonfunctie
@@ -328,31 +328,31 @@ def write_table(
             )
 
 
-def result_as_dict(name, damage, area, damage_table):
+def result_as_dict(damage, area, damage_table):
     """
     return data structure of result which can be stored and looped
     """
-    data = []
-    data.append({
-        'source': None,
-        'code': None,
-        'description': 'Totaal',
-        'area_ha': sum(area.values()) / 10000.,
-        'damage': sum(damage.values()),
-    })
+
     head = [{'display': 'bron', 'key': 'source'},
             {'display': 'code', 'key': 'code'},
             {'display': 'omschrijving', 'key': 'description'},
             {'display': 'oppervlakte met schade [ha]', 'key': 'area_ha'},
             {'display': 'schade', 'key': 'damage'}]
-    for code, dr in damage_table.data.items():
-        data.append({
-            'source': dr.source,
-            'code': dr.code,
-            'description': dr.description,
-            'area_ha': area[dr.code] / 10000.,
-            'damage': damage[dr.code],
-        })
+
+    data = [{
+        'source': None,
+        'code': None,
+        'description': 'Totaal',
+        'area_ha': sum(area.values()) / 10000.,
+        'damage': sum(damage.values()),
+    }] + [{
+        'source': dr.source,
+        'code': dr.code,
+        'description': dr.description,
+        'area_ha': area[dr.code] / 10000.,
+        'damage': damage[dr.code],
+    } for code, dr in damage_table.data.items()]
+
     return (head, data)
 
 
@@ -382,7 +382,7 @@ CDICT_WATER_DEPTH = {
 
 
 def add_roads_to_image(roads, image_path, extent):
-    """ This function could be moved to top level. """
+    """Draw roads into an existing PNG."""
 
     # Get old image that needs indirect road damage visualized
     image = Image.open(image_path)

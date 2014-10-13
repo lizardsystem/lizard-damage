@@ -23,8 +23,11 @@ class TestDamageScenario(TestCase):
     def setUp(self):
         pass
 
-    def test_factory(self):
-        factories.DamageScenarioFactory.create()
+    def test_directory_url(self):
+        scenario = factories.DamageScenarioFactory.create()
+        self.assertEquals(
+            scenario.directory_url,
+            '/media/damagescenario/{}'.format(scenario.id))
 
     def test_that_setup_creates_a_scenario(self):
         self.assertEquals(
@@ -45,7 +48,7 @@ class TestDamageEvent(TestCase):
     def setUp(self):
         models.Unit.fill_units_table()
 
-    def test_calculation(self):
+    def test_calculation_doesnt_crash(self):
         scenario = factories.DamageScenarioFactory(
             damagetable_file=os.path.join(
                 TESTDATA_DIR, 'dt.cfg'))
@@ -58,6 +61,31 @@ class TestDamageEvent(TestCase):
 
         with self.settings(LIZARD_DAMAGE_DATA_ROOT=TESTDATA_DIR):
             event.calculate(logger)
+
+    def test_calculation_creates_results(self):
+        scenario = factories.DamageScenarioFactory(
+            damagetable_file=os.path.join(
+                TESTDATA_DIR, 'dt.cfg'))
+
+        event = factories.DamageEventFactory.create(scenario=scenario)
+
+        models.DamageEventWaterlevel.objects.create(
+            event=event, waterlevel_path=os.path.join(
+                TESTDATA_DIR, 'wl.asc'))
+
+        with self.settings(LIZARD_DAMAGE_DATA_ROOT=TESTDATA_DIR):
+            event.calculate(logger)
+
+        # Re-get from database to get saved version
+        event = models.DamageEvent.objects.get(pk=event.id)
+
+        # Check if a table has been saved
+        self.assertTrue(event.parsed_table)
+
+        # Check if a zipfile exists and is greater than size 0
+        zippath = os.path.join(event.workdir, 'result.zip')
+        self.assertTrue(os.path.exists(zippath))
+        self.assertTrue(os.stat(zippath).st_size > 0)
 
 
 class TestDamageEventWaterlevel(TestCase):

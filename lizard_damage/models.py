@@ -79,24 +79,6 @@ def extent_from_dataset(ds):
     return (minx, miny, maxx, maxy)
 
 
-def write_extent_pgw(name, extent):
-    """write pgw file:
-
-    0.5
-    0.000
-    0.000
-    0.5
-    <x ul corner>
-    <y ul corner>
-
-    extent is a 4-tuple
-    """
-    f = open(name, 'w')
-    f.write('0.5\n0.000\n0.000\n-0.5\n')
-    f.write('%f\n%f' % (min(extent[0], extent[2]), max(extent[1], extent[3])))
-    f.close()
-
-
 def write_geotransform_pgw(name, geotransform):
     """Write PGW based on geotransform"""
     f = open(name, 'w')
@@ -343,6 +325,12 @@ class DamageScenario(models.Model):
             os.makedirs(workdir)
         return workdir
 
+    @property
+    def directory_url(self):
+        """URL to the workdir."""
+        return "{}{}/{}".format(
+            settings.MEDIA_URL, 'damagescenario', str(self.id))
+
     def read_damage_table(self):
         """Returns damage table from dt_path, or data/damagetable/dt.cfg
         if not given."""
@@ -426,7 +414,6 @@ class DamageScenario(models.Model):
         errors = 0
 
         # Use local imports while we are refactoring
-        from lizard_damage import calc
         from lizard_damage import risk
         from lizard_damage import emails
 
@@ -434,9 +421,10 @@ class DamageScenario(models.Model):
                 self.damageevent_set.all()):
             result = damage_event.calculate(logger)
             if result:
-                errors += calc.process_result(
-                    logger, damage_event, damage_event_index,
-                    result, self.name)
+                pass
+                #errors += calc.process_result(
+                #    logger, damage_event, damage_event_index,
+                #    result, self.name)
             else:
                 errors += 1
 
@@ -550,9 +538,27 @@ class DamageEvent(models.Model):
         return workdir
 
     @property
+    def directory_url(self):
+        return '/'.join((self.scenario.directory_url,
+                         'damage_events', str(self.id)))
+
+    @property
+    def result_url(self):
+        """Return URL to result.zip in the workdir."""
+        path = os.path.join(self.workdir, results.ZIP_FILENAME)
+        logger.warn("Looking for {}...".format(path))
+        if os.path.exists(path):
+            logger.warn("Exists")
+            return '/'.join((self.directory_url, results.ZIP_FILENAME))
+        else:
+            logger.warn("Doesn't exist.")
+            return None
+
+    @property
     def result_display(self):
         """display name of result"""
-        return 'zipfile (%s)' % friendly_filesize(self.result.size)
+        return 'zipfile (%s)' % friendly_filesize(
+            os.stat(os.path.join(self.workdir, results.ZIP_FILENAME).st_size))
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -562,6 +568,10 @@ class DamageEvent(models.Model):
     @property
     def parsed_table(self):
         return json.loads(self.table)
+
+    @parsed_table.setter
+    def parsed_table(self, value):
+        self.table = json.dumps(value)
 
     def get_filenames(self, pattern=None):
         """
@@ -608,27 +618,10 @@ class DamageEvent(models.Model):
 
     def calculate(self, logger):
         """
-        Calculate damage for provided waterlevel file.
-
-        in:
-
-        - waterlevel file (provided by user)
-
-        - damage table (optionally provided by user, else default)
-
-        - AHN: models.AhnIndex refer to ahn tiles available on
-        <settings.DATA_ROOT>/...
-
-        - month, floodtime (s), repairtime_roads/buildings (s): provided
-        by user, used by calc.calculate
-
-        out:
-
-        - per ahn tile an .asc and .csv (see write_result and write_table)
-
-        - schade_totaal.csv (see write_table)
-
+        Calculate this damage event.
         """
+        from lizard_damage import calc
+
         logger.info("event %s" % (self,))
         logger.info(" - month %s, floodtime %s" % (
             self.floodmonth, self.floodtime))
@@ -669,7 +662,8 @@ class DamageEvent(models.Model):
 
         all_leaves = calculator.get_ahn_leaves()
 
-        result_collector = results.ResultCollector(self, all_leaves, logger)
+        result_collector = results.ResultCollector(
+            self.workdir, all_leaves, logger)
         result_collector.save_file_for_zipfile(dt_path, 'dt.cfg')
 
         for (ahn_name, extent, ds_height, landuse_ma, depth_ma, damage,
@@ -681,7 +675,8 @@ class DamageEvent(models.Model):
                     repairtime_buildings=self.repairtime_buildings)):
             logger.info("Recording results for tile {}...".format(ahn_name))
 
-            result_collector.save_landuse_grid(ahn_name, landuse_ma)
+            result_collector.save_ma_to_geoimage(
+                ahn_name, landuse_ma, result_type='landuse')
 
             # Keep track of flooded roads
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
@@ -692,11 +687,8 @@ class DamageEvent(models.Model):
             arcname = 'schade_{}'.format(ahn_name)
             if self.repetition_time:
                 arcname += '_T%.1f' % self.repetition_time
-            result_collector.save_ma_for_zipfile(
-                result, ds_height, arcname + '.asc')
-
-            # XXX todo: write result as PNG+PGW using calc.write_image
-            # and write_extent_pgw.
+            result_collector.save_ma(
+                ahn_name, result, result_type='damage', ds_template=ds_height)
 
             result_collector.save_csv_data_for_zipfile(
                 'schade_{}.csv'.format(ahn_name), dict(
@@ -751,17 +743,10 @@ class DamageEvent(models.Model):
                         ))
                     overall_damage[code] += indirect_road_damage
 
-        # Draw roads over images
-        # road_objects = Roads.objects.filter(
-        #     pk__in=roads_flooded_over_threshold,
-        #     )
-
-        # for result_image in result_images:
-        #     calc.add_roads_to_image(
-        #         roads=road_objects,
-        #         image_path=result_image['path'],
-        #         extent=result_image['extent'],
-        #         )
+        # Add roads to damage images
+        road_objects = Roads.objects.filter(
+            pk__in=roads_flooded_over_threshold)
+        result_collector.draw_roads(road_objects)
 
         result_collector.save_csv_data_for_zipfile(
             'schade_totaal.csv', dict(
@@ -782,15 +767,18 @@ class DamageEvent(models.Model):
                 ],
                 include_total=True))
 
-        # result_table = calc.result_as_dict(
-        #     name=csv_result['filename'],
-        #     damage=overall_damage,
-        #     area=overall_area,
-        #     damage_table=damage_table
-        #     )
+        # Save a table in a JSON string to show in the interface
+        self.parsed_table = calc.result_as_dict(
+            damage=overall_damage,
+            area=overall_area,
+            damage_table=damage_table)
+        self.save()
+
+        result_collector.finalize()
 
         # return (output_zipfile, img_result, result_table,
         #         landuse_slugs, height_slugs, depth_slugs)
+        return True  # success
 
 
 class DamageEventResult(models.Model):
@@ -1064,7 +1052,7 @@ class GeoImage(models.Model):
         rgba = colormap(data, bytes=True)
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
         if extent is not None:
-            write_extent_pgw(tmp_base + '.pgw', extent)
+            results.write_extent_pgw(tmp_base + '.pgw', extent)
         if geotransform is not None:
             write_geotransform_pgw(tmp_base + '.pgw', geotransform)
 
@@ -1104,7 +1092,7 @@ class GeoImage(models.Model):
 
         Image.fromarray(rgba).save(tmp_base + '.png', 'PNG')
 
-        write_extent_pgw(tmp_base + '.pgw', extent)
+        results.write_extent_pgw(tmp_base + '.pgw', extent)
 
         return cls._from_rd_png(tmp_base, slug, extent)
 
