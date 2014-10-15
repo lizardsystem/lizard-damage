@@ -1,7 +1,6 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 from __future__ import unicode_literals
 
-from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -15,7 +14,6 @@ from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import DamageEvent
-from lizard_damage.models import DamageEventWaterlevel
 from lizard_damage.models import GeoImage
 from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
@@ -401,8 +399,9 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
     @property
     def events(self):
-        event = get_object_or_404(DamageEvent, slug=self.kwargs['slug'])
-        return event.damageeventresult_set.all()
+        event = get_object_or_404(DamageEvent, slug=self.slug)
+        return event.damageeventresult_set.filter(
+            result_type=self.result_type)
 
     @property
     def root_url(self):
@@ -412,8 +411,10 @@ class DamageEventKML(ViewContextMixin, TemplateView):
             root_url = 'http://schade.lizard.net'
         return root_url
 
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
+    def get(self, request, slug, result_type):
+        self.slug = slug
+        self.result_type = result_type
+        context = self.get_context_data()
         return self.render_to_response(
             context, mimetype='application/vnd.google-earth.kml+xml')
 

@@ -151,7 +151,7 @@ class ResultCollector(object):
             png_path = self.png_path(result_type, tile)
             if os.path.exists(png_path):
                 relative = png_path[len(self.workdir):]
-                yield relative, extent
+                yield result_type, relative, extent
 
 
 def write_extent_pgw(name, extent):

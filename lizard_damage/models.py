@@ -785,6 +785,10 @@ class DamageEventResult(models.Model):
     Normally a Damage Event has multiple tiles
     """
 
+    RESULT_TYPE_CHOICES = ('damage', 'landuse', 'height', 'depth')
+    result_type = models.CharField(max_length=10, choices=[
+        (choice, choice) for choice in RESULT_TYPE_CHOICES])
+
     damage_event = models.ForeignKey(DamageEvent)
 
     # Relative to the damage event's workdir
@@ -822,9 +826,10 @@ class DamageEventResult(models.Model):
 
         results = [
             cls(
-                damage_event=damage_event, relative_path=relative_path,
+                damage_event=damage_event, result_type=result_type,
+                relative_path=relative_path,
                 north=north, south=south, east=east, west=west)
-            for (relative_path, (west, south, east, north)) in
+            for (result_type, relative_path, (west, south, east, north)) in
             result_collector.all_images()]
 
         cls.objects.bulk_create(results)
