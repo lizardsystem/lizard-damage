@@ -49,9 +49,9 @@
             geen resultaat
           {% endif %}&nbsp;
           <a href="{% url "lizard_damage_event_kml" slug=event.slug result_type="damage" %}">kml</a>&nbsp;
-          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" result_type="landuse" %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;
-          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" result_type="height" %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>&nbsp;
-          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" result_type="depth" %}" target="_blank" alt="dieptekaart bekijken in Google Maps">diepte</a>
+          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" slug=event.slug result_type="landuse" %}" target="_blank" alt="landgebruik bekijken in Google Maps">landgebruik</a>&nbsp;
+          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" slug=event.slug result_type="height" %}" target="_blank" alt="hoogtekaart bekijken in Google Maps">hoogte</a>&nbsp;
+          <a href="https://maps.google.com/maps?q={{ view.root_url }}{% url "lizard_damage_event_kml" slug=event.slug result_type="depth" %}" target="_blank" alt="dieptekaart bekijken in Google Maps">diepte</a>
 
           <dl>
             <dt>Waterstand</dt>
