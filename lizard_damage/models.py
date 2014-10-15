@@ -26,7 +26,6 @@ from pyproj import Proj
 import matplotlib as mpl
 import numpy as np
 
-from django.contrib.sites.models import Site
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from django.core.files import File
