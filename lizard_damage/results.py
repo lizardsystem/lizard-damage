@@ -8,9 +8,10 @@ import os
 import subprocess
 import zipfile
 
+from PIL import Image
 from pyproj import Proj
 import matplotlib as mpl
-from PIL import Image
+import numpy as np
 
 ZIP_FILENAME = 'result.zip'
 
@@ -25,6 +26,18 @@ WGS84 = str('+proj=latlong +datum=WGS84')
 
 rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
+
+COLOR_DICT = {
+    'red': ((0.0, 51. / 256, 51. / 256),
+            (0.5, 237. / 256, 237. / 256),
+            (1.0, 83. / 256, 83. / 256)),
+    'green': ((0.0, 114. / 256, 114. / 256),
+              (0.5, 245. / 256, 245. / 256),
+              (1.0, 83. / 256, 83. / 256)),
+    'blue': ((0.0, 54. / 256, 54. / 256),
+             (0.5, 170. / 256, 170. / 256),
+             (1.0, 83. / 256, 83. / 256)),
+}
 
 
 class ResultCollector(object):
@@ -56,6 +69,11 @@ class ResultCollector(object):
         """
 
         self.workdir = workdir
+
+        self.tempdir = os.path.join(self.workdir, 'tmp')
+        if not os.path.exists(self.tempdir):
+            os.makedirs(self.tempdir)
+
         self.logger = logger
 
         # We want to know all leaves in advance, so we can make images for
@@ -69,6 +87,9 @@ class ResultCollector(object):
         self.zipfile = mk(self.workdir, ZIP_FILENAME)
         if os.path.exists(self.zipfile):
             os.remove(self.zipfile)
+
+        self.mins = {'depth': float("+inf"), 'height': float("+inf")}
+        self.maxes = {'depth': float("-inf"), 'height': float("-inf")}
 
     def png_path(self, result_type, tile):
         return mk(self.workdir, result_type, "{}.png".format(tile))
@@ -90,7 +111,8 @@ class ResultCollector(object):
         self.save_file_for_zipfile(
             tempfile, 'schade_{}.asc'.format(tile), delete_after=True)
 
-    def save_ma_to_geoimage(self, tile, masked_array, result_type):
+    def save_ma_to_geoimage(
+            self, tile, masked_array, result_type, color_dict=None):
         from lizard_damage import calc
 
         filename = self.png_path(result_type, tile)
@@ -102,6 +124,18 @@ class ResultCollector(object):
             colormap = mpl.colors.ListedColormap(legend, 'indexed')
             rgba = colormap(masked_array, bytes=True)
             Image.fromarray(rgba).save(filename, 'PNG')
+        if result_type in ('depth', 'height'):
+            # Before we can do this, we need to know the max and min value,
+            # for coloring. So record that, and save the array to a tmp
+            # dir. We then make the images in finalize().
+            self.mins[result_type] = min(
+                self.mins[result_type], np.amin(masked_array))
+            self.maxes[result_type] = max(
+                self.maxes[result_type], np.amin(masked_array))
+
+            masked_array.dump(
+                os.path.join(self.tempdir, "{}.{}".format(tile, result_type)))
+            return
 
         write_extent_pgw(filename.replace('.png', '.pgw'),
                          self.all_leaves[tile])
@@ -138,6 +172,27 @@ class ResultCollector(object):
         self.extents = {}
 
         for tile in self.all_leaves:
+            for result_type in ('height', 'depth'):
+                tmp_filename = os.path.join(
+                    self.tempdir, "{}.{}".format(tile, result_type))
+                if os.path.exists(tmp_filename):
+                    masked_array = np.load(tmp_filename)
+                    os.remove(tmp_filename)
+
+                    normalize = mpl.colors.Normalize(
+                        vmin=self.mins[result_type],
+                        vmax=self.maxes[result_type])
+                    colormap = mpl.colors.LinearSegmentedColormap(
+                        'something', COLOR_DICT, N=1024)
+                    rgba = colormap(normalize(masked_array), bytes=True)
+                    if result_type == 'depth':
+                        rgba[:, :, 3] = np.where(
+                            np.greater(masked_array, 0), 255, 0)
+                    filename = self.png_path(result_type, tile)
+                    Image.fromarray(rgba).save(filename, 'PNG')
+                    write_extent_pgw(filename.replace('.png', '.pgw'),
+                                     self.all_leaves[tile])
+
             for result_type in ('damage', 'landuse', 'height', 'depth'):
                 png = self.png_path(result_type, tile)
                 if os.path.exists(png):

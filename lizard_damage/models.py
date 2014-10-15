@@ -674,6 +674,11 @@ class DamageEvent(models.Model):
 
             result_collector.save_ma_to_geoimage(
                 ahn_name, landuse_ma, result_type='landuse')
+            result_collector.save_ma_to_geoimage(
+                ahn_name, depth_ma, result_type='depth')
+            result_collector.save_ma_to_geoimage(
+                ahn_name, ds_height.GetRasterBand(1).ReadAsArray(),
+                result_type='height')
 
             # Keep track of flooded roads
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
