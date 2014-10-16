@@ -27,7 +27,7 @@ WGS84 = str('+proj=latlong +datum=WGS84')
 rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
 
-COLOR_DICT = {
+CDICT_HEIGHT = {
     'red': ((0.0, 51. / 256, 51. / 256),
             (0.5, 237. / 256, 237. / 256),
             (1.0, 83. / 256, 83. / 256)),
@@ -38,6 +38,18 @@ COLOR_DICT = {
              (0.5, 170. / 256, 170. / 256),
              (1.0, 83. / 256, 83. / 256)),
 }
+
+CDICT_WATER_DEPTH = {
+    'red': ((0.0, 170. / 256, 170. / 256),
+            (0.5, 65. / 256, 65. / 256),
+            (1.0, 4. / 256, 4. / 256)),
+    'green': ((0.0, 200. / 256, 200. / 256),
+              (0.5, 120. / 256, 120. / 256),
+              (1.0, 65. / 256, 65. / 256)),
+    'blue': ((0.0, 255. / 256, 255. / 256),
+             (0.5, 221. / 256, 221. / 256),
+             (1.0, 176. / 256, 176. / 256)),
+    }
 
 
 class ResultCollector(object):
@@ -182,8 +194,12 @@ class ResultCollector(object):
                     normalize = mpl.colors.Normalize(
                         vmin=self.mins[result_type],
                         vmax=self.maxes[result_type])
+                    if result_type == 'height':
+                        cdict = CDICT_HEIGHT
+                    elif result_type == 'depth':
+                        cdict = CDICT_WATER_DEPTH
                     colormap = mpl.colors.LinearSegmentedColormap(
-                        'something', COLOR_DICT, N=1024)
+                        'something', cdict, N=1024)
                     rgba = colormap(normalize(masked_array), bytes=True)
                     if result_type == 'depth':
                         rgba[:, :, 3] = np.where(

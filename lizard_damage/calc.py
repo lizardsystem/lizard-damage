@@ -368,19 +368,6 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
-CDICT_WATER_DEPTH = {
-    'red': ((0.0, 170. / 256, 170. / 256),
-            (0.5, 65. / 256, 65. / 256),
-            (1.0, 4. / 256, 4. / 256)),
-    'green': ((0.0, 200. / 256, 200. / 256),
-              (0.5, 120. / 256, 120. / 256),
-              (1.0, 65. / 256, 65. / 256)),
-    'blue': ((0.0, 255. / 256, 255. / 256),
-             (0.5, 221. / 256, 221. / 256),
-             (1.0, 176. / 256, 176. / 256)),
-    }
-
-
 def add_roads_to_image(roads, image_path, extent):
     """Draw roads into an existing PNG."""
 
