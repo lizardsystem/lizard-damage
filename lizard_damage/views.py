@@ -477,7 +477,8 @@ class GeoImageHeightKML(GeoImageKML):
             min_height = 0
             max_height = 1000
         return self.root_url + reverse('lizard_damage_legend_height', kwargs={
-            'min_height': min_height, 'max_height': max_height})
+            'min_height': min_height * 1000.0,
+            'max_height': max_height * 1000.0})
 
 
 class LegendHeight(View):
