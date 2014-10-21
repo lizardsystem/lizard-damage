@@ -203,7 +203,7 @@ class ResultCollector(object):
                     rgba = colormap(normalize(masked_array), bytes=True)
                     if result_type == 'depth':
                         rgba[:, :, 3] = np.where(
-                            np.greater(masked_array, 0), 255, 0)
+                            np.greater(masked_array.filled(0), 0), 255, 0)
                     filename = self.png_path(result_type, tile)
                     Image.fromarray(rgba).save(filename, 'PNG')
                     write_extent_pgw(filename.replace('.png', '.pgw'),
