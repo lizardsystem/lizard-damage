@@ -406,8 +406,8 @@ class DamageEventKML(ViewContextMixin, TemplateView):
         elif self.result_type == 'height':
             return self.root_url + reverse(
                 'lizard_damage_legend_height', kwargs={
-                    'min_height': self.damage_event.min_height,
-                    'max_height': self.damage_event.max_height})
+                    'min_height': self.damage_event.min_height * 1000,
+                    'max_height': self.damage_event.max_height * 1000})
 
     @property
     def events(self):
