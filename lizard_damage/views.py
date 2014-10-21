@@ -395,15 +395,15 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
     @property
     def legend_url(self):
-        if self.resulttype == 'damage':
+        if self.result_type == 'damage':
             return self.root_url + '/static_media/lizard_damage/legend.png'
-        elif self.resulttype == 'landuse':
+        elif self.result_type == 'landuse':
             return (
                 self.root_url +
                 '/static_media/lizard_damage/legend_landuse.png')
-        elif self.resulttype == 'depth':
+        elif self.result_type == 'depth':
             return
-        elif self.resulttype == 'height':
+        elif self.result_type == 'height':
             return self.root_url + reverse(
                 'lizard_damage_legend_height', kwargs={
                     'min_height': self.damage_event.min_height,
