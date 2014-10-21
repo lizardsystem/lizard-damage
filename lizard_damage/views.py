@@ -395,25 +395,34 @@ class DamageEventKML(ViewContextMixin, TemplateView):
 
     @property
     def legend_url(self):
-        return self.root_url + '/static_media/lizard_damage/legend.png'
+        if self.resulttype == 'damage':
+            return self.root_url + '/static_media/lizard_damage/legend.png'
+        elif self.resulttype == 'landuse':
+            return (
+                self.root_url +
+                '/static_media/lizard_damage/legend_landuse.png')
+        elif self.resulttype == 'depth':
+            return
+        elif self.resulttype == 'height':
+            return self.root_url + reverse(
+                'lizard_damage_legend_height', kwargs={
+                    'min_height': self.damage_event.min_height,
+                    'max_height': self.damage_event.max_height})
 
     @property
     def events(self):
-        event = get_object_or_404(DamageEvent, slug=self.slug)
-        return event.damageeventresult_set.filter(
+        return self.damage_event.damageeventresult_set.filter(
             result_type=self.result_type)
-
-    @property
-    def root_url(self):
-        try:
-            root_url = 'http://%s' % Site.objects.all()[0].domain
-        except:
-            root_url = 'http://schade.lizard.net'
-        return root_url
 
     def get(self, request, slug, result_type):
         self.slug = slug
+        self.damage_event = get_object_or_404(DamageEvent, slug=self.slug)
         self.result_type = result_type
+        try:
+            self.root_url = 'http://%s' % Site.objects.all()[0].domain
+        except:
+            self.root_url = 'http://schade.lizard.net'
+
         context = self.get_context_data()
         return self.render_to_response(
             context, mimetype='application/vnd.google-earth.kml+xml')

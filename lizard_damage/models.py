@@ -495,6 +495,8 @@ class DamageEvent(models.Model):
     depth_slugs = models.TextField(
         null=True, blank=True,
         help_text='comma separated depth slugs for GeoImage')
+
+    # Used for the legend
     min_height = models.FloatField(null=True, blank=True)
     max_height = models.FloatField(null=True, blank=True)
 
@@ -769,15 +771,19 @@ class DamageEvent(models.Model):
                 ],
                 include_total=True))
 
+        result_collector.finalize()
+        DamageEventResult.create_from_result_collector(self, result_collector)
+
         # Save a table in a JSON string to show in the interface
         self.parsed_table = calc.result_as_dict(
             damage=overall_damage,
             area=overall_area,
             damage_table=damage_table)
-        self.save()
 
-        result_collector.finalize()
-        DamageEventResult.create_from_result_collector(self, result_collector)
+        # Save min and max height, for legend
+        self.min_height = result_collector.mins.get('height')
+        self.max_height = result_collector.maxes.get('height')
+        self.save()
 
         # return (output_zipfile, img_result, result_table,
         #         landuse_slugs, height_slugs, depth_slugs)
