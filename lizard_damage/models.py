@@ -300,7 +300,7 @@ class DamageScenario(models.Model):
         dt_path = self.damage_table_path
         if dt_path is None:
             damage_table_path = table.DEFAULT_DAMAGE_TABLE
-        dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
+            dt_path = os.path.join(settings.BUILDOUT_DIR, damage_table_path)
 
         with open(dt_path) as cfg:
             return dt_path, table.DamageTable.read_cfg(
