@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-1.2 (unreleased)
+1.2 (2014-11-04)
 ----------------
 
 - Swapped potatoes.
