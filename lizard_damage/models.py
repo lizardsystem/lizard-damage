@@ -417,14 +417,13 @@ class DamageScenario(models.Model):
         from lizard_damage import risk
         from lizard_damage import emails
 
+        all_riskmap_data = []
+
         for damage_event_index, damage_event in enumerate(
                 self.damageevent_set.all()):
-            result = damage_event.calculate(logger)
+            result, riskmap_data = damage_event.calculate(logger)
             if result:
-                pass
-                #errors += calc.process_result(
-                #    logger, damage_event, damage_event_index,
-                #    result, self.name)
+                all_riskmap_data += riskmap_data
             else:
                 errors += 1
 
@@ -482,19 +481,6 @@ class DamageEvent(models.Model):
 
     # Result
     table = models.TextField(null=True, blank=True, help_text='in json format')
-    result = models.FileField(
-        upload_to='scenario/result',
-        null=True, blank=True,
-        help_text='Will be filled once the calculation has been done')
-    landuse_slugs = models.TextField(
-        null=True, blank=True,
-        help_text='comma separated landuse slugs for GeoImage')
-    height_slugs = models.TextField(
-        null=True, blank=True,
-        help_text='comma separated height slugs for GeoImage')
-    depth_slugs = models.TextField(
-        null=True, blank=True,
-        help_text='comma separated depth slugs for GeoImage')
 
     # Used for the legend
     min_height = models.FloatField(null=True, blank=True)
@@ -554,10 +540,15 @@ class DamageEvent(models.Model):
             return None
 
     @property
+    def result(self):
+        """Path to result zipfile."""
+        return os.path.join(self.workdir, results.ZIP_FILENAME)
+
+    @property
     def result_display(self):
         """display name of result"""
         return 'zipfile (%s)' % friendly_filesize(
-            os.stat(os.path.join(self.workdir, results.ZIP_FILENAME).st_size))
+            os.stat(self.result).st_size)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -607,13 +598,6 @@ class DamageEvent(models.Model):
             os.remove(filepath)
             os.rmdir(tempdir)
             return geotransform, data
-
-    def set_slugs(self, landuse_slugs, height_slugs, depth_slugs):
-        """Set slugs to the given slugs, *unless* the scenario
-        overrides them."""
-        self.landuse_slugs = self.scenario.landuse_slugs or landuse_slugs
-        self.height_slugs = height_slugs
-        self.depth_slugs = depth_slugs
 
     def calculate(self, logger):
         """
@@ -692,7 +676,8 @@ class DamageEvent(models.Model):
             if self.repetition_time:
                 arcname += '_T%.1f' % self.repetition_time
             result_collector.save_ma(
-                ahn_name, result, result_type='damage', ds_template=ds_height)
+                ahn_name, result, result_type='damage', ds_template=ds_height,
+                repetition_time=self.repetition_time)
 
             result_collector.save_csv_data_for_zipfile(
                 'schade_{}.csv'.format(ahn_name), dict(
@@ -785,9 +770,7 @@ class DamageEvent(models.Model):
         self.max_height = result_collector.maxes.get('height')
         self.save()
 
-        # return (output_zipfile, img_result, result_table,
-        #         landuse_slugs, height_slugs, depth_slugs)
-        return True  # success
+        return True, result_collector.riskmap_data  # success
 
 
 class DamageEventResult(models.Model):
@@ -809,6 +792,8 @@ class DamageEventResult(models.Model):
     south = models.FloatField()
     east = models.FloatField()
     west = models.FloatField()
+
+    geotransform_json = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s - %s' % (self.damage_event, self.image)
@@ -839,7 +824,8 @@ class DamageEventResult(models.Model):
             cls(
                 damage_event=damage_event, result_type=result_type,
                 relative_path=relative_path,
-                north=north, south=south, east=east, west=west)
+                north=north, south=south, east=east, west=west,
+            )
             for (result_type, relative_path, (west, south, east, north)) in
             result_collector.all_images()]
 

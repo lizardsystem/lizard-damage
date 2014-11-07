@@ -94,6 +94,7 @@ class ResultCollector(object):
         self.all_leaves = {
             ahn_name: extent for (ahn_name, extent) in all_leaves
         }
+        self.riskmap_data = []
 
         # Create an empty zipfile, throw away the old one if needed.
         self.zipfile = mk(self.workdir, ZIP_FILENAME)
@@ -106,22 +107,36 @@ class ResultCollector(object):
     def png_path(self, result_type, tile):
         return mk(self.workdir, result_type, "{}.png".format(tile))
 
-    def save_ma(self, tile, masked_array, result_type, ds_template=None):
+    def save_ma(
+            self, tile, masked_array, result_type, ds_template=None,
+            repetition_time=None):
         self.save_ma_to_geoimage(tile, masked_array, result_type)
 
         if result_type == 'damage':
-            self.save_ma_to_zipfile(
-                tile, masked_array, result_type, ds_template)
+            filename = self.save_ma_to_zipfile(
+                tile, masked_array, result_type, ds_template, repetition_time)
+            if repetition_time is not None:
+                self.riskmap_data.append(
+                    (tile, repetition_time, filename))
 
-    def save_ma_to_zipfile(self, tile, masked_array, result_type, ds_template):
+    def save_ma_to_zipfile(
+            self, tile, masked_array, result_type, ds_template,
+            repetition_time):
         from lizard_damage import calc
         tempfile = calc.mkstemp_and_close()
         calc.write_result(
             name=tempfile,
             ma_result=masked_array,
             ds_template=ds_template)
+
+        if repetition_time is not None:
+            filename = 'schade_{}_T{}.asc'.format(tile, repetition_time)
+        else:
+            filename = 'schade_{}.asc'.format(tile)
         self.save_file_for_zipfile(
-            tempfile, 'schade_{}.asc'.format(tile), delete_after=True)
+            tempfile, filename, delete_after=True)
+
+        return filename
 
     def save_ma_to_geoimage(
             self, tile, masked_array, result_type, color_dict=None):
@@ -222,7 +237,7 @@ class ResultCollector(object):
             png_path = self.png_path(result_type, tile)
             if os.path.exists(png_path):
                 relative = png_path[len(self.workdir):]
-                yield result_type, relative, extent
+                yield (result_type, relative, extent)
 
 
 def write_extent_pgw(name, extent):
