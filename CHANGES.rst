@@ -5,7 +5,9 @@ Changelog of lizard-damage
 1.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Disable area check
+
+- Disable google maps view in result page
 
 
 1.2 (2014-11-04)
