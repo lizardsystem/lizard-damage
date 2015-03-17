@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-1.3 (unreleased)
-----------------
+1.2.1 (2015-03-17)
+------------------
 
 - Rewrite zipfile analysis and unpacking
 
