@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-1.2.2 (unreleased)
+1.2.2 (2015-03-17)
 ------------------
 
 - Test for include package data and templates
