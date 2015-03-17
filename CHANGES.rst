@@ -5,6 +5,8 @@ Changelog of lizard-damage
 1.3 (unreleased)
 ----------------
 
+- Rewrite zipfile analysis and unpacking
+
 - Disable area check
 
 - Disable google maps view in result page
