@@ -802,7 +802,7 @@ class DamageEventResult(models.Model):
     geotransform_json = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s - %s' % (self.damage_event, self.image)
+        return '%s' % (self.damage_event)
 
     def url(self):
         return "{}{}".format(
@@ -894,6 +894,7 @@ class RiskResult(models.Model):
 
     def __unicode__(self):
         return os.path.basename(self.zip_risk.path)
+
 
     @property
     def result_display(self):

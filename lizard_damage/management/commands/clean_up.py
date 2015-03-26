@@ -8,7 +8,7 @@ from __future__ import (
 
 from django.core.management.base import BaseCommand
 
-from lizard_damage import models
+from lizard_damage.models import DamageScenario
 from lizard_task.models import SecuredPeriodicTask
 
 import logging
@@ -24,16 +24,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.info("Cleaning up scenarios which are expired...")
         now = datetime.datetime.now()
-        exp = models.DamageScenario.objects.filter(expiration_date__lte=now)
-        for damage_scenario in exp:
+        scenarios = DamageScenario.objects.filter(expiration_date__lte=now)
+        for damage_scenario in scenarios:
 
             logger.info(
                 "Deleting scenario %d (%s), tasks, events and results..." % (
                     damage_scenario.id, str(damage_scenario)))
 
-            damage_scenario.delete()
-
             SecuredPeriodicTask.objects.filter(
                 name__contains='Scenario (%05d)' % damage_scenario.id).delete()
+
+            damage_scenario.delete()
 
         logger.info("Finished.")
