@@ -39,6 +39,32 @@ class TestDamageScenario(TestCase):
                 name="Testscenario").count(),
             1)
 
+    def test_delete_deletes_files(self):
+        scenario = factories.DamageScenarioFactory.create()
+
+        workdir = scenario.workdir
+
+        testfile = os.path.join(workdir, 'test.txt')
+        f = open(testfile, 'w')
+        f.write("Test!")
+        f.close()
+
+        self.assertTrue(os.path.exists(testfile))
+        scenario.delete()
+        self.assertFalse(os.path.exists(testfile))
+
+    def test_delete_deletes_damage_events(self):
+        scenario = factories.DamageScenarioFactory.create()
+        event = factories.DamageEventFactory.create(scenario=scenario)
+
+        event_id = event.id
+
+        self.assertTrue(
+            models.DamageEvent.objects.filter(pk=event_id).exists())
+        scenario.delete()
+        self.assertFalse(
+            models.DamageEvent.objects.filter(pk=event_id).exists())
+
 
 class TestDamageEvent(TestCase):
 
