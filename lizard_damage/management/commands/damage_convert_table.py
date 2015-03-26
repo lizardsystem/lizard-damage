@@ -9,7 +9,7 @@ from __future__ import (
 
 from django.core.management.base import BaseCommand
 
-from lizard_damage import table
+from lizard_damage_calculation import table
 
 
 def main(*args, **options):

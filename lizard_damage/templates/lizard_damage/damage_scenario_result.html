@@ -30,84 +30,89 @@
 {% endblock %}
 
 {% block content %}
-<div class="textual-content">
-<h2>Resultaten berekening {{ view.damage_scenario }}</h2>
-{% for riskresult in view.damage_scenario.riskresult_set.all %}
-<a href="{{ riskresult.zip_risk.url }}" alt="{{ riskresult.result_display }}">
-Risicokaart downloaden
-</a>
-{% endfor %}
+  <div class="textual-content">
+    <h2>Resultaten berekening {{ view.damage_scenario }}</h2>
 
-{% for event in view.damage_scenario.damageevent_set.all %}
-<h3>Gebeurtenis {{ event }}</h3>
-<div>
-  {% if event.result %}<a href="{{ event.result.url }}" alt="{{ event.result_display }}">downloaden</a>
-  {% else %}geen resultaat{% endif %}&nbsp;
-  <a href="{% url "lizard_damage_event_kml" slug=event.slug %}">kml</a>&nbsp;
-  <p>
-    Het tonen van externe kaarten op Google Maps zoals die van de
-    waterschadeschatter wordt niet meer door Google ondersteund. Daardoor
-    is het momenteel niet mogelijk om schade, waterdiepte en landgebruik op
-    Google Maps te bekijken. In overleg met STOWA wordt naar een oplossing
-    gezocht.
-  </p>
-
-<dl>
-  <dt>Waterstand</dt>
-  <dd>{{ event.waterlevel }}</dd>
-
-  <dt>Schadetabel</dt>
-  <dd>{% firstof view.damage_scenario.damagetable 'standaard' %}</dd>
-
-  <dt>Duur overlast</dt>
-  <dd>{{ event.floodtime|hoursformat }}</dd>
-
-  {% ifequal view.damage_scenario.scenario_type 1 %}
-  {# scenario_type  (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),  #}
-  <dt>Herhalingstijd</dt>
-  <dd>1 op de {{ event.repetition_time|floatformat }} jaar</dd>
-  {% endifequal %}
-
-  <dt>Hersteltijd wegen</dt>
-  <dd>{{ event.repairtime_roads|daysformat }}</dd>
-
-  <dt>Hersteltijd bebouwing</dt>
-  <dd>{{ event.repairtime_buildings|daysformat }}</dd>
-
-  <dt>Maand gebeurtenis</dt>
-  <dd>{{ event.floodmonth|monthformat }}</dd>
-</dl>
-
-{% with event.parsed_table as event_table %}
-<table class="table table-striped">
-  <thead>
-    <th>Categorie</th>
-    <th style="text-align: right">Oppervlakte met schade</th>
-    <th style="text-align: right">Schade</th>
-  </thead>
-  <tbody>
-    {% for data_row in event_table.1 %}
-      {% if data_row.damage %}
-      <tr>
-        <td title="{{ data_row.description }} ({{ data_row.source }} - {{ data_row.code }})">
-        {{ data_row.description }}
-        </td>
-        <td title="{{ data_row.area_ha|floatformat }}" style="text-align: right">
-        {% autoescape off %}{{ data_row.area_ha|haformat }}{% endautoescape %}
-        </td>
-        <td title="{{ data_row.damage|floatformat }}" style="text-align: right">
-        {% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}
-        </td>
-      </tr>
-    {% endif %}
+    {% for riskresult in view.damage_scenario.riskresult_set.all %}
+      <a href="{{ riskresult.zip_risk.url }}" alt="{{ riskresult.result_display }}">
+        Risicokaart downloaden
+      </a>
     {% endfor %}
-  </tbody>
-</table>
-{% endwith %}
 
-{% empty %}
-Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.
-{% endfor %}
-</div>
+    {% for event in view.damage_scenario.damageevent_set.all %}
+      <h3>Gebeurtenis {{ event }}</h3>
+        <div>
+          {% if event.result_url %}
+            <a href="{{ event.result_url }}" alt="{{ event.result_display }}">downloaden</a>
+          {% else %}
+            geen resultaat
+          {% endif %}&nbsp;
+          <a href="{% url "lizard_damage_event_kml" slug=event.slug result_type="damage" %}">kml</a>&nbsp;
+
+          <p>
+            Het tonen van externe kaarten op Google Maps zoals die van
+            de waterschadeschatter wordt niet meer door Google
+            ondersteund. Daardoor is het momenteel niet mogelijk om
+            schade, waterdiepte en landgebruik op Google Maps te
+            bekijken. In overleg met STOWA wordt naar een oplossing
+            gezocht.
+          </p>
+
+          <dl>
+            <dt>Waterstand</dt>
+            <dd>{{ event.waterlevel }}</dd>
+
+            <dt>Schadetabel</dt>
+            <dd>{% firstof view.damage_scenario.damagetable 'standaard' %}</dd>
+
+            <dt>Duur overlast</dt>
+            <dd>{{ event.floodtime|hoursformat }}</dd>
+
+            {% ifequal view.damage_scenario.scenario_type 1 %}
+              {# scenario_type  (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),  #}
+              <dt>Herhalingstijd</dt>
+              <dd>1 op de {{ event.repetition_time|floatformat }} jaar</dd>
+            {% endifequal %}
+
+            <dt>Hersteltijd wegen</dt>
+            <dd>{{ event.repairtime_roads|daysformat }}</dd>
+
+            <dt>Hersteltijd bebouwing</dt>
+            <dd>{{ event.repairtime_buildings|daysformat }}</dd>
+
+            <dt>Maand gebeurtenis</dt>
+            <dd>{{ event.floodmonth|monthformat }}</dd>
+         </dl>
+
+         {% with event.parsed_table as event_table %}
+           <table class="table table-striped">
+             <thead>
+               <th>Categorie</th>
+               <th style="text-align: right">Oppervlakte met schade</th>
+               <th style="text-align: right">Schade</th>
+             </thead>
+             <tbody>
+               {% for data_row in event_table.1 %}
+                 {% if data_row.damage %}
+                   <tr>
+                     <td title="{{ data_row.description }} ({{ data_row.source }} - {{ data_row.code }})">
+                       {{ data_row.description }}
+                    </td>
+                    <td title="{{ data_row.area_ha|floatformat }}" style="text-align: right">
+                     {% autoescape off %}{{ data_row.area_ha|haformat }}{% endautoescape %}
+                    </td>
+                    <td title="{{ data_row.damage|floatformat }}" style="text-align: right">
+                      {% autoescape off %}{{ data_row.damage|euroformat }}{% endautoescape %}
+                    </td>
+                  </tr>
+               {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endwith %}
+    {% empty %}
+      Er zijn geen gebeurtenissen verbonden aan deze resultaten (dat mag nooit gebeuren). Contacteer systeembeheerder.
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

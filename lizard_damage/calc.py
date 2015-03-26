@@ -5,13 +5,14 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+"""What is left in here is a pretty random collection of helper functions."""
+
 import numpy as np
 
 import logging
 import os
 import tempfile
 import traceback
-import zipfile
 
 from matplotlib import colors
 from PIL import Image
@@ -130,10 +131,8 @@ def mkstemp_and_close():
 
 
 def landuse_legend():
-    result = []
     # defaults
-    for i in range(100):
-        result.append('#dddddd')
+    result = ['#dddddd'] * 100
 
     # specifics
     result[2] = '#cc0000'  # Woonfunctie
@@ -329,31 +328,31 @@ def write_table(
             )
 
 
-def result_as_dict(name, damage, area, damage_table):
+def result_as_dict(damage, area, damage_table):
     """
     return data structure of result which can be stored and looped
     """
-    data = []
-    data.append({
-        'source': None,
-        'code': None,
-        'description': 'Totaal',
-        'area_ha': sum(area.values()) / 10000.,
-        'damage': sum(damage.values()),
-    })
+
     head = [{'display': 'bron', 'key': 'source'},
             {'display': 'code', 'key': 'code'},
             {'display': 'omschrijving', 'key': 'description'},
             {'display': 'oppervlakte met schade [ha]', 'key': 'area_ha'},
             {'display': 'schade', 'key': 'damage'}]
-    for code, dr in damage_table.data.items():
-        data.append({
-            'source': dr.source,
-            'code': dr.code,
-            'description': dr.description,
-            'area_ha': area[dr.code] / 10000.,
-            'damage': damage[dr.code],
-        })
+
+    data = [{
+        'source': None,
+        'code': None,
+        'description': 'Totaal',
+        'area_ha': sum(area.values()) / 10000.,
+        'damage': sum(damage.values()),
+    }] + [{
+        'source': dr.source,
+        'code': dr.code,
+        'description': dr.description,
+        'area_ha': area[dr.code] / 10000.,
+        'damage': damage[dr.code],
+    } for code, dr in damage_table.data.items()]
+
     return (head, data)
 
 
@@ -369,42 +368,8 @@ def write_image(name, values):
     Image.fromarray(rgba).save(name, 'PNG')
 
 
-def add_to_zip(output_zipfile, zip_result, logger):
-    """
-    Now zip all files listed in zip_result
-
-    zip_result is a list with keys:
-    - filename: filename on disc
-    - arcname: target filename in archive
-    - delete_after: set this to remove file from file system after zipping
-    """
-    logger.info('zipping result into %s' % output_zipfile)
-    with zipfile.ZipFile(output_zipfile, 'a', zipfile.ZIP_DEFLATED) as myzip:
-        for file_in_zip in zip_result:
-            logger.info('zipping %s...' % file_in_zip['arcname'])
-            myzip.write(file_in_zip['filename'], file_in_zip['arcname'])
-            if file_in_zip.get('delete_after', False):
-                logger.info(
-                    'removing %r (%s in arc)'
-                    % (file_in_zip['filename'], file_in_zip['arcname']))
-                os.remove(file_in_zip['filename'])
-
-
-CDICT_WATER_DEPTH = {
-    'red': ((0.0, 170. / 256, 170. / 256),
-            (0.5, 65. / 256, 65. / 256),
-            (1.0, 4. / 256, 4. / 256)),
-    'green': ((0.0, 200. / 256, 200. / 256),
-              (0.5, 120. / 256, 120. / 256),
-              (1.0, 65. / 256, 65. / 256)),
-    'blue': ((0.0, 255. / 256, 255. / 256),
-             (0.5, 221. / 256, 221. / 256),
-             (1.0, 176. / 256, 176. / 256)),
-    }
-
-
 def add_roads_to_image(roads, image_path, extent):
-    """ This function could be moved to top level. """
+    """Draw roads into an existing PNG."""
 
     # Get old image that needs indirect road damage visualized
     image = Image.open(image_path)

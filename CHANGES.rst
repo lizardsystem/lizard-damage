@@ -5,7 +5,7 @@ Changelog of lizard-damage
 1.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Make risk maps work with refactored result collector.
 
 
 1.2.2 (2015-03-17)

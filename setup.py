@@ -15,10 +15,12 @@ install_requires = [
     'lizard-task >= 0.16',
     'lizard-map >= 4.40, < 5.0',
     'lizard-ui >= 4.40, < 5.0',
+    'lizard-damage-calculation',
     'xlrd',
     'Pillow',
     'pyproj',
     'mock',
+    'factory-boy',
     'django-appconf'
     ],
 

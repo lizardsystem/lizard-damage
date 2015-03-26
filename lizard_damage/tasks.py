@@ -72,11 +72,17 @@ def calculate_damage(
         logger = logging.getLogger(taskname)
         damage_scenario = models.DamageScenario.objects.get(
             pk=damage_scenario_id)
+        logger.info(
+            "Starting scenario {} calculation...".format(damage_scenario))
+        logger.info("BBBBBBBBBBBBBBBBBBBBB")
         damage_scenario.calculate(logger)
+        logger.info("WWWWWWWWWWWWWWWWWWWWW")
     except:
+        logger.info("AAAAAAAAAAAAAAAAAAAAA")
         exc_info = sys.exc_info()
         tracebackbuf = StringIO.StringIO()
         traceback.print_exception(*exc_info, limit=None, file=tracebackbuf)
+        logger.info(tracebackbuf.getvalue())
 
         emails.send_email_to_task(
             damage_scenario_id, 'email_exception',

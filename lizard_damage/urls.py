@@ -92,7 +92,7 @@ urlpatterns = patterns(
         name='lizard_damage_benefit_kml'
     ),
     url(
-        r'^event/(?P<slug>.*)/kml/$',
+        r'^event/(?P<slug>.*)/(?P<result_type>.*)/kml/$',
         views.DamageEventKML.as_view(),
         name='lizard_damage_event_kml'
     ),
