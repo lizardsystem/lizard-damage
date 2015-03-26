@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-2.0.1 (unreleased)
+2.0.1 (2015-03-26)
 ------------------
 
 - Fix calculation type parsing.
