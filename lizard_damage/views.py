@@ -19,10 +19,11 @@ from lizard_ui.views import ViewContextMixin
 from lizard_damage import tools
 
 from zipfile import ZipFile
+import csv
 import shutil
-import tempfile
 import os
 import re
+import tempfile
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -87,96 +88,92 @@ def damage_scenario_from_type_0(all_form_data):
                 index=1)])])
 
 
+class BatchConfig(object):
+    def __init__(self, content):
+        # Set default headers:
+        self.scenario_type = 3
+        self.calc_type = 2  # 'max'
+        self.scenario_damage_table = None
+
+        head, body = [], []
+        for line in content:
+            if line.count(',') == 1:
+                head.append(line)
+            else:
+                body.append(line)
+
+        for rec in csv.reader(head):
+            setattr(self, rec[0], rec[1])
+
+        self.events = list(csv.DictReader(body))
+
+
 def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
     """
     Create scenario structure from (user uploaded) zip file
-
-    TODO: make a class for index.csv
-    (so we can use it in analyze_zip_file as well)
     """
-
     zip_temp = tempfile.mkdtemp()
     with ZipFile(zipfile, 'r') as myzip:
-        index = myzip.read('index.csv')
-        index_data = [
-            line.strip().split(',')
-            for line in index.split('\n') if line.strip()]
+        config = BatchConfig(myzip.open('index.csv').readlines())
 
         scenario_data = {
-            'name': scenario_name,
-            'email': scenario_email,
-            'scenario_type': None,
-            'calc_type': None,
+            'name': getattr(config, 'scenario_name', scenario_name),
+            'email': getattr(config, 'scenario_email', scenario_email),
+            'scenario_type': int(config.scenario_type),
+            'calc_type': config.scenario_calc_type.lower(),
             'customheights': None,
             'customlanduse': None,
             'damagetable': None,
             'damage_events': []
         }
 
-        for line in index_data:
-            if line[0] == 'scenario_name':
-                if not scenario_data['name']:
-                    scenario_data['name'] = line[1]
-            elif line[0] == 'scenario_email':
-                if not scenario_data['email']:
-                    scenario_data['email'] = line[1]
-            elif line[0] == 'scenario_type':
-                scenario_data['scenario_type'] = int(line[1])
-            elif line[0] == 'scenario_calc_type':
-                scenario_data['calc_type'] = {
-                    'min': 1, 'max': 2, 'avg': 3}.get(line[1].lower(), 'max')
-            elif line[0] == 'scenario_damage_table':
-                if line[1]:
-                    myzip.extract(line[1], zip_temp)  # extract to temp dir
-                    scenario_data['damagetable'] = os.path.join(
-                        zip_temp, line[1])
-            elif line[0] == 'event_name':
-                # Header for second part: don't do anything yet
-                pass
+        if config.scenario_damage_table:
+            # extract to temp dir
+            myzip.extract(config.scenario_damage_table, zip_temp)
+            scenario_data['damagetable'] = os.path.join(
+                zip_temp, config.scenario_damage_table)
+
+        for event in config.events:
+            # This is an event
+            damage_event = {
+                'name': event['event_name'],
+                'floodtime_hours': event['floodtime'],
+                'repairtime_roads_days': event['repairtime_roads'],
+                'repairtime_buildings_days': event['repairtime_buildings'],
+                'floodmonth': event['floodmonth'],
+                'waterlevels': [],
+                'repetition_time': event.get('repetition_time', None) or None
+            }
+            scenario_data['damage_events'].append(damage_event)
+
+            if scenario_data['scenario_type'] == 2:
+                # guess the waterlevel names from the zip
+                zip_file_names = myzip.namelist()
+                re_match = re.match(
+                    '(.*[^0-9])([0-9]+)(\.asc)$',
+                    event['waterlevel']).groups()  # i.e. ('ws', '324', '.asc')
+
+                re_pattern = re.compile(
+                    '%s[0-9]+%s' % (re_match[0], re_match[2]))
+                water_level_filenames = [
+                    fn for fn in zip_file_names
+                    if re.match(re_pattern, fn)]
+                water_level_filenames.sort()
             else:
-                # This is an event
-                damage_event = {
-                    'name': line[0],
-                    'floodtime_hours': line[2],
-                    'repairtime_roads_days': line[3],
-                    'repairtime_buildings_days': line[4],
-                    'floodmonth': line[5],
-                    'waterlevels': [],
-                    'repetition_time': None  # Default
-                    }
-                scenario_data['damage_events'].append(damage_event)
+                water_level_filenames = [event['waterlevel']]
 
-                if line[6]:
-                    damage_event['repetition_time'] = line[6]
-
-                if scenario_data['scenario_type'] == 2:
-                    zip_file_names = myzip.namelist()
-                    re_match = re.match(
-                        '(.*[^0-9])([0-9]+)(\.asc)$',
-                        line[1]).groups()  # i.e. ('ws', '324', '.asc')
-
-                    re_pattern = re.compile(
-                        '%s[0-9]+%s' % (re_match[0], re_match[2]))
-                    water_level_filenames = [
-                        fn for fn in zip_file_names
-                        if re.match(re_pattern, fn)]
-                    water_level_filenames.sort()
-                else:
-                    water_level_filenames = [line[1], ]
-
-                for index, water_level_filename in enumerate(
-                        water_level_filenames):
-                    myzip.extract(water_level_filename, zip_temp)
-                    tempfilename = os.path.join(
-                        zip_temp, water_level_filename)
-                    damage_event['waterlevels'].append({
-                        'waterlevel': tempfilename,
-                        'index': index
-                        })
+            for index, water_level_filename in enumerate(
+                    water_level_filenames):
+                myzip.extract(water_level_filename, zip_temp)
+                tempfilename = os.path.join(
+                    zip_temp, water_level_filename)
+                damage_event['waterlevels'].append({
+                    'waterlevel': tempfilename,
+                    'index': index
+                })
         damage_scenario = DamageScenario.setup(**scenario_data)
 
     shutil.rmtree(zip_temp)
-
     return damage_scenario
 
 
@@ -213,45 +210,50 @@ def analyze_zip_file(zipfile):
     """
     result = []
 
-    with ZipFile(zipfile, 'r') as myzip:
-        zip_file_names = myzip.namelist()
-
+    # read and parse
+    with ZipFile(zipfile) as archive:
+        namelist = archive.namelist()
         try:
-            index = myzip.read('index.csv')
-            index_data = [
-                line.strip().split(',')
-                for line in index.split('\n') if line.strip()]
-        except:
-            result.append('index.csv is afwezig of is niet goed')
+            index_lines = archive.open('index.csv').readlines()
+        except KeyError:
+            return 'Zip-bestand bevat geen "index.csv".'
+        try:
+            config = BatchConfig(index_lines)
+        except Exception as error:
+            return '"fout bij lezen van index.csv:\n{}"'.format(error)
 
-        for line in index_data:
-            if line[0] == 'scenario_type':
-                try:
-                    DamageScenario.SCENARIO_TYPES_DICT[int(line[1])]
-                except:
-                    result.append(
-                        'Scenario type "%s" niet goed (moet 0..4 zijn)'
-                        % line[1])
-            elif line[0] == 'scenario_name':
-                pass
-            elif line[0] == 'scenario_email':
-                pass
-            elif line[0] == 'scenario_calc_type':
-                if line[1].lower() not in ['min', 'max', 'avg']:
-                    result.append(
-                        'FOUT: scenario type "%s" moet min, max of avg zijn'
-                        % line[1].lower())
-            elif line[0] == 'scenario_damage_table':
-                if line[1] not in zip_file_names:
-                    result.append(
-                        'FOUT: schadetabel %s (NIET gevonden in zipfile)'
-                        % line[1])
-            elif line[0] == 'event_name':
-                pass
-            else:
-                if line[1] not in zip_file_names:
-                    result.append(
-                        'FOUT: waterlevel %s NIET gevonden' % line[1])
+    # scenario type
+    scenario = int(config.scenario_type)
+    if scenario not in DamageScenario.SCENARIO_TYPES_DICT:
+        message = 'Onbekend scenariotype ({}); kies uit 0 t/m 4.'
+        result.append(message.format(scenario))
+
+    # scenario calc type
+    calc_type = config.scenario_calc_type
+    if calc_type not in ('min', 'max', 'avg'):
+        message = 'Onbekend berekeningstype ({}); kies min, max of avg.'
+        result.append(message.format(calc_type))
+
+    # scenario damage table
+    damage_table = config.scenario_damage_table
+    if damage_table and damage_table not in namelist:
+        message = 'Schadetabel "{}" niet gevonden in zipfile.'
+        result.append(message.format(damage_table))
+
+    # waterlevel files
+    for event in config.events:
+        waterlevel = event['waterlevel']
+        if waterlevel not in namelist:
+            message = 'Waterstand "{}" niet gevonden in zipfile.'
+            result.append(message.format(waterlevel))
+
+    # repetition times
+    rtimes = [event['repetition_time'] for event in config.events]
+    if scenario in (1, 4) and not all(rtimes):
+        message = ('Scenario type is {}, maar niet alle '
+                   'waterstanden hebben een herhalingstijd.')
+        result.append(message.format(scenario))
+
     if not result:
         # Everything seems to be ok
         result.append("zip bestand ok")
@@ -468,7 +470,7 @@ class GeoImageHeightKML(GeoImageKML):
     def legend_url(self):
         """Dirty way to get min/max"""
         try:
-            #fn something like: height_i43bn2_09_-2230_3249
+            # fn something like: height_i43bn2_09_-2230_3249
             fn = self.kwargs['slugs'].split(',')[0]
             fn_split = fn.split('_')
             min_height = fn_split[-2]

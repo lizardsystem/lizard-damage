@@ -2,10 +2,32 @@ Changelog of lizard-damage
 ===================================================
 
 
-1.2 (unreleased)
-----------------
+1.2.3 (unreleased)
+------------------
 
 - Make risk maps work with refactored result collector.
+
+
+1.2.2 (2015-03-17)
+------------------
+
+- Test for include package data and templates
+
+
+1.2.1 (2015-03-17)
+------------------
+
+- Rewrite zipfile analysis and unpacking
+
+- Disable area check
+
+- Disable google maps view in result page
+
+
+1.2 (2014-11-04)
+----------------
+
+- Swapped potatoes.
 
 
 1.1 (2014-08-05)

@@ -334,6 +334,7 @@ class DamageScenario(models.Model):
     def read_damage_table(self):
         """Returns damage table from dt_path, or data/damagetable/dt.cfg
         if not given."""
+
         dt_path = self.damagetable_file or os.path.join(
             settings.BUILDOUT_DIR, table.DEFAULT_DAMAGE_TABLE)
 

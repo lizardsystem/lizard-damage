@@ -76,6 +76,7 @@ def get_area_per_pixel(ds):
 
 def get_area_with_data(ds):
     """Return area of dataset in m2, not counting the nodata cells"""
+    return 0
     band = ds.GetRasterBand(1)
     nodatavalue = band.GetNoDataValue()
     if nodatavalue is not None:
