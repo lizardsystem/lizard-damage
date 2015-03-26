@@ -91,9 +91,9 @@ def damage_scenario_from_type_0(all_form_data):
 class BatchConfig(object):
     def __init__(self, content):
         # Set default headers:
-        self.scenario_type = 3
-        self.calc_type = 2  # 'max'
-        self.scenario_damage_table = None
+        self.scenario_type = '3'
+        self.calc_type = 'max'
+        self.scenario_damage_table = ''
 
         head, body = [], []
         for line in content:
@@ -120,12 +120,14 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
             'name': getattr(config, 'scenario_name', scenario_name),
             'email': getattr(config, 'scenario_email', scenario_email),
             'scenario_type': int(config.scenario_type),
-            'calc_type': config.scenario_calc_type.lower(),
             'customheights': None,
             'customlanduse': None,
             'damagetable': None,
             'damage_events': []
         }
+        scenario_data['calc_type'] = {
+            'min': 1, 'max': 2, 'avg': 3,
+        }.get(config.scenario_calc_type.lower(), 2)
 
         if config.scenario_damage_table:
             # extract to temp dir
