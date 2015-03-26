@@ -20,9 +20,6 @@ TESTDATA_DIR = os.path.join(settings.BUILDOUT_DIR, 'testdata')
 
 
 class TestDamageScenario(TestCase):
-    def setUp(self):
-        pass
-
     def test_directory_url(self):
         scenario = factories.DamageScenarioFactory.create()
         self.assertEquals(
