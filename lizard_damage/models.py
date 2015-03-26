@@ -325,6 +325,11 @@ class DamageScenario(models.Model):
             os.makedirs(workdir)
         return workdir
 
+    def delete(self):
+        """Also remove the workdir."""
+        shutil.rmtree(self.workdir)
+        return super(DamageScenario, self).delete()
+
     @property
     def directory_url(self):
         """URL to the workdir."""
