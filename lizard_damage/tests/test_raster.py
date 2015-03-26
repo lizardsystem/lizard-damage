@@ -7,6 +7,8 @@ from lizard_damage import raster
 
 class TestGetAreaWithData(TestCase):
     def test_correct_area_all_data(self):
+        return  # This functionality has been turned off!!
+
         driver = gdal.GetDriverByName('mem')
         dataset = driver.Create(
             '', 10, 10, 1, gdal.GDT_Byte,

@@ -30,7 +30,8 @@ def send_email_to_task(
     """
     Create a task for sending email
     """
-    task_name = 'Scenario ({}) send mail {}'.format(scenario_id, mail_template)
+    task_name = 'Scenario ({:05}) send mail {}'.format(scenario_id,
+                                                       mail_template)
     task_kwargs = (
         '{{'
         '"username": "admin", '

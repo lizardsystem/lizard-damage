@@ -5,7 +5,9 @@ Changelog of lizard-damage
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Update cleanup command.
+
+- Fix names of tasks to be picked up by cleanup command.
 
 
 2.0.1 (2015-03-26)
