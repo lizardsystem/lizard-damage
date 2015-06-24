@@ -110,8 +110,10 @@ class ResultCollector(object):
     def save_ma(
             self, tile, masked_array, result_type, ds_template=None,
             repetition_time=None):
-        self.save_ma_to_geoimage(tile, masked_array, result_type)
-
+        # self.save_ma_to_geoimage(tile, masked_array, result_type)
+        # ^^^ disable because google maps api no longer supports this,
+        #     and because tmp takes excessive space because of this
+        #     (uncompressed) storage.
         if result_type == 'damage':
             filename = self.save_ma_to_zipfile(
                 tile, masked_array, result_type, ds_template, repetition_time)
@@ -161,7 +163,8 @@ class ResultCollector(object):
                 self.maxes[result_type], np.amin(masked_array))
 
             masked_array.dump(
-                os.path.join(self.tempdir, "{}.{}".format(tile, result_type)))
+                os.path.join(self.tempdir,
+                             "{}.{}".format(tile, result_type)))
             return
 
         write_extent_pgw(filename.replace('.png', '.pgw'),

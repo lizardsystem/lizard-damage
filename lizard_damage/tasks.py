@@ -74,11 +74,11 @@ def calculate_damage(
             pk=damage_scenario_id)
         logger.info(
             "Starting scenario {} calculation...".format(damage_scenario))
-        logger.info("BBBBBBBBBBBBBBBBBBBBB")
+        logger.info("Calculation started")
         damage_scenario.calculate(logger)
-        logger.info("WWWWWWWWWWWWWWWWWWWWW")
+        logger.info("Calculation exited normally")
     except:
-        logger.info("AAAAAAAAAAAAAAAAAAAAA")
+        logger.info("An exception has occurred")
         exc_info = sys.exc_info()
         tracebackbuf = StringIO.StringIO()
         traceback.print_exception(*exc_info, limit=None, file=tracebackbuf)

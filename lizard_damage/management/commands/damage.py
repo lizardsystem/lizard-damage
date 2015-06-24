@@ -19,4 +19,3 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         result = tasks.calculate_damage(sys.argv[2])
         # result = tasks.calculate_benefit(sys.argv[2])
-        print(result)

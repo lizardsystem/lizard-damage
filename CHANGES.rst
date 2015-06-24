@@ -5,7 +5,8 @@ Changelog of lizard-damage
 2.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Disable the image generation, since tmp takes a lot of space and google
+  does not support at any way.
 
 
 2.0.2 (2015-03-26)
