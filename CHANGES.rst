@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Update manuals after update of height tiles in the east.
 
 
 2.0.3 (2015-06-24)
