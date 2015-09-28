@@ -266,6 +266,9 @@ class DamageScenario(models.Model):
     scenario_type = models.IntegerField(
         choices=SCENARIO_TYPES, default=0)
 
+    use_max_depth = models.BooleanField(
+        'If this is true, do not subtract the AHN', default=False)
+
     customheights = models.FilePathField(
         max_length=200, null=True, blank=True)
     customlanduse = models.FilePathField(
