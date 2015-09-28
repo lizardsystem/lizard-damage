@@ -283,12 +283,12 @@ class DamageScenario(models.Model):
     @classmethod
     def setup(
             cls, name, email, scenario_type, calc_type, customheights,
-            customlanduse, damagetable, damage_events):
+            customlanduse, damagetable, use_max_depth, damage_events):
         """Create and setup a DamageScenario. Handles all types."""
 
         scenario = cls.objects.create(
             name=name, email=email, scenario_type=scenario_type,
-            calc_type=calc_type)
+            calc_type=calc_type, use_max_depth=use_max_depth)
 
         files_to_move = dict()
         if customheights:

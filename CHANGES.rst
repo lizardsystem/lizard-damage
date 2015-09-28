@@ -5,7 +5,9 @@ Changelog of lizard-damage
 2.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Lizard-damage-calculation has an 'use_max_depth' option that does
+  not subtract the AHN from depths. Make this option available in the
+  UI.
 
 
 2.0.2 (2015-03-26)

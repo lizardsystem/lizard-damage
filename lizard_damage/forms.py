@@ -146,6 +146,15 @@ class FormStep1(forms.Form):
         help_text='Dit is het bestand met waterstanden in mNAP voor het '
         'gebied waarvoor u de berekening wilt uitvoeren.')
 
+    use_max_depth = forms.BooleanField(
+        label="Mijn bestand bevat waterdieptes in plaats van waterstanden",
+        required=False,
+        default=False,
+        help_text='Als uw bestand waterdieptes in plaats van waterstanden '
+        't.o.v. NAP bevat , dan hoeft het niet meer met behulp van de AHN '
+        'geconverteerd te worden naar waterdieptes. Kies in dat geval '
+        'deze optie.')
+
     damagetable = forms.FileField(
         label="Optioneel: eigen schadetabel", required=False,
         help_text='Het is mogelijk om eigen schadebedragen te gebruiken. '

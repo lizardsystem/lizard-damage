@@ -77,6 +77,7 @@ def damage_scenario_from_type_0(all_form_data):
         customheights=all_form_data.get('customheights_file'),
         customlanduse=all_form_data.get('customlanduse_file'),
         damagetable=all_form_data.get('damagetable'),
+        use_max_depth=all_form_data.get('use_max_depth'),
         damage_events=[dict(
             floodtime_hours=all_form_data['floodtime'],
             repairtime_roads_days=all_form_data['repairtime_roads'],
