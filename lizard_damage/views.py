@@ -124,6 +124,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
             'customheights': None,
             'customlanduse': None,
             'damagetable': None,
+            'use_max_depth': False,
             'damage_events': []
         }
         scenario_data['calc_type'] = {

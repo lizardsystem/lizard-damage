@@ -149,7 +149,7 @@ class FormStep1(forms.Form):
     use_max_depth = forms.BooleanField(
         label="Mijn bestand bevat waterdieptes in plaats van waterstanden",
         required=False,
-        default=False,
+        initial=False,
         help_text='Als uw bestand waterdieptes in plaats van waterstanden '
         't.o.v. NAP bevat , dan hoeft het niet meer met behulp van de AHN '
         'geconverteerd te worden naar waterdieptes. Kies in dat geval '
