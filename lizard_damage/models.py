@@ -638,6 +638,7 @@ class DamageEvent(models.Model):
             get_roads_flooded_for_tile_and_code=
             Roads.get_roads_flooded_for_tile_and_code,
             calc_type=calc_type,
+            use_max_depth=self.scenario.use_max_depth,
             road_grid_codes=Roads.ROAD_GRIDCODE,
             logger=logger)
 
