@@ -3,10 +3,14 @@
 # IDs to our IDs. This module checks, reads, and uses that Excel file.
 
 import logging
+import os
 
 import numpy as np
 import xlrd
 
+from django.conf import settings
+
+from lizard_damage.models import Unit
 from lizard_damage_calculation import table
 
 logger = logging.getLogger(__name__)
@@ -105,9 +109,11 @@ class LanduseTranslator(object):
                     .format(value))
 
         # Check if all values are in the default damage table
-        from lizard_damage.models import Unit
+        default_damage_table_path = os.path.join(settings.BUILDOUT_DIR,
+                                                 table.DEFAULT_DAMAGE_TABLE)
         damage_table = table.DamageTable.read_cfg(
-            open(table.DEFAULT_DAMAGE_TABLE), units=Unit.objects.all())
+            open(default_damage_table_path), units=Unit.objects.all()
+        )
 
         codes = set(damage_table.data)
         for value in sorted(self.translate_dict.values()):
