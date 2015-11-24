@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.0.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix custom landuse bug.
 
 
 2.0.4 (2015-06-30)
