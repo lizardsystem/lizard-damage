@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     python-psycopg2 \
     python-matplotlib \
     python-gdal \
-    python-scipy \
     gdal-bin \
     gettext \
     postgresql-client \
