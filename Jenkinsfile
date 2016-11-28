@@ -5,7 +5,6 @@ node {
    stage "Build"
    sh "docker-compose down -v"
    sh "docker-compose build"
-   sh "ln -sf development.cfg buildout.cfg"
    sh "docker-compose run web python bootstrap.py"
    sh "docker-compose run web bin/buildout"
 
