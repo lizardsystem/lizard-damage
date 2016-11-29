@@ -26,4 +26,4 @@ Regular commands::
 
 Alternatively to the last one::
 
-$ docker-compose run --service-ports web bin/django runserver 0.0.0.0:5000
+    $ docker-compose run --service-ports web bin/django runserver 0.0.0.0:5000
