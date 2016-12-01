@@ -6,6 +6,7 @@ be "thrown to" it."""
 
 import os
 import subprocess
+import tempfile
 import zipfile
 
 from PIL import Image
@@ -125,9 +126,9 @@ class ResultCollector(object):
             self, tile, masked_array, result_type, ds_template,
             repetition_time):
         from lizard_damage import calc
-        tempfile = calc.mkstemp_and_close()
+        temp_file = calc.mkstemp_and_close()
         calc.write_result(
-            name=tempfile,
+            name=temp_file,
             ma_result=masked_array,
             ds_template=ds_template)
 
@@ -136,7 +137,7 @@ class ResultCollector(object):
         else:
             filename = 'schade_{}.asc'.format(tile)
         self.save_file_for_zipfile(
-            tempfile, filename, delete_after=True)
+            temp_file, filename, delete_after=True)
 
         return filename
 
@@ -232,6 +233,37 @@ class ResultCollector(object):
                 if os.path.exists(png):
                     result_extent = rd_to_wgs84(png)
                     self.extents[(tile, result_type)] = result_extent
+        for result_type in ('damage', 'landuse', 'height', 'depth'):
+            self._build_vrt(result_type)
+
+    def _build_vrt(self, result_type):
+        """Run gdalbuildvrt to create a virtual raster of all the tiles
+
+        Because we will often have a *lot* of tiles, putting all filenames in
+        a command to call with os.system fails because the command is too
+        long.  Therefore, generate a temporary file containing the filenames
+        of all the tiles; run gdalbuildvrt to create damage_estimation.vrt in
+        the output dir, then delete the temporary file by closing it.
+
+        Note: mostly copied from ``threedi_result/damage_estimation.py``.
+
+        """
+        tiles_dir = os.path.join(self.workdir, result_type)
+        tiles = [os.path.join(tiles_dir, tile) for tile in os.listdir(tiles_dir)]
+        vrt_file = os.path.join(self.workdir, '%s.vrt' % result_type)
+
+        temporary_file = tempfile.NamedTemporaryFile()
+        for tile in tiles:
+            temporary_file.write(tile + "\n")
+        temporary_file.flush()
+
+        command = "gdalbuildvrt -input_file_list {infile} {outfile} > /dev/null"
+        os.system(command.format(
+            infile=temporary_file.name,
+            outfile=vrt_file))
+
+        self.logger.debug("Created vrt file %s", vrt_file)
+        temporary_file.close() # Deletes the temporary file
 
     def all_images(self):
         """Generate path and extent of all created images. Path is relative
