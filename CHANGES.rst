@@ -11,6 +11,8 @@ Changelog of lizard-damage
 - Updated lizard-map version to a 4.x version that includes a fix for the
   jsonfield-problem with an old lizard-map migration.
 
+- After generating tiles, a matching VRT is also created.
+
 
 2.0.6 (2016-08-31)
 ------------------
