@@ -664,17 +664,6 @@ class DamageEvent(models.Model):
                     repairtime_buildings=self.repairtime_buildings)):
             logger.info("Recording results for tile {}...".format(ahn_name))
 
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, landuse_ma, result_type='landuse')
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, depth_ma, result_type='depth')
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, ds_height.GetRasterBand(1).ReadAsArray(),
-            #     result_type='height')
-            # ^^^ disable because google maps api no longer supports this,
-            #     and because tmp takes excessive space because of this
-            #     (uncompressed) storage.
-
             # Keep track of flooded roads
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
                 for road, flooded_m2 in roads_flooded.iteritems():
