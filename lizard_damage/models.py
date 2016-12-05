@@ -701,6 +701,9 @@ class DamageEvent(models.Model):
             for k in area.keys():
                 overall_area[k] += area[k]
 
+        # Generate vrt + geotiff out of the .asc files.
+        result_collector.build_damage_geotiff()
+
         # Only after all tiles have been processed, calculate overall indirect
         # Road damage. This is not visible in the per-tile-damagetable.
         roads_flooded_over_threshold = []

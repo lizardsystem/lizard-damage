@@ -4,6 +4,7 @@ The idea is that during a calculation a ResultCollector object is kept
 around, and generated results (like land use images for a given tile) can
 be "thrown to" it."""
 
+import glob
 import os
 import subprocess
 import tempfile
@@ -116,60 +117,29 @@ class ResultCollector(object):
         #     and because tmp takes excessive space because of this
         #     (uncompressed) storage.
         if result_type == 'damage':
-            filename = self.save_ma_to_zipfile(
+            filename = self.save_ma_to_asc(
                 tile, masked_array, result_type, ds_template, repetition_time)
             if repetition_time is not None:
+                # TODO (Reinout wants to know where this is used. The file is
+                # deleted after adding it to the zipfile, so....)
                 self.riskmap_data.append(
                     (tile, repetition_time, filename))
 
-    def save_ma_to_zipfile(
+    def save_ma_to_asc(
             self, tile, masked_array, result_type, ds_template,
             repetition_time):
         from lizard_damage import calc
-        temp_file = calc.mkstemp_and_close()
-        calc.write_result(
-            name=temp_file,
-            ma_result=masked_array,
-            ds_template=ds_template)
-
         if repetition_time is not None:
             filename = 'schade_{}_T{}.asc'.format(tile, repetition_time)
         else:
             filename = 'schade_{}.asc'.format(tile)
-        self.save_file_for_zipfile(
-            temp_file, filename, delete_after=True)
+        filename = os.path.join(self.tempdir, filename)
+        calc.write_result(
+            name=filename,
+            ma_result=masked_array,
+            ds_template=ds_template)
 
         return filename
-
-    def save_ma_to_geoimage(
-            self, tile, masked_array, result_type, color_dict=None):
-        from lizard_damage import calc
-
-        filename = self.png_path(result_type, tile)
-
-        if result_type == 'damage':
-            calc.write_image(filename, masked_array)
-        if result_type == 'landuse':
-            legend = calc.landuse_legend()
-            colormap = mpl.colors.ListedColormap(legend, 'indexed')
-            rgba = colormap(masked_array, bytes=True)
-            Image.fromarray(rgba).save(filename, 'PNG')
-        if result_type in ('depth', 'height'):
-            # Before we can do this, we need to know the max and min value,
-            # for coloring. So record that, and save the array to a tmp
-            # dir. We then make the images in finalize().
-            self.mins[result_type] = min(
-                self.mins[result_type], np.amin(masked_array))
-            self.maxes[result_type] = max(
-                self.maxes[result_type], np.amin(masked_array))
-
-            masked_array.dump(
-                os.path.join(self.tempdir,
-                             "{}.{}".format(tile, result_type)))
-            return
-
-        write_extent_pgw(filename.replace('.png', '.pgw'),
-                         self.all_leaves[tile])
 
     def save_csv_data_for_zipfile(self, zipname, csvdata):
         from lizard_damage import calc
@@ -185,6 +155,35 @@ class ResultCollector(object):
                 self.logger.info(
                     'removing %r (%s in arc)' % (file_path, zipname))
                 os.remove(file_path)
+
+    def build_damage_geotiff(self):
+        # for i in *asc; do gdal_translate $i ${i/asc/tif} -co compress=deflate -co tiled=yes -ot float32; done
+        # gdalbuildvrt all.vrt *tif
+        orig_dir = os.getcwd()
+        os.chdir(self.tempdir)
+        asc_files = glob.glob('*.asc')
+        if not asc_files:
+            self.logger.info("No asc files as input, not writing out a geotiff.")
+        for asc_file in asc_files:
+            tiff_file = asc_file.replace('.asc', '.tiff')
+            cmd = ("gdal_translate %s %s "
+                   "-co compress=deflate -co tiled=yes -ot float32")
+            os.system(cmd % (asc_file, tiff_file))
+            self.save_file_for_zipfile(tiff_file, tiff_file)
+
+        file_with_tiff_filenames = tempfile.NamedTemporaryFile()
+        tiff_files = glob.glob('*.tiff')
+        for tiff_file in tiff_files:
+            file_with_tiff_filenames.write(tiff_file + "\n")
+        file_with_tiff_filenames.flush()
+        vrt_file = 'schade.vrt'
+        cmd = "gdalbuildvrt -input_file_list %s %s" % (
+            file_with_tiff_filenames.name, vrt_file)
+        self.logger.debug(cmd)
+        os.system(cmd )
+        file_with_tiff_filenames.close() # Deletes the temporary file
+        self.save_file_for_zipfile(vrt_file, vrt_file)
+        os.chdir(orig_dir)
 
     def finalize(self):
         """Make final version of the data:
@@ -225,37 +224,6 @@ class ResultCollector(object):
                 if os.path.exists(png):
                     result_extent = rd_to_wgs84(png)
                     self.extents[(tile, result_type)] = result_extent
-        for result_type in ('damage', 'landuse', 'height', 'depth'):
-            self._build_vrt(result_type)
-
-    def _build_vrt(self, result_type):
-        """Run gdalbuildvrt to create a virtual raster of all the tiles
-
-        Because we will often have a *lot* of tiles, putting all filenames in
-        a command to call with os.system fails because the command is too
-        long.  Therefore, generate a temporary file containing the filenames
-        of all the tiles; run gdalbuildvrt to create damage_estimation.vrt in
-        the output dir, then delete the temporary file by closing it.
-
-        Note: mostly copied from ``threedi_result/damage_estimation.py``.
-
-        """
-        tiles_dir = os.path.join(self.workdir, result_type)
-        tiles = [os.path.join(tiles_dir, tile) for tile in os.listdir(tiles_dir)]
-        vrt_file = os.path.join(self.workdir, '%s.vrt' % result_type)
-
-        temporary_file = tempfile.NamedTemporaryFile()
-        for tile in tiles:
-            temporary_file.write(tile + "\n")
-        temporary_file.flush()
-
-        command = "gdalbuildvrt -input_file_list {infile} {outfile} > /dev/null"
-        os.system(command.format(
-            infile=temporary_file.name,
-            outfile=vrt_file))
-
-        self.logger.debug("Created vrt file %s", vrt_file)
-        temporary_file.close() # Deletes the temporary file
 
     def all_images(self):
         """Generate path and extent of all created images. Path is relative
