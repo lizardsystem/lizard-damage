@@ -186,14 +186,6 @@ class ResultCollector(object):
                     'removing %r (%s in arc)' % (file_path, zipname))
                 os.remove(file_path)
 
-    def draw_roads(self, roads):
-        from lizard_damage import calc
-        for tile, extent in self.all_leaves.items():
-            png_path = self.png_path('damage', tile)
-            if os.path.exists(png_path):
-                calc.add_roads_to_image(
-                    roads=roads, image_path=png_path, extent=extent)
-
     def finalize(self):
         """Make final version of the data:
 

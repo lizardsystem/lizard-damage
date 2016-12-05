@@ -741,11 +741,6 @@ class DamageEvent(models.Model):
                         ))
                     overall_damage[code] += indirect_road_damage
 
-        # Add roads to damage images
-        road_objects = Roads.objects.filter(
-            pk__in=roads_flooded_over_threshold)
-        result_collector.draw_roads(road_objects)
-
         result_collector.save_csv_data_for_zipfile(
             'schade_totaal.csv', dict(
                 damage=overall_damage,
