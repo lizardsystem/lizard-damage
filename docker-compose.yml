@@ -1,0 +1,19 @@
+version: '2'
+services:
+
+  db:
+    image: mdillon/postgis
+    environment:
+      POSTGRES_PASSWORD: 'buildout'
+      POSTGRES_USER: 'buildout'
+      POSTGRES_DB: 'lizard_damage'
+
+  web:
+    build: .
+    command: "bin/django runserver 0.0.0.0:5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/code
+    depends_on:
+      - db

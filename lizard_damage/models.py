@@ -664,17 +664,6 @@ class DamageEvent(models.Model):
                     repairtime_buildings=self.repairtime_buildings)):
             logger.info("Recording results for tile {}...".format(ahn_name))
 
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, landuse_ma, result_type='landuse')
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, depth_ma, result_type='depth')
-            # result_collector.save_ma_to_geoimage(
-            #     ahn_name, ds_height.GetRasterBand(1).ReadAsArray(),
-            #     result_type='height')
-            # ^^^ disable because google maps api no longer supports this,
-            #     and because tmp takes excessive space because of this
-            #     (uncompressed) storage.
-
             # Keep track of flooded roads
             for code, roads_flooded in roads_flooded_for_tile.iteritems():
                 for road, flooded_m2 in roads_flooded.iteritems():
@@ -712,6 +701,9 @@ class DamageEvent(models.Model):
             for k in area.keys():
                 overall_area[k] += area[k]
 
+        # Generate vrt + geotiff out of the .asc files.
+        result_collector.build_damage_geotiff()
+
         # Only after all tiles have been processed, calculate overall indirect
         # Road damage. This is not visible in the per-tile-damagetable.
         roads_flooded_over_threshold = []
@@ -740,11 +732,6 @@ class DamageEvent(models.Model):
                             self.scenario.slug, road, indirect_road_damage,
                         ))
                     overall_damage[code] += indirect_road_damage
-
-        # Add roads to damage images
-        road_objects = Roads.objects.filter(
-            pk__in=roads_flooded_over_threshold)
-        result_collector.draw_roads(road_objects)
 
         result_collector.save_csv_data_for_zipfile(
             'schade_totaal.csv', dict(

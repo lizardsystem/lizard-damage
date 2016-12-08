@@ -33,7 +33,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'USER': 'buildout',
         'PASSWORD': 'buildout',
-        'HOST': '',  # empty string for localhost.
+        'HOST': 'db',  # empty string for localhost.
         'PORT': '',  # empty string for default.
         },
     }
