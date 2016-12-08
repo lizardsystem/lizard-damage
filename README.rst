@@ -14,14 +14,14 @@ Prerequisite: recent docker install (including docker-compose).
 One-time setup::
 
     $ docker-compose build
-    $ docker-compose web run python bootstrap.py
-    $ docker-compose web run bin/buildout
-    $ docker-compose web run bin/django syncdb
-    $ docker-compose web run bin/django migrate
+    $ docker-compose run web python bootstrap.py
+    $ docker-compose run web bin/buildout
+    $ docker-compose run web bin/django syncdb
+    $ docker-compose run web bin/django migrate
 
 Regular commands::
 
-    $ docker-compose web run bin/test
+    $ docker-compose run web bin/test
     $ docker-compose up
 
 Alternatively to the last one::
