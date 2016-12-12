@@ -2,8 +2,8 @@ Changelog of lizard-damage
 ===================================================
 
 
-2.0.7 (unreleased)
-------------------
+2.1 (2016-12-12)
+----------------
 
 - Added docker setup for local development, including a ``Jenkinsfile`` for
   automatic testing on jenkins.
