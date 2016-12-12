@@ -157,17 +157,17 @@ class ResultCollector(object):
                 os.remove(file_path)
 
     def build_damage_geotiff(self):
-        # for i in *asc; do gdal_translate $i ${i/asc/tif} -co compress=deflate -co tiled=yes -ot float32; done
-        # gdalbuildvrt all.vrt *tif
         orig_dir = os.getcwd()
         os.chdir(self.tempdir)
         asc_files = glob.glob('*.asc')
         if not asc_files:
-            self.logger.info("No asc files as input, not writing out a geotiff.")
+            self.logger.info(
+                "No asc files as input, not writing out a geotiff.")
         for asc_file in asc_files:
             tiff_file = asc_file.replace('.asc', '.tiff')
             cmd = ("gdal_translate %s %s "
-                   "-co compress=deflate -co tiled=yes -ot float32")
+                   "-co compress=deflate -co tiled=yes "
+                   "-ot float32 -a_srs EPSG:28992")
             os.system(cmd % (asc_file, tiff_file))
             self.save_file_for_zipfile(tiff_file, tiff_file)
 
@@ -180,8 +180,8 @@ class ResultCollector(object):
         cmd = "gdalbuildvrt -input_file_list %s %s" % (
             file_with_tiff_filenames.name, vrt_file)
         self.logger.debug(cmd)
-        os.system(cmd )
-        file_with_tiff_filenames.close() # Deletes the temporary file
+        os.system(cmd)
+        file_with_tiff_filenames.close()  # Deletes the temporary file
         self.save_file_for_zipfile(vrt_file, vrt_file)
         os.chdir(orig_dir)
 

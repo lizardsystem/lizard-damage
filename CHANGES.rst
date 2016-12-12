@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added projection assignment to tiff generation.
 
 
 2.1 (2016-12-12)
