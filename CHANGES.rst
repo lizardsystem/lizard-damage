@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-2.2 (unreleased)
+2.2 (2016-12-12)
 ----------------
 
 - Added projection assignment to tiff generation.
