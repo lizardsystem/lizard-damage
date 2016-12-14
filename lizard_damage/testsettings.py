@@ -41,6 +41,7 @@ SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
     'lizard_damage',
+    'lizard_task',
     'lizard_ui',
     'django.contrib.staticfiles',
     'compressor',
