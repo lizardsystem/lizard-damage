@@ -244,6 +244,7 @@ class DamageScenario(models.Model):
         (5, 'Tijdserie aan kaarten met per tijdstip de '
             'waterstand van meerdere gebeurtenissen'),
         (6, 'Batenkaart maken met resultaten uit twee risicokaarten'),
+        (7, 'Batchberekening'),
     )
     SCENARIO_TYPES_DICT = dict(SCENARIO_TYPES)
 

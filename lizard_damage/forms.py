@@ -92,7 +92,7 @@ class FormStep0(forms.Form):
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
     scenario_type.widget.renderer.actives = [
-        True, True, True, True, True, False, True]
+        True, True, True, True, True, False, True, True]
     scenario_type.widget.renderer.help_texts = [
         'Kies deze optie indien u één kaart heeft met de waterstand in meter '
         't.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste'
@@ -116,7 +116,9 @@ class FormStep0(forms.Form):
         'tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is'
         ' ASCI met RD als coordinatenstelsel.',
         'Kies deze optie indien u een batenkaart wilt maken op basis van'
-        ' risicokaarten.']
+        ' risicokaarten.',
+        'Kies deze optie indien u een batchberekening uit wilt voeren.',
+    ]
 
 
 class FormStep1(forms.Form):
@@ -364,6 +366,22 @@ class FormStep2(FormStep1):
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[1]
     repetition_time = forms.FloatField(
         label="Herhalingstijd (jaar)", help_text="")
+
+
+class FormStepBatch(FormStep1):
+    """
+    Batch, scenario type 7
+    """
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[7]
+    increment = forms.FloatField(
+        label="Stapgrootte (m)",
+        help_text=("Met deze stap wordt de waterstandshoogte uit " +
+                   "de asc steeds opgehoogd."))
+    number_of_increments = forms.IntegerField(
+        label="Aantal stappen",
+        help_text=("Aantal keer dat de waterstandshoogte met de " +
+                   "stapgrootte opgehoogd moet worden."))
+    # ^^^ TODO: > 1 conditie toevoegen
 
 
 class FormStep3(forms.Form):

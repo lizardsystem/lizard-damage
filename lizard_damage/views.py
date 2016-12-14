@@ -88,6 +88,27 @@ def damage_scenario_from_type_0(all_form_data):
                 index=1)])])
 
 
+def damage_scenario_from_batch_type(all_form_data):
+    # TODO
+    return DamageScenario.setup(
+        name=all_form_data['name'],
+        email=all_form_data['email'],
+        scenario_type=all_form_data['scenario_type'],
+        calc_type=all_form_data['calc_type'],
+        customheights=all_form_data.get('customheights_file'),
+        customlanduse=all_form_data.get('customlanduse_file'),
+        damagetable=all_form_data.get('damagetable'),
+        damage_events=[dict(
+            floodtime_hours=all_form_data['floodtime'],
+            repairtime_roads_days=all_form_data['repairtime_roads'],
+            repairtime_buildings_days=all_form_data['repairtime_buildings'],
+            floodmonth=all_form_data['floodmonth'],
+            repetition_time=all_form_data.get('repetition_time'),
+            waterlevels=[dict(
+                waterlevel=all_form_data['waterlevel'],
+                index=1)])])
+
+
 class BatchConfig(object):
     def __init__(self, content):
         # Set default headers:
@@ -330,7 +351,9 @@ class Wizard(ViewContextMixin, SessionWizardView):
             'waterstanden',
             5: 'Tijdserie aan kaarten met per tijdstip de waterstand van '
             'meerdere gebeurtenissen',
-            6: 'baten taak'}
+            6: 'baten taak',
+            7: 'batch berekening',
+        }
 
         all_form_data = self.get_all_cleaned_data()
 
@@ -363,6 +386,14 @@ class Wizard(ViewContextMixin, SessionWizardView):
             return HttpResponseRedirect(
                 reverse('lizard_damage_thank_you') +
                 '?benefit_scenario_id=%d' % benefit_scenario.id)
+        if scenario_type == 7:
+            damage_scenario = damage_scenario_from_batch_type(all_form_data)
+            self.clean_temporary_directory(all_form_data)
+            # launch task
+            tasks.damage_scenario_to_task(damage_scenario, username="web")
+            return HttpResponseRedirect(
+                reverse('lizard_damage_thank_you') +
+                '?damage_scenario_id=%d' % damage_scenario.id)
 
     def clean_temporary_directory(self, all_form_data):
         """This must be called after processing the saved files."""
