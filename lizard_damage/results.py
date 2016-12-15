@@ -6,6 +6,7 @@ be "thrown to" it."""
 
 import glob
 import os
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -224,6 +225,9 @@ class ResultCollector(object):
                 if os.path.exists(png):
                     result_extent = rd_to_wgs84(png)
                     self.extents[(tile, result_type)] = result_extent
+
+    def cleanup_tmp_dir(self):
+        shutil.rmtree(self.tempdir)
 
     def all_images(self):
         """Generate path and extent of all created images. Path is relative
