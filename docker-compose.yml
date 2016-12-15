@@ -24,5 +24,15 @@ services:
       - db
       - rabbit
 
+  worker:
+    build: .
+    command: "bin/django celery worker --loglevel DEBUG"
+    environment:
+      C_FORCE_ROOT: 1
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - rabbit
 volumes:
   pgdata:
