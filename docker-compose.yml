@@ -34,5 +34,6 @@ services:
     depends_on:
       - db
       - rabbit
+
 volumes:
   pgdata:
