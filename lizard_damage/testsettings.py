@@ -43,6 +43,7 @@ BROKER_URL = "amqp://guest@rabbit"
 CELERY_IMPORTS = ('lizard_damage.tasks', )
 import djcelery
 djcelery.setup_loader()
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
