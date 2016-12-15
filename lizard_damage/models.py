@@ -765,6 +765,7 @@ class DamageEvent(models.Model):
         self.min_height = result_collector.mins.get('height')
         self.max_height = result_collector.maxes.get('height')
         self.save()
+        result_collector.cleanup_tmp_dir()
 
         return True, result_collector.riskmap_data  # success
 

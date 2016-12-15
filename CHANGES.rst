@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removing temp dir as last step to get rid of bulky ascii files.
 
 
 2.2 (2016-12-12)
