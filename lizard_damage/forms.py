@@ -8,19 +8,19 @@ from __future__ import (
 )
 
 from django import forms
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
 import gdal
 import logging
-import tempfile
 import os
+import tempfile
 
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
-
-from .raster import get_area_with_data
-from .models import gdal_open
-from .models import DamageScenario
 from . import landuse_translator
-
+from .models import DamageScenario
+from .models import gdal_open
+from .raster import get_area_with_data
 from lizard_damage.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -373,15 +373,32 @@ class FormStepBatch(FormStep1):
     Batch, scenario type 7
     """
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[7]
+
+    def __init__(self, *args, **kwargs):
+        super(FormStepBatch, self).__init__(*args, **kwargs)
+        # Override waterlevel text
+        self.fields['waterlevel'].label = "Ascii bestand met te berekenen gebied"
+        self.fields['waterlevel'].help_text = (
+            "In dit bestand wordt voor elke cel met een (willekeurige) waarde "
+            "per rekenstap de waterstandshoogte ingesteld. Cellen zonder "
+            "waarde doen niet mee."
+            )
+
     increment = forms.FloatField(
         label="Stapgrootte (m)",
+        required=True,
         help_text=("Met deze stap wordt de waterstandshoogte uit " +
                    "de asc steeds opgehoogd."))
     number_of_increments = forms.IntegerField(
         label="Aantal stappen",
+        required=True,
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(20),
+            # Max 20 seems enough to me. Safety valve for typos.
+        ],
         help_text=("Aantal keer dat de waterstandshoogte met de " +
                    "stapgrootte opgehoogd moet worden."))
-    # ^^^ TODO: > 1 conditie toevoegen
 
 
 class FormStep3(forms.Form):
