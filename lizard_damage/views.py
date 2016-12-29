@@ -90,6 +90,23 @@ def damage_scenario_from_type_0(all_form_data):
 
 def damage_scenario_from_batch_type(all_form_data):
     # TODO
+    waterlevels = []
+    tempdir = tempfile.mkdtemp()
+    base_waterlevel_file = all_form_data['waterlevel_file']
+    increment = all_form_data['increment']
+    start_level = all_form_data['start_level']
+    for index in range(all_form_data['number_of_increments']):
+        level_filename = os.path.join(tempdir, 'waterlevel_%s.tif' % index)
+        desired_level = start_level + index * increment
+        # gdal_calc.py -A in.asc --calc 2.2 --NoDataValue=-9999 --outfile out.tif
+        cmd = ("gdal_calc.py -A %s --calc %s "
+               "--NoDataValue=-9999 --outfile %s")
+        logger.debug("Generating water level file (at %s) for batch: %s",
+                     desired_level, level_filename)
+        os.system(cmd % (base_waterlevel_file, desired_level, level_filename))
+        waterlevels.append({'waterlevel': level_filename,
+                            'index': index + 1})
+
     return DamageScenario.setup(
         name=all_form_data['name'],
         email=all_form_data['email'],
@@ -104,9 +121,7 @@ def damage_scenario_from_batch_type(all_form_data):
             repairtime_buildings_days=all_form_data['repairtime_buildings'],
             floodmonth=all_form_data['floodmonth'],
             repetition_time=all_form_data.get('repetition_time'),
-            waterlevels=[dict(
-                waterlevel=all_form_data['waterlevel'],
-                index=1)])])
+            waterlevels=waterlevels)])
 
 
 class BatchConfig(object):
