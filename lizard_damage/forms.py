@@ -384,10 +384,15 @@ class FormStepBatch(FormStep1):
             "waarde doen niet mee."
             )
 
+    start_level = forms.FloatField(
+        label="Startniveau (m)",
+        required=True,
+        help_text=("Startniveau van de waterstandshoogte die steeds "
+                   "met de stapgrootte wordt opgehoogd."))
     increment = forms.FloatField(
         label="Stapgrootte (m)",
         required=True,
-        help_text=("Met deze stap wordt de waterstandshoogte uit " +
+        help_text=("Met deze stap wordt de waterstandshoogte uit "
                    "de asc steeds opgehoogd."))
     number_of_increments = forms.IntegerField(
         label="Aantal stappen",
@@ -397,7 +402,7 @@ class FormStepBatch(FormStep1):
             MaxValueValidator(20),
             # Max 20 seems enough to me. Safety valve for typos.
         ],
-        help_text=("Aantal keer dat de waterstandshoogte met de " +
+        help_text=("Aantal keer dat de waterstandshoogte met de "
                    "stapgrootte opgehoogd moet worden."))
 
 
