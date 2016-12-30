@@ -90,13 +90,15 @@ def damage_scenario_from_type_0(all_form_data):
 
 def damage_scenario_from_batch_type(all_form_data):
     # TODO
-    waterlevels = []
+    events = []
     tempdir = tempfile.mkdtemp()
     base_waterlevel_file = all_form_data['waterlevel_file']
     increment = all_form_data['increment']
     start_level = all_form_data['start_level']
     for index in range(all_form_data['number_of_increments']):
         level_filename = os.path.join(tempdir, 'waterlevel_%s.tif' % index)
+        # ^^^ 'waterlevel_' should be retained as prefix, this is needed for
+        # re-assembling the output afterwards.
         desired_level = start_level + index * increment
         # gdal_calc.py -A in.asc --calc 2.2 --NoDataValue=-9999 --outfile out.tif
         cmd = ("gdal_calc.py -A %s --calc %s "
@@ -104,8 +106,15 @@ def damage_scenario_from_batch_type(all_form_data):
         logger.debug("Generating water level file (at %s) for batch: %s",
                      desired_level, level_filename)
         os.system(cmd % (base_waterlevel_file, desired_level, level_filename))
-        waterlevels.append({'waterlevel': level_filename,
-                            'index': index + 1})
+        event = dict(
+            floodtime_hours=all_form_data['floodtime'],
+            repairtime_roads_days=all_form_data['repairtime_roads'],
+            repairtime_buildings_days=all_form_data['repairtime_buildings'],
+            floodmonth=all_form_data['floodmonth'],
+            repetition_time=all_form_data.get('repetition_time'),
+            waterlevels=[{'waterlevel': level_filename,
+                          'index': index + 1}])
+        events.append(event)
 
     return DamageScenario.setup(
         name=all_form_data['name'],
@@ -115,13 +124,7 @@ def damage_scenario_from_batch_type(all_form_data):
         customheights=all_form_data.get('customheights_file'),
         customlanduse=all_form_data.get('customlanduse_file'),
         damagetable=all_form_data.get('damagetable'),
-        damage_events=[dict(
-            floodtime_hours=all_form_data['floodtime'],
-            repairtime_roads_days=all_form_data['repairtime_roads'],
-            repairtime_buildings_days=all_form_data['repairtime_buildings'],
-            floodmonth=all_form_data['floodmonth'],
-            repetition_time=all_form_data.get('repetition_time'),
-            waterlevels=waterlevels)])
+        damage_events=events)
 
 
 class BatchConfig(object):
@@ -438,6 +441,33 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     @property
     def damage_scenario(self):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])
+
+    @property
+    def table_for_batch(self):
+        # table for calculation #7
+        damage_events = self.damage_scenario.damageevent_set.all()
+        damage_per_height = {}
+        for damage_event in damage_events:
+            waterlevels = damage_event.damageeventwaterlevel_set.all()
+            waterlevel = waterlevels[0]
+            filename = os.path.basename(waterlevel.waterlevel_path)
+            # waterlevel_1.2.tif
+            filename = filename[:-4]
+            # waterlevel_1.2
+            level = filename.split('_')[1]
+            # 1.2
+            level = float(level)
+
+            table = damage_event.parsed_table
+            total_damage = table[1][0]['damage']
+
+            damage_per_height[level] = total_damage
+
+        heights = sorted(damage_per_height.keys())
+        result = [{'height': height,
+                   'damage': damage_per_height[height]}
+                  for height in heights]
+        return result
 
 
 class DamageEventKML(ViewContextMixin, TemplateView):
