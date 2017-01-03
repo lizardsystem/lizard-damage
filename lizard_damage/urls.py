@@ -32,6 +32,7 @@ urlpatterns = patterns(
              forms.FormBatenKaart,  # '7'
              forms.FormZipResult,  # '8' for batch zip (single file)
              forms.FormZipResult,  # '9' for baten kaart (2 files)
+             forms.FormStepUniformLevelsBatch,  # '10' for batch berekening
              ],
             initial_dict={
                 '0': {
@@ -63,6 +64,7 @@ urlpatterns = patterns(
                 # Check zipfile and show results
                 '8': views.show_form_condition([2, 3, 4, 5]),
                 '9': views.show_form_condition([6]),  # Batenkaart files
+                '10': views.show_form_condition([7]),  # Batch
                 }
             ),
         name='lizard_damage_form'

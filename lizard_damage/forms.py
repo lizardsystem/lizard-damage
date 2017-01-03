@@ -8,19 +8,19 @@ from __future__ import (
 )
 
 from django import forms
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
 import gdal
 import logging
-import tempfile
 import os
+import tempfile
 
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
-
-from .raster import get_area_with_data
-from .models import gdal_open
-from .models import DamageScenario
 from . import landuse_translator
-
+from .models import DamageScenario
+from .models import gdal_open
+from .raster import get_area_with_data
 from lizard_damage.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class FormStep0(forms.Form):
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
     scenario_type.widget.renderer.actives = [
-        True, True, True, True, True, False, True]
+        True, True, True, True, True, False, True, True]
     scenario_type.widget.renderer.help_texts = [
         'Kies deze optie indien u één kaart heeft met de waterstand in meter '
         't.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste'
@@ -116,7 +116,10 @@ class FormStep0(forms.Form):
         'tijdstap de waterstand in meter t.o.v. NAP. Het gewenste formaat is'
         ' ASCI met RD als coordinatenstelsel.',
         'Kies deze optie indien u een batenkaart wilt maken op basis van'
-        ' risicokaarten.']
+        ' risicokaarten.',
+        'Kies deze optie om een batchberekening voor een opeenvolgende '
+        'reeks van uniforme waterstanden uit te voeren.',
+    ]
 
 
 class FormStep1(forms.Form):
@@ -364,6 +367,43 @@ class FormStep2(FormStep1):
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[1]
     repetition_time = forms.FloatField(
         label="Herhalingstijd (jaar)", help_text="")
+
+
+class FormStepUniformLevelsBatch(FormStep1):
+    """
+    Uniform levels batch, scenario type 7
+    """
+    display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[7]
+
+    def __init__(self, *args, **kwargs):
+        super(FormStepUniformLevelsBatch, self).__init__(*args, **kwargs)
+        # Override waterlevel text
+        self.fields['waterlevel'].label = "Rasterbestand met te berekenen gebied"
+        self.fields['waterlevel'].help_text = (
+            "In dit bestand wordt voor elke cel met een (willekeurige) waarde "
+            "per rekenstap de waterstand ingesteld. Cellen zonder "
+            "waarde doen niet mee."
+            )
+
+    start_level = forms.FloatField(
+        label="Startniveau (m)",
+        required=True,
+        help_text=("Startniveau van de waterstand die steeds "
+                   "met de stapgrootte wordt opgehoogd."))
+    increment = forms.FloatField(
+        label="Stapgrootte (m)",
+        required=True,
+        help_text="Met deze stap wordt het startniveau steeds opgehoogd.")
+    number_of_increments = forms.IntegerField(
+        label="Aantal stappen",
+        required=True,
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(20),
+            # Max 20 seems enough to me. Safety valve for typos.
+        ],
+        help_text=("Aantal keer dat de waterstand met de "
+                   "stapgrootte opgehoogd moet worden."))
 
 
 class FormStep3(forms.Form):

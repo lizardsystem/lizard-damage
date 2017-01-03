@@ -88,6 +88,44 @@ def damage_scenario_from_type_0(all_form_data):
                 index=1)])])
 
 
+def damage_scenario_from_uniform_levels_batch_type(all_form_data):
+    events = []
+    tempdir = tempfile.mkdtemp()
+    base_waterlevel_file = all_form_data['waterlevel_file']
+    increment = all_form_data['increment']
+    start_level = all_form_data['start_level']
+    for index in range(all_form_data['number_of_increments']):
+        level_filename = os.path.join(tempdir, 'waterlevel_%s.tif' % index)
+        # ^^^ 'waterlevel_' should be retained as prefix, this is needed for
+        # re-assembling the output afterwards.
+        desired_level = start_level + index * increment
+        # gdal_calc.py -A in.asc --calc 2.2 --NoDataValue=-9999 --outfile out.tif
+        cmd = ("gdal_calc.py -A %s --calc %s "
+               "--NoDataValue=-9999 --outfile %s")
+        logger.debug("Generating water level file (at %s) for batch: %s",
+                     desired_level, level_filename)
+        os.system(cmd % (base_waterlevel_file, desired_level, level_filename))
+        event = dict(
+            floodtime_hours=all_form_data['floodtime'],
+            repairtime_roads_days=all_form_data['repairtime_roads'],
+            repairtime_buildings_days=all_form_data['repairtime_buildings'],
+            floodmonth=all_form_data['floodmonth'],
+            repetition_time=all_form_data.get('repetition_time'),
+            waterlevels=[{'waterlevel': level_filename,
+                          'index': index + 1}])
+        events.append(event)
+
+    return DamageScenario.setup(
+        name=all_form_data['name'],
+        email=all_form_data['email'],
+        scenario_type=all_form_data['scenario_type'],
+        calc_type=all_form_data['calc_type'],
+        customheights=all_form_data.get('customheights_file'),
+        customlanduse=all_form_data.get('customlanduse_file'),
+        damagetable=all_form_data.get('damagetable'),
+        damage_events=events)
+
+
 class BatchConfig(object):
     def __init__(self, content):
         # Set default headers:
@@ -326,11 +364,13 @@ class Wizard(ViewContextMixin, SessionWizardView):
             2: 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis',
             3: 'Kaarten met de max. waterstand van afzonderlijke '
             'gebeurtenissen.',
+            7: 'Schadeberekening voor een reeks waterstanden voor 1 gebied',
             4: 'Kaarten met voor verschillende herhalingstijden de '
             'waterstanden',
             5: 'Tijdserie aan kaarten met per tijdstip de waterstand van '
             'meerdere gebeurtenissen',
-            6: 'baten taak'}
+            6: 'baten taak',
+        }
 
         all_form_data = self.get_all_cleaned_data()
 
@@ -363,6 +403,15 @@ class Wizard(ViewContextMixin, SessionWizardView):
             return HttpResponseRedirect(
                 reverse('lizard_damage_thank_you') +
                 '?benefit_scenario_id=%d' % benefit_scenario.id)
+        if scenario_type == 7:
+            damage_scenario = damage_scenario_from_uniform_levels_batch_type(
+                all_form_data)
+            self.clean_temporary_directory(all_form_data)
+            # launch task
+            tasks.damage_scenario_to_task(damage_scenario, username="web")
+            return HttpResponseRedirect(
+                reverse('lizard_damage_thank_you') +
+                '?damage_scenario_id=%d' % damage_scenario.id)
 
     def clean_temporary_directory(self, all_form_data):
         """This must be called after processing the saved files."""
@@ -392,6 +441,33 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     @property
     def damage_scenario(self):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])
+
+    @property
+    def table_for_uniform_levels_batch(self):
+        # table for calculation #7, used in damage_scenario_result.html
+        damage_events = self.damage_scenario.damageevent_set.all()
+        damage_per_height = {}
+        for damage_event in damage_events:
+            waterlevels = damage_event.damageeventwaterlevel_set.all()
+            waterlevel = waterlevels[0]
+            filename = os.path.basename(waterlevel.waterlevel_path)
+            # waterlevel_1.2.tif
+            filename = filename[:-4]
+            # waterlevel_1.2
+            level = filename.split('_')[1]
+            # 1.2
+            level = float(level)
+
+            table = damage_event.parsed_table
+            total_damage = table[1][0]['damage']
+
+            damage_per_height[level] = total_damage
+
+        heights = sorted(damage_per_height.keys())
+        result = [{'height': height,
+                   'damage': damage_per_height[height]}
+                  for height in heights]
+        return result
 
 
 class DamageEventKML(ViewContextMixin, TemplateView):

@@ -37,11 +37,21 @@ DATABASES = {
         'PORT': '',  # empty string for default.
         },
     }
+
+# For celery/lizard-task
+BROKER_URL = "amqp://guest@rabbit"
+CELERY_IMPORTS = ('lizard_damage.tasks', )
+import djcelery
+djcelery.setup_loader()
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
     'lizard_damage',
+    'lizard_task',
     'lizard_ui',
+    'djcelery',
     'django.contrib.staticfiles',
     'compressor',
     'south',
