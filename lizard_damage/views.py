@@ -443,8 +443,8 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
         return get_object_or_404(DamageScenario, slug=self.kwargs['slug'])
 
     @property
-    def table_for_batch(self):
-        # table for calculation #7
+    def table_for_uniform_levels_batch(self):
+        # table for calculation #7, used in damage_scenario_result.html
         damage_events = self.damage_scenario.damageevent_set.all()
         damage_per_height = {}
         for damage_event in damage_events:
