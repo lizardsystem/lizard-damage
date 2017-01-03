@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added batch calculation of uniform levels.
 
 
 2.3 (2016-12-15)
