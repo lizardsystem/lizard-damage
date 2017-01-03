@@ -88,8 +88,7 @@ def damage_scenario_from_type_0(all_form_data):
                 index=1)])])
 
 
-def damage_scenario_from_batch_type(all_form_data):
-    # TODO
+def damage_scenario_from_uniform_levels_batch_type(all_form_data):
     events = []
     tempdir = tempfile.mkdtemp()
     base_waterlevel_file = all_form_data['waterlevel_file']
@@ -365,12 +364,12 @@ class Wizard(ViewContextMixin, SessionWizardView):
             2: 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis',
             3: 'Kaarten met de max. waterstand van afzonderlijke '
             'gebeurtenissen.',
+            7: 'Schadeberekening voor een reeks waterstanden voor 1 gebied',
             4: 'Kaarten met voor verschillende herhalingstijden de '
             'waterstanden',
             5: 'Tijdserie aan kaarten met per tijdstip de waterstand van '
             'meerdere gebeurtenissen',
             6: 'baten taak',
-            7: 'batch berekening',
         }
 
         all_form_data = self.get_all_cleaned_data()
@@ -405,7 +404,8 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 reverse('lizard_damage_thank_you') +
                 '?benefit_scenario_id=%d' % benefit_scenario.id)
         if scenario_type == 7:
-            damage_scenario = damage_scenario_from_batch_type(all_form_data)
+            damage_scenario = damage_scenario_from_uniform_levels_batch_type(
+                all_form_data)
             self.clean_temporary_directory(all_form_data)
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")

@@ -239,12 +239,12 @@ class DamageScenario(models.Model):
         (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
         (2, 'Kaarten met per tijdstip de waterstand van 1 gebeurtenis'),
         (3, 'Kaarten met de max. waterstand van afzonderlijke gebeurtenissen'),
+        (7, 'Schadeberekening voor een reeks waterstanden voor 1 gebied'),
         (4, 'Kaarten met voor verschillende herhalingstijden de '
          'waterstanden (voor risicokaart)'),
         (5, 'Tijdserie aan kaarten met per tijdstip de '
             'waterstand van meerdere gebeurtenissen'),
         (6, 'Batenkaart maken met resultaten uit twee risicokaarten'),
-        (7, 'Batchberekening'),
     )
     SCENARIO_TYPES_DICT = dict(SCENARIO_TYPES)
 

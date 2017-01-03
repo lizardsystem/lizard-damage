@@ -32,7 +32,7 @@ urlpatterns = patterns(
              forms.FormBatenKaart,  # '7'
              forms.FormZipResult,  # '8' for batch zip (single file)
              forms.FormZipResult,  # '9' for baten kaart (2 files)
-             forms.FormStepBatch,  # '10' for batch berekening
+             forms.FormStepUniformLevelsBatch,  # '10' for batch berekening
              ],
             initial_dict={
                 '0': {

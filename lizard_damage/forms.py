@@ -117,7 +117,8 @@ class FormStep0(forms.Form):
         ' ASCI met RD als coordinatenstelsel.',
         'Kies deze optie indien u een batenkaart wilt maken op basis van'
         ' risicokaarten.',
-        'Kies deze optie indien u een batchberekening uit wilt voeren.',
+        'Kies deze optie om een batchberekening voor een opeenvolgende '
+        'reeks van uniforme waterstanden uit te voeren.',
     ]
 
 
@@ -368,32 +369,31 @@ class FormStep2(FormStep1):
         label="Herhalingstijd (jaar)", help_text="")
 
 
-class FormStepBatch(FormStep1):
+class FormStepUniformLevelsBatch(FormStep1):
     """
-    Batch, scenario type 7
+    Uniform levels batch, scenario type 7
     """
     display_title = 'Invoer voor "%s"' % SCENARIO_TYPES_DICT[7]
 
     def __init__(self, *args, **kwargs):
-        super(FormStepBatch, self).__init__(*args, **kwargs)
+        super(FormStepUniformLevelsBatch, self).__init__(*args, **kwargs)
         # Override waterlevel text
-        self.fields['waterlevel'].label = "Ascii bestand met te berekenen gebied"
+        self.fields['waterlevel'].label = "Rasterbestand met te berekenen gebied"
         self.fields['waterlevel'].help_text = (
             "In dit bestand wordt voor elke cel met een (willekeurige) waarde "
-            "per rekenstap de waterstandshoogte ingesteld. Cellen zonder "
+            "per rekenstap de waterstand ingesteld. Cellen zonder "
             "waarde doen niet mee."
             )
 
     start_level = forms.FloatField(
         label="Startniveau (m)",
         required=True,
-        help_text=("Startniveau van de waterstandshoogte die steeds "
+        help_text=("Startniveau van de waterstand die steeds "
                    "met de stapgrootte wordt opgehoogd."))
     increment = forms.FloatField(
         label="Stapgrootte (m)",
         required=True,
-        help_text=("Met deze stap wordt de waterstandshoogte uit "
-                   "de asc steeds opgehoogd."))
+        help_text="Met deze stap wordt het startniveau steeds opgehoogd.")
     number_of_increments = forms.IntegerField(
         label="Aantal stappen",
         required=True,
@@ -402,7 +402,7 @@ class FormStepBatch(FormStep1):
             MaxValueValidator(20),
             # Max 20 seems enough to me. Safety valve for typos.
         ],
-        help_text=("Aantal keer dat de waterstandshoogte met de "
+        help_text=("Aantal keer dat de waterstand met de "
                    "stapgrootte opgehoogd moet worden."))
 
 
