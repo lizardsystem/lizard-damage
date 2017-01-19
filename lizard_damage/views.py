@@ -445,29 +445,7 @@ class DamageScenarioResult(ViewContextMixin, TemplateView):
     @property
     def table_for_uniform_levels_batch(self):
         # table for calculation #7, used in damage_scenario_result.html
-        damage_events = self.damage_scenario.damageevent_set.all()
-        damage_per_height = {}
-        for damage_event in damage_events:
-            waterlevels = damage_event.damageeventwaterlevel_set.all()
-            waterlevel = waterlevels[0]
-            filename = os.path.basename(waterlevel.waterlevel_path)
-            # waterlevel_1.2.tif
-            filename = filename[:-4]
-            # waterlevel_1.2
-            level = filename.split('_')[1]
-            # 1.2
-            level = float(level)
-
-            table = damage_event.parsed_table
-            total_damage = table[1][0]['damage']
-
-            damage_per_height[level] = total_damage
-
-        heights = sorted(damage_per_height.keys())
-        result = [{'height': height,
-                   'damage': damage_per_height[height]}
-                  for height in heights]
-        return result
+        return self.damage_scenario.table_for_uniform_levels_batch()
 
 
 class DamageEventKML(ViewContextMixin, TemplateView):
