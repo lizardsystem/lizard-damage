@@ -51,6 +51,7 @@ RD = str(
 )
 
 WGS84 = str('+proj=latlong +datum=WGS84')
+UNIFORM_LEVELS_FILENAME = 'uniform-levels.csv'
 
 rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
@@ -464,7 +465,13 @@ class DamageScenario(models.Model):
             risk.create_risk_map(damage_scenario=self, logger=logger)
 
         # Calculate csv for uniform levels batch
-
+        if self.scenario_type == 7:
+            filename = os.path.join(self.workdir, UNIFORM_LEVELS_FILENAME)
+            with open(filename, 'w') as resultfile:
+                resultfile.write("Waterniveau,schade")
+                for line in self.table_for_uniform_levels_batch():
+                    resultfile.write(
+                        "%s,%s" % (line['height'], line['damage']))
 
         # Roundup
         self.status = self.SCENARIO_STATUS_DONE
