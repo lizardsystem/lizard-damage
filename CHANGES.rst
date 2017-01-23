@@ -5,7 +5,8 @@ Changelog of lizard-damage
 2.4 (unreleased)
 ----------------
 
-- Added batch calculation of uniform levels.
+- Added batch calculation of uniform levels. Including email at the start of
+  calculation as it can take a long time.
 
 
 2.3 (2016-12-15)
