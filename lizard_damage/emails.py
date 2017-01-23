@@ -117,6 +117,16 @@ def send_damage_success_mail(damage_scenario, logger, start_dt):
         damage_scenario.id, 'email_ready', subject)
 
 
+def send_damage_start_mail(damage_scenario, logger, start_dt):
+    """Send start mail"""
+    logger.info("creating email task for scenario %d" % damage_scenario.id)
+    subject = (
+        'WaterSchadeSchatter: Berekening scenario %s is gestart'
+        % damage_scenario.name)
+    send_email_to_task(
+        damage_scenario.id, 'email_started', subject)
+
+
 def send_damage_error_mail(damage_scenario, logger, start_dt):
     # Send error mail
     logger.info('STATS scenario type %s van %s is mislukt in %r' % (
