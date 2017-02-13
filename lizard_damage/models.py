@@ -451,10 +451,7 @@ class DamageScenario(models.Model):
         from lizard_damage import risk
         from lizard_damage import emails
 
-        if self.scenario_type == 7:
-            # Potentially very long calculation.  So tell the customer we've
-            # started!
-            emails.send_damage_start_mail(self, logger, start_dt)
+        emails.send_start_mail(self, logger, start_dt)
 
         all_riskmap_data = []
 

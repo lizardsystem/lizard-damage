@@ -117,7 +117,7 @@ def send_damage_success_mail(damage_scenario, logger, start_dt):
         damage_scenario.id, 'email_ready', subject)
 
 
-def send_damage_start_mail(damage_scenario, logger, start_dt):
+def send_start_mail(damage_scenario, logger, start_dt):
     """Send start mail"""
     logger.info("creating email task for scenario %d" % damage_scenario.id)
     subject = (
