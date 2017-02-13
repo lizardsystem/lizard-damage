@@ -304,6 +304,9 @@ class DamageScenario(models.Model):
         for damage_event_data in damage_events:
             DamageEvent.setup(scenario, **damage_event_data)
 
+        from lizard_damage import emails
+        emails.send_taskrecieved_mail(scenario, logger)
+
         return scenario
 
     def __unicode__(self):
