@@ -95,10 +95,10 @@ def damage_scenario_from_uniform_levels_batch_type(all_form_data):
     increment = all_form_data['increment']
     start_level = all_form_data['start_level']
     for index in range(all_form_data['number_of_increments']):
-        level_filename = os.path.join(tempdir, 'waterlevel_%s.tif' % index)
+        desired_level = start_level + index * increment
+        level_filename = os.path.join(tempdir, 'waterlevel_%s.tif' % desired_level)
         # ^^^ 'waterlevel_' should be retained as prefix, this is needed for
         # re-assembling the output afterwards.
-        desired_level = start_level + index * increment
         # gdal_calc.py -A in.asc --calc 2.2 --NoDataValue=-9999 --outfile out.tif
         cmd = ("gdal_calc.py -A %s --calc %s "
                "--NoDataValue=-9999 --outfile %s")
