@@ -1,0 +1,10 @@
+{# template for received notification txt#}
+L.S.,
+
+De berekening van het WaterSchadeSchatter scenario {{ damage_scenario.name }}
+is opgestart. Als het klaar is krijgt u nogmaals een email.
+
+--
+waterschadeschatter.nl
+
+Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

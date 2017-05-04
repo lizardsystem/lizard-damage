@@ -51,6 +51,8 @@ RD = str(
 )
 
 WGS84 = str('+proj=latlong +datum=WGS84')
+UNIFORM_LEVELS_FILENAME = 'uniform-levels.csv'
+# ^^^ Sync with damage_scenario_result.html
 
 rd_proj = Proj(RD)
 wgs84_proj = Proj(WGS84)
@@ -302,6 +304,9 @@ class DamageScenario(models.Model):
         for damage_event_data in damage_events:
             DamageEvent.setup(scenario, **damage_event_data)
 
+        from lizard_damage import emails
+        emails.send_taskrecieved_mail(scenario, logger)
+
         return scenario
 
     def __unicode__(self):
@@ -403,6 +408,31 @@ class DamageScenario(models.Model):
         # Return a comma-separated list of a single slug, aka the slug itself
         return self.customlandusegeoimage.slug
 
+    def table_for_uniform_levels_batch(self):
+        damage_events = self.damageevent_set.all()
+        damage_per_height = {}
+        for damage_event in damage_events:
+            waterlevels = damage_event.damageeventwaterlevel_set.all()
+            waterlevel = waterlevels[0]
+            filename = os.path.basename(waterlevel.waterlevel_path)
+            # waterlevel_1.2.tif
+            filename = filename[:-4]
+            # waterlevel_1.2
+            level = filename.split('_')[1]
+            # 1.2
+            level = float(level)
+
+            table = damage_event.parsed_table
+            total_damage = table[1][0]['damage']
+
+            damage_per_height[level] = total_damage
+
+        heights = sorted(damage_per_height.keys())
+        result = [{'height': height,
+                   'damage': damage_per_height[height]}
+                  for height in heights]
+        return result
+
     def calculate(self, logger):
         """
         Calculate this DamageScenario. Called from task.
@@ -424,6 +454,8 @@ class DamageScenario(models.Model):
         from lizard_damage import risk
         from lizard_damage import emails
 
+        emails.send_start_mail(self, logger, start_dt)
+
         all_riskmap_data = []
 
         for damage_event_index, damage_event in enumerate(
@@ -437,6 +469,15 @@ class DamageScenario(models.Model):
         # Calculate risk maps
         if self.scenario_type == 4:
             risk.create_risk_map(damage_scenario=self, logger=logger)
+
+        # Calculate csv for uniform levels batch
+        if self.scenario_type == 7:
+            filename = os.path.join(self.workdir, UNIFORM_LEVELS_FILENAME)
+            with open(filename, 'w') as resultfile:
+                resultfile.write("Waterniveau,schade\n")
+                for line in self.table_for_uniform_levels_batch():
+                    resultfile.write(
+                        "%s,%s\n" % (line['height'], line['damage']))
 
         # Roundup
         self.status = self.SCENARIO_STATUS_DONE

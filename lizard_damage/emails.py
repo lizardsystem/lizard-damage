@@ -18,6 +18,8 @@ from django.core import mail
 from django.core import urlresolvers
 from django.template import loader
 from django.contrib.sites.models import Site
+from celery.states import UNREADY_STATES
+from djcelery.models import TaskMeta
 
 from lizard_task.models import SecuredPeriodicTask
 
@@ -115,6 +117,31 @@ def send_damage_success_mail(damage_scenario, logger, start_dt):
         % damage_scenario.name)
     send_email_to_task(
         damage_scenario.id, 'email_ready', subject)
+
+
+def send_taskrecieved_mail(damage_scenario, logger):
+    """Send mail upon recieving a task"""
+    logger.info("creating email task for scenario %d" % damage_scenario.id)
+    celery_queuelength = TaskMeta.objects.filter(
+        status__in=UNREADY_STATES).count()
+    # ^^^ Note: depends on us retaining the current use of the celery django
+    # backend...
+    subject = (
+        'WaterSchadeSchatter: scenario %s is ontvangen'
+        % damage_scenario.name)
+    send_email_to_task(
+        damage_scenario.id, 'email_taskrecieved', subject,
+        extra_context={'celery_queuelength': celery_queuelength})
+
+
+def send_start_mail(damage_scenario, logger, start_dt):
+    """Send start mail"""
+    logger.info("creating email task for scenario %d" % damage_scenario.id)
+    subject = (
+        'WaterSchadeSchatter: Berekening scenario %s is gestart'
+        % damage_scenario.name)
+    send_email_to_task(
+        damage_scenario.id, 'email_started', subject)
 
 
 def send_damage_error_mail(damage_scenario, logger, start_dt):

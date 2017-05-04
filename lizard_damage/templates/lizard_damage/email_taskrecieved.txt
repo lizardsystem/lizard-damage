@@ -1,0 +1,11 @@
+{# template for received notification txt#}
+L.S.,
+
+Het WaterSchadeSchatter scenario {{ damage_scenario.name }}
+is ontvangen. Zodra de berekening start krijgt u nogmaals een email.
+Op het moment staan er nog {{ celery_queuelength }} taken in de wachtrij.
+
+--
+waterschadeschatter.nl
+
+Dit is een automatisch gegenereerd bericht. Graag niet beantwoorden.

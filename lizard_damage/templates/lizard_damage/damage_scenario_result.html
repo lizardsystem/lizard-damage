@@ -52,6 +52,11 @@
         </tbody>
       </table>
 
+      <p>
+        <a href="{{ view.damage_scenario.directory_url }}/uniform-levels.csv">
+          download .csv
+        </a>
+      </p>
     {% else %}
 
       {% for riskresult in view.damage_scenario.riskresult_set.all %}
