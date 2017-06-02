@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-2.5 (unreleased)
+2.5 (2017-06-02)
 ----------------
 
 - Removed the damagetable from here, it is not used by the calculation.
