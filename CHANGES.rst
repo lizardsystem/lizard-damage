@@ -9,6 +9,8 @@ Changelog of lizard-damage
 
 - Adjusted the road gridcodes to the new landuse map.
 
+- Fixed selection screen errors.
+
 
 2.4 (2017-05-05)
 ----------------
