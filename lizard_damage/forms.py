@@ -90,7 +90,7 @@ class FormStep0(forms.Form):
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
     scenario_type.widget.renderer.actives = [
-        True, True, True, True, True, False, True, True]
+        True, True, True, True, True, True, False, True]
     scenario_type.widget.renderer.help_texts = [
         'Kies deze optie indien u één kaart heeft met de waterstand in meter '
         't.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste'
