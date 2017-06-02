@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
-from __future__ import (
-    print_function,
-    unicode_literals,
-    absolute_import,
-    division,
-)
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
 
 from django import forms
 from django.core.validators import MaxValueValidator
@@ -17,10 +15,10 @@ import logging
 import os
 import tempfile
 
-from . import landuse_translator
-from .models import DamageScenario
-from .models import gdal_open
-from .raster import get_area_with_data
+from lizard_damage import landuse_translator
+from lizard_damage.models import DamageScenario
+from lizard_damage.models import gdal_open
+from lizard_damage.raster import get_area_with_data
 from lizard_damage.conf import settings
 
 logger = logging.getLogger(__name__)
