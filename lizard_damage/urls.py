@@ -7,10 +7,8 @@ from django.views.generic import TemplateView
 
 from lizard_ui.urls import debugmode_urlpatterns
 
-from lizard_damage import (
-    views,
-    forms,
-)
+from lizard_damage import forms
+from lizard_damage import views
 
 admin.autodiscover()
 
