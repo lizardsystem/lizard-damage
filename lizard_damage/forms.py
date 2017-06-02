@@ -105,6 +105,8 @@ class FormStep0(forms.Form):
         'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft '
         'met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat '
         'is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie om een batchberekening voor een opeenvolgende '
+        'reeks van uniforme waterstanden uit te voeren.',
         'Kies deze optie indien u voor meerdere herhalingstijden kaarten '
         'heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat'
         ' is ASCI met RD als coordinatenstelsel. Bij deze methode wordt '
@@ -115,8 +117,6 @@ class FormStep0(forms.Form):
         ' ASCI met RD als coordinatenstelsel.',
         'Kies deze optie indien u een batenkaart wilt maken op basis van'
         ' risicokaarten.',
-        'Kies deze optie om een batchberekening voor een opeenvolgende '
-        'reeks van uniforme waterstanden uit te voeren.',
     ]
 
 
