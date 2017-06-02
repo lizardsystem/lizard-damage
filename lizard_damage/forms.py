@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
-from __future__ import (
-    print_function,
-    unicode_literals,
-    absolute_import,
-    division,
-)
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
 
 from django import forms
 from django.core.validators import MaxValueValidator
@@ -17,11 +15,11 @@ import logging
 import os
 import tempfile
 
-from . import landuse_translator
-from .models import DamageScenario
-from .models import gdal_open
-from .raster import get_area_with_data
+from lizard_damage import landuse_translator
 from lizard_damage.conf import settings
+from lizard_damage.models import DamageScenario
+from lizard_damage.models import gdal_open
+from lizard_damage.raster import get_area_with_data
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +90,7 @@ class FormStep0(forms.Form):
         widget=forms.widgets.RadioSelect(renderer=CustomRadioSelectRenderer),
     )
     scenario_type.widget.renderer.actives = [
-        True, True, True, True, True, False, True, True]
+        True, True, True, True, True, True, False, True]
     scenario_type.widget.renderer.help_texts = [
         'Kies deze optie indien u één kaart heeft met de waterstand in meter '
         't.o.v. NAP die hoort bij één water- overlastgebeurtenis. Het gewenste'
@@ -107,6 +105,8 @@ class FormStep0(forms.Form):
         'Kies deze optie indien u voor meerdere gebeurtenissen kaarten heeft '
         'met de maximale waterstand in meter t.o.v. NAP. Het gewenste formaat '
         'is ASCI met RD als coordinatenstelsel.',
+        'Kies deze optie om een batchberekening voor een opeenvolgende '
+        'reeks van uniforme waterstanden uit te voeren.',
         'Kies deze optie indien u voor meerdere herhalingstijden kaarten '
         'heeft met de waterstand in meter t.o.v. NAP. Het gewenste formaat'
         ' is ASCI met RD als coordinatenstelsel. Bij deze methode wordt '
@@ -117,8 +117,6 @@ class FormStep0(forms.Form):
         ' ASCI met RD als coordinatenstelsel.',
         'Kies deze optie indien u een batenkaart wilt maken op basis van'
         ' risicokaarten.',
-        'Kies deze optie om een batchberekening voor een opeenvolgende '
-        'reeks van uniforme waterstanden uit te voeren.',
     ]
 
 
