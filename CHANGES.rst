@@ -5,7 +5,9 @@ Changelog of lizard-damage
 2.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removed the damagetable from here, it is not used by the calculation.
+
+- Adjusted the road gridcodes to the new landuse map.
 
 
 2.4 (2017-05-05)

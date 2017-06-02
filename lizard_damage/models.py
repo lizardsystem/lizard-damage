@@ -139,8 +139,14 @@ class Roads(models.Model):
     When using postgis2, shp2pgsql must take care of the table creation
     since django doesn't handle postgis2 very well currently.
     """
-    # {landuse-code: gridcode} mapping for roads
-    ROAD_GRIDCODE = {32: 20, 22: 21, 23: 22}
+    # {landuse-code: gridcode} mapping for roads, nowadays this is a one-on-one
+    # relation but it used to be different in the past.
+    ROAD_GRIDCODE = {
+        34: 34,    # Spoor
+        251: 251,  # Primaire wegen
+        252: 252,  # Secundaire wegen
+        253: 253,  # Tertiaire wegen
+    }
 
     gid = models.IntegerField(primary_key=True)
     typeinfr_1 = models.CharField(max_length=25, blank=True)
