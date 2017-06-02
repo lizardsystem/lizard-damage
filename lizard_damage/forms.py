@@ -16,10 +16,10 @@ import os
 import tempfile
 
 from lizard_damage import landuse_translator
+from lizard_damage.conf import settings
 from lizard_damage.models import DamageScenario
 from lizard_damage.models import gdal_open
 from lizard_damage.raster import get_area_with_data
-from lizard_damage.conf import settings
 
 logger = logging.getLogger(__name__)
 
