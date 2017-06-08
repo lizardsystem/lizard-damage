@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Moved default damage table from here to parent repo.
 
 
 2.5 (2017-06-02)
