@@ -5,7 +5,7 @@ Changelog of lizard-damage
 2.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Updated documentation.
 
 
 2.5.1 (2017-06-08)
