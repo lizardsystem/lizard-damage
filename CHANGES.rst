@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-3.0.0 (unreleased)
+3.0.0 (2017-07-03)
 ------------------
 
 - Increased major version number.
