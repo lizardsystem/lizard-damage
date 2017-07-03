@@ -10,6 +10,6 @@ def version():
     import lizard_damage
     installed = Installed(lizard_damage)
     if installed.version:
-        return 'Versie augustus 2014 (%s)' % (installed.version)
+        return 'Versie juni 2017 (%s)' % (installed.version)
     else:
-        return 'Versie augustus 2014'
+        return 'Versie juni 2017'
