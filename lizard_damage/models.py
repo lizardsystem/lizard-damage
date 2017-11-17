@@ -242,6 +242,11 @@ class DamageScenario(models.Model):
         (CALC_TYPE_AVG, 'Gemiddelde schadebedragen en schadefuncties'),
         )
 
+    AHN_VERSIONS = (
+        ('2', 'AHNv2'),
+        ('3', 'AHNv3'),
+    )
+
     SCENARIO_TYPES = (
         (0, '1 Kaart met de max waterstand van 1 gebeurtenis'),
         (1, '1 Kaart met de waterstand voor een zekere herhalingstijd'),
@@ -275,6 +280,9 @@ class DamageScenario(models.Model):
     scenario_type = models.IntegerField(
         choices=SCENARIO_TYPES, default=0)
 
+    ahn_version = models.CharField(
+        max_length=2, choices=AHN_VERSIONS, default=2
+    )
     customheights = models.FilePathField(
         max_length=200, null=True, blank=True)
     customlanduse = models.FilePathField(
@@ -288,13 +296,13 @@ class DamageScenario(models.Model):
 
     @classmethod
     def setup(
-            cls, name, email, scenario_type, calc_type, customheights,
-            customlanduse, damagetable, damage_events):
+            cls, name, email, scenario_type, calc_type, ahn_version,
+            customheights, customlanduse, damagetable, damage_events):
         """Create and setup a DamageScenario. Handles all types."""
 
         scenario = cls.objects.create(
             name=name, email=email, scenario_type=scenario_type,
-            calc_type=calc_type)
+            calc_type=calc_type, ahn_version=ahn_version)
 
         files_to_move = dict()
         if customheights:
@@ -670,9 +678,12 @@ class DamageEvent(models.Model):
         calc_type = self.scenario.calc_type or calculation.CALC_TYPE_MAX
         # Use the calculator from lizard-damage-calculation for the
         # actual calculation.
+
+        ahn_dir = 'data_ahn' + self.scenario.ahn_version
+
         calculator = calculation.DamageCalculator(
             ahn_data_dir=os.path.join(
-                settings.LIZARD_DAMAGE_DATA_ROOT, 'data_ahn'),
+                settings.LIZARD_DAMAGE_DATA_ROOT, ahn_dir),
             lgn_data_dir=os.path.join(
                 settings.LIZARD_DAMAGE_DATA_ROOT, 'data_lgn'),
             alternative_heights_dataset=(

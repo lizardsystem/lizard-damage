@@ -74,6 +74,7 @@ def damage_scenario_from_type_0(all_form_data):
         email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'],
+        ahn_version=all_form_data['ahn_version'],
         customheights=all_form_data.get('customheights_file'),
         customlanduse=all_form_data.get('customlanduse_file'),
         damagetable=all_form_data.get('damagetable'),
@@ -120,6 +121,7 @@ def damage_scenario_from_uniform_levels_batch_type(all_form_data):
         email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'],
+        anh_version=all_form_data['ahn_version'],
         customheights=all_form_data.get('customheights_file'),
         customlanduse=all_form_data.get('customlanduse_file'),
         damagetable=all_form_data.get('damagetable'),
@@ -132,6 +134,7 @@ class BatchConfig(object):
         self.scenario_type = '3'
         self.calc_type = 'max'
         self.scenario_damage_table = ''
+        self.ahn_version = '2'
 
         head, body = [], []
         for line in content:
@@ -158,6 +161,7 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
             'name': getattr(config, 'scenario_name', scenario_name),
             'email': getattr(config, 'scenario_email', scenario_email),
             'scenario_type': int(config.scenario_type),
+            'ahn_version': getattr(config, 'ahn_version', '2'),
             'customheights': None,
             'customlanduse': None,
             'damagetable': None,
