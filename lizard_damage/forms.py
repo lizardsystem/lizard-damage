@@ -158,9 +158,9 @@ class FormStep1(forms.Form):
 
     ahn_version = forms.ChoiceField(
         label="AHN versie", required=True,
-        choices=(("2", "AHN2"), ("3", "AHN3")),
+        choices=DamageScenario.AHN_VERSIONS,
         help_text='De AHN versie welke gebruikt wordt voor de schadeberekening. '
-        'Wanneer voor AHN3 wordt gekozen, moet de positie en omvang van het'
+        'Wanneer voor AHN3 wordt gekozen, moet de positie en omvang van de'
         ' waterstand volledig binnen het bereik van de AHN3 vallen.'
         )
 
@@ -332,21 +332,24 @@ class FormStep1(forms.Form):
             # get needed AHN files
             ahn_files = calculation._get_ahn_leaves(
                 cleaned_data['waterlevel_dataset'], logger)
-            ahn_files = [ahn[0] for ahn in ahn_files]
+            ahn_files = [ahn_file[0] for ahn_file in ahn_files]
             logger.debug('Required AHN %s files: %s',
                          cleaned_data['ahn_version'],
                          ahn_files)
             # Check that AHN-files exists for selected AHN-version
+            # AHN files are stored on the server in directory 'data_ahn2' and
+            # 'data_ahn3' for AHN version 2 and 3 respectively.
             ahn_data_dir = os.path.join(settings.LIZARD_DAMAGE_DATA_ROOT,
                                         'data_ahn' + cleaned_data['ahn_version'])
-            for file in ahn_files:
-                file_name = file + '.tif'
+            for ahn_file in ahn_files:
+                file_name = ahn_file + '.tif'
                 prefix = file_name[1:4]
                 path = os.path.join(ahn_data_dir, prefix, file_name)
                 if not os.path.isfile(path):
                     logger.debug("file %s not present", file_name)
-                    self.add_field_error('ahn_version', 'Geen AHN-kaart beschikbaar '
-                                         'voor het gebied van deze waterstand.')
+                    self.add_field_error(
+                        'ahn_version',
+                        'Geen AHN-kaart beschikbaar voor het gebied van deze waterstand.')
 
         # Check the landuse Excel sheet
         translator = self.cleaned_data.get('customlanduseexcel_translator')

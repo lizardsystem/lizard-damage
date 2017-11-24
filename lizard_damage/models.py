@@ -242,9 +242,12 @@ class DamageScenario(models.Model):
         (CALC_TYPE_AVG, 'Gemiddelde schadebedragen en schadefuncties'),
         )
 
+    AHN2 = "2"
+    AHN3 = "3"
+
     AHN_VERSIONS = (
-        ('2', 'AHNv2'),
-        ('3', 'AHNv3'),
+        (AHN2, 'AHN2'),
+        (AHN3, 'AHN3'),
     )
 
     SCENARIO_TYPES = (
@@ -281,7 +284,7 @@ class DamageScenario(models.Model):
         choices=SCENARIO_TYPES, default=0)
 
     ahn_version = models.CharField(
-        max_length=2, choices=AHN_VERSIONS, default=2
+        max_length=2, choices=AHN_VERSIONS, default=AHN2
     )
     customheights = models.FilePathField(
         max_length=200, null=True, blank=True)
