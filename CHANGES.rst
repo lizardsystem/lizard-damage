@@ -5,7 +5,7 @@ Changelog of lizard-damage
 3.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added support for AHN3
 
 
 3.0.0 (2017-07-03)
