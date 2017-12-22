@@ -33,7 +33,7 @@ class TestDamageScenario(TestCase):
             0)
         models.DamageScenario.setup(
             "Testscenario", "info@nelen-schuurmans.nl", 0,
-            models.DamageScenario.CALC_TYPE_AVG, None, None, None, [])
+            models.DamageScenario.CALC_TYPE_AVG, 2, None, None, None, [])
         self.assertEquals(
             models.DamageScenario.objects.filter(
                 name="Testscenario").count(),
