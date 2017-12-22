@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y \
     wget \
 && apt-get clean -y
 
-RUN add-apt-repository 'deb http://ppa.launchpad.net/ubuntugis/ppa/ubuntu precise main'
-
 RUN apt-get update && apt-get install -y \
     python-dev \
     python-pip \
