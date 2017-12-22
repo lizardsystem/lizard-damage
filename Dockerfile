@@ -1,4 +1,4 @@
-FROM ubuntu:precise
+FROM ubuntu:trusty
 
 MAINTAINER Reinout van Rees <reinout.vanrees@nelen-schuurmans.nl>
 
@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y \
     wget \
 && apt-get clean -y
 
-RUN add-apt-repository 'deb http://ppa.launchpad.net/ubuntugis/ppa/ubuntu precise main'
-
 RUN apt-get update && apt-get install -y \
     python-dev \
     python-pip \
@@ -27,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     gettext \
     postgresql-client \
 && apt-get clean -y
+RUN pip install --upgrade setuptools zc.buildout
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
