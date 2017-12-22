@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     gettext \
     postgresql-client \
 && apt-get clean -y
-RUN pip install -u setuptools zc.buildout
+RUN pip install --upgrade setuptools zc.buildout
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
