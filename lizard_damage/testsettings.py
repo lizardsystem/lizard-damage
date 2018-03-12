@@ -48,15 +48,15 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SITE_ID = 1
 SECRET_KEY = 'This is not secret but that is ok.'
 INSTALLED_APPS = [
-    'lizard_damage',
-    'lizard_task',
     'lizard_ui',
+    'lizard_security',
+    'lizard_task',
+    'lizard_damage',
     'djcelery',
     'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_nose',
-    'lizard_security',
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',

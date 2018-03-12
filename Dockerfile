@@ -8,6 +8,7 @@ ENV REFRESHED_AT 1972-12-25
 # system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    zlib1g-dev \
     git \
     python-software-properties \
     software-properties-common \
