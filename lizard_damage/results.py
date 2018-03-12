@@ -183,7 +183,8 @@ class ResultCollector(object):
         self.logger.debug(cmd)
         os.system(cmd)
         file_with_tiff_filenames.close()  # Deletes the temporary file
-        self.save_file_for_zipfile(vrt_file, vrt_file)
+        if os.path.exists(vrt_file):
+            self.save_file_for_zipfile(vrt_file, vrt_file)
         os.chdir(orig_dir)
 
     def finalize(self):

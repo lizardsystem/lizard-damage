@@ -5,7 +5,9 @@ Changelog of lizard-damage
 3.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Global buildout.
+
+- Fixed missing chdir trouble when no VRT is created.
 
 
 3.1 (2017-12-22)
