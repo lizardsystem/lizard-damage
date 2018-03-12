@@ -16,7 +16,7 @@ One-time setup::
     $ docker-compose build
     $ docker-compose run web buildout
     $ docker-compose run web bin/django syncdb
-    $ docker-compose run web bin/django migrate  # at the moment it ends here...
+    $ docker-compose run web bin/django migrate
 
 Regular commands::
 
