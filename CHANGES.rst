@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-3.1.3 (unreleased)
+3.1.3 (2018-03-23)
 ------------------
 
 - Added a link to stowa.lizard.net, which shows the default maps.
