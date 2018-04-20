@@ -121,7 +121,7 @@ def damage_scenario_from_uniform_levels_batch_type(all_form_data):
         email=all_form_data['email'],
         scenario_type=all_form_data['scenario_type'],
         calc_type=all_form_data['calc_type'],
-        anh_version=all_form_data['ahn_version'],
+        ahn_version=all_form_data['ahn_version'],
         customheights=all_form_data.get('customheights_file'),
         customlanduse=all_form_data.get('customlanduse_file'),
         damagetable=all_form_data.get('damagetable'),

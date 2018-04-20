@@ -5,7 +5,7 @@ Changelog of lizard-damage
 3.1.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Another typo.
 
 
 3.1.4 (2018-03-23)
