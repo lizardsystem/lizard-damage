@@ -2,7 +2,7 @@ Changelog of lizard-damage
 ===================================================
 
 
-3.1.6 (unreleased)
+3.1.6 (2018-05-25)
 ------------------
 
 - Put area restriction back in, implemented for zipfiles as well.
