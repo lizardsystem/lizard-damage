@@ -130,6 +130,11 @@ urlpatterns = patterns(
         views.ThankYou.as_view(),
         name='lizard_damage_thank_you'
         ),
+    url(
+        r'^max_area_exceeded/$',
+        views.MaxAreaExceeded.as_view(),
+        name='lizard_damage_max_area_exceeded'
+        ),
     url(r'^test$',
         TemplateView.as_view(template_name="lizard_damage/openlayers.html"),
         name='lizard_damage_test'),

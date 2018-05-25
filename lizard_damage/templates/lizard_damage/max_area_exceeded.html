@@ -1,0 +1,11 @@
+{% extends "lizard_ui/lizardbase.html" %}
+
+{% block content %}
+<h2>Gebied te groot!</h2>
+<p>
+Bij het verwerken van de zipfile is helaas een probleem opgetreden. Tenminste
+één van de waterstandsbestanden is groter dan toegestaan. Het maximum
+toegestane oppervlak is {{max_area}} km2. Het bestand {{name}} bestrijkt
+{{area}}
+km2.
+{% endblock %}

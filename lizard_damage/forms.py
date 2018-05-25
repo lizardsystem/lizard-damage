@@ -320,7 +320,7 @@ class FormStep1(forms.Form):
                settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE:
                 self.add_field_error(
                     'waterlevel',
-                    'Het waterstand bestand mag maximaal 200km2 beslaan.')
+                    'Het waterstand bestand mag maximaal 200 km2 bestrijken.')
 
         return self.cleaned_data.get('waterlevel')
 
@@ -483,7 +483,7 @@ class FormZipResult(forms.Form):
     display_title = 'Controle invoer'
 
     zip_content = forms.CharField(
-        max_length=100,
+        max_length=25,
         label="zipfile analyse",
         widget=forms.Textarea(attrs={'readonly': 'readonly'}))
 

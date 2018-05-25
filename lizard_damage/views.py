@@ -9,7 +9,10 @@ from django.shortcuts import get_object_or_404
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sites.models import Site
 
+from osgeo import gdal
+
 from lizard_damage import tasks
+from lizard_damage.raster import get_area_with_data
 from lizard_damage.conf import settings
 from lizard_damage.models import BenefitScenario
 from lizard_damage.models import DamageScenario
@@ -29,6 +32,9 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import logging
 
+from django.http import HttpResponseRedirect
+from django.contrib.formtools.wizard.views import SessionWizardView
+
 # Do not generate directoryname, because for each worker the directory
 # will be different and that loads to errors.
 temp_storage_location = '/tmp/django_uploads'
@@ -39,8 +45,10 @@ logger = logging.getLogger(__name__)
 # from lizard_damage import models
 
 
-from django.http import HttpResponseRedirect
-from django.contrib.formtools.wizard.views import SessionWizardView
+class AreaError(Exception):
+    def __init__(self, name, area):
+        self.name = name
+        self.area = area
 
 
 def show_form_condition(condition):
@@ -211,6 +219,18 @@ def unpack_zipfile_into_scenario(zipfile, scenario_name='', scenario_email=''):
                 myzip.extract(water_level_filename, zip_temp)
                 tempfilename = os.path.join(
                     zip_temp, water_level_filename)
+
+                # check area
+                area = get_area_with_data(gdal.Open(tempfilename))
+                max_area = settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE
+                if area > max_area:
+                    # cleanup and raise
+                    shutil.rmtree(zip_temp)
+                    raise AreaError(
+                        name=water_level_filename,
+                        area='{:.0f}'.format(area / 1000000.),
+                    )
+
                 damage_event['waterlevels'].append({
                     'waterlevel': tempfilename,
                     'index': index
@@ -286,10 +306,25 @@ def analyze_zip_file(zipfile):
 
     # waterlevel files
     for event in config.events:
+        # check waterlevel in zipfile
         waterlevel = event['waterlevel']
         if waterlevel not in namelist:
             message = 'Waterstand "{}" niet gevonden in zipfile.'
             result.append(message.format(waterlevel))
+        # check waterlevel area within limits
+        vsipath = '/vsizip/' + os.path.join(zipfile.file.name, waterlevel)
+        dataset = gdal.Open(vsipath)
+        area = get_area_with_data(dataset)
+        max_area = settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE
+        if area > max_area:
+            template = ('Oppervlakte van waterstand "{}"'
+                        ' ({:.0f} km2) is groter dan {:.0f} km2.')
+            message = template.format(
+                waterlevel,
+                area / 1000000.,
+                max_area / 1000000.,
+            )
+            result.append(message)
 
     # repetition times
     rtimes = [event['repetition_time'] for event in config.events]
@@ -298,9 +333,11 @@ def analyze_zip_file(zipfile):
                    'waterstanden hebben een herhalingstijd.')
         result.append(message.format(scenario))
 
-    if not result:
+    if result:
+        result = ['Probleem met zipbestand:'] + result
+    else:
         # Everything seems to be ok
-        result.append("zip bestand ok")
+        result.append("Zipbestand lijkt in orde.")
 
     return '\n'.join(result)
 
@@ -336,7 +373,6 @@ class Wizard(ViewContextMixin, SessionWizardView):
             try:
                 zipfile = form_datas['zipfile']
                 logger.info('zipfile.file.name %s' % zipfile.file.name)
-                print 'zipfile.file.name %s' % zipfile.file.name
                 return {'zip_content': analyze_zip_file(zipfile)}
             except:
                 return {'zip_content': 'analyse gefaald, zipfile is niet goed'}
@@ -393,13 +429,24 @@ class Wizard(ViewContextMixin, SessionWizardView):
                 reverse('lizard_damage_thank_you') +
                 '?damage_scenario_id=%d' % damage_scenario.id)
         if scenario_type in (2, 3, 4):
-            damage_scenario = damage_scenario_from_zip_type(all_form_data)
-            self.clean_temporary_directory(all_form_data)
+            try:
+                damage_scenario = damage_scenario_from_zip_type(all_form_data)
+            except AreaError as area_error:
+                url = reverse('lizard_damage_max_area_exceeded')
+                query = '?name={name}&area={area}'.format(
+                        name=area_error.name, area=area_error.area,
+                )
+                return HttpResponseRedirect(url + query)
+            finally:
+                self.clean_temporary_directory(all_form_data)
+
             # launch task
             tasks.damage_scenario_to_task(damage_scenario, username="web")
+
             return HttpResponseRedirect(
                 reverse('lizard_damage_thank_you') +
                 '?damage_scenario_id=%d' % damage_scenario.id)
+
         elif scenario_type == 6:
             # baten taak
             benefit_scenario = create_benefit_scenario(all_form_data)
@@ -635,3 +682,16 @@ class ThankYou(ViewContextMixin, TemplateView):
             message += 'Uw referentie is scenario id b%s' % benefit_scenario_id
 
         return message
+
+
+class MaxAreaExceeded(ViewContextMixin, TemplateView):
+    template_name = 'lizard_damage/max_area_exceeded.html'
+
+    def get_context_data(self):
+        max_area = settings.LIZARD_DAMAGE_MAX_WATERLEVEL_SIZE / 1000000
+        context = {
+            'name': self.request.GET.get('name'),
+            'area': self.request.GET.get('area'),
+            'max_area': max_area,
+        }
+        return context
