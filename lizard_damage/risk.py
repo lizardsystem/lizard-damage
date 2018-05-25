@@ -26,11 +26,11 @@ from second zip, check if names unchanged.
 for each tile, for each event, calculate.
 """
 PATTERN = re.compile(
-    'schade_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])_T(.*)\.asc$'
+    'schade_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])_T(.*)\.tiff$'
 )
 
 RISK_PATTERN = re.compile(
-    'risk_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])\.asc$'
+    'risk_([a-z][0-9][0-9][a-z][a-z][0-9]_[0-9][0-9])\.tiff$'
 )
 
 
@@ -145,9 +145,9 @@ def create_risk_map(damage_scenario, logger):
         band.SetNoDataValue(float(risk.fill_value))
         band.WriteArray(risk.filled())
 
-        # Write to asc and add to zip
-        ascpath = os.path.join(tempdir, str('risk_' + index + '.asc'))
-        gdal.GetDriverByName(b'aaigrid').CreateCopy(ascpath, dataset)
+        # Write to tif and add to zip
+        ascpath = os.path.join(tempdir, str('risk_' + index + '.tiff'))
+        gdal.GetDriverByName(b'gtiff').CreateCopy(ascpath, dataset)
         with zipfile.ZipFile(zipriskpath,
                              'a', zipfile.ZIP_DEFLATED) as archive:
             archive.write(ascpath, os.path.basename(ascpath))
@@ -208,9 +208,9 @@ def create_benefit_map(benefit_scenario, logger):
         band.SetNoDataValue(float(benefit.fill_value))
         band.WriteArray(benefit.filled())
 
-        # Write to asc and add to zip
-        ascpath = os.path.join(tempdir, str('benefit_' + index + '.asc'))
-        gdal.GetDriverByName(b'aaigrid').CreateCopy(ascpath, dataset)
+        # Write to tif and add to zip
+        ascpath = os.path.join(tempdir, str('benefit_' + index + '.tiff'))
+        gdal.GetDriverByName(b'gtiff').CreateCopy(ascpath, dataset)
         with zipfile.ZipFile(
             zipbenefitpath, 'a', zipfile.ZIP_DEFLATED,
         ) as archive:

@@ -5,7 +5,7 @@ Changelog of lizard-damage
 3.1.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Riskmaps should look for and create geotiff, not aaigrid.
 
 
 3.1.6 (2018-05-25)
